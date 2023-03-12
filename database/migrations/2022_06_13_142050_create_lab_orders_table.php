@@ -15,7 +15,7 @@ return new class extends Migration
     {
         Schema::create('lab_orders', function (Blueprint $table) {
             $table->id();
-            $table->longText('v_id')->unique();
+            $table->longText('v_id')->uniqid();
             $table->longText('p_id')->nullable();
             $table->longText('status')->nullable();
             $table->timestamps();
