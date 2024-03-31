@@ -1,45 +1,68 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400"></a></p>
+# ERP-Based Clinic Management System (Laravel)
 
-<p align="center">
-<a href="https://travis-ci.org/laravel/framework"><img src="https://travis-ci.org/laravel/framework.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+## Project Overview
 
-## About Laravel
+This project represents the culmination of my final year studies, centered around the Laravel framework, aimed at modernizing and streamlining the operations of the Dire Dawa University Student Clinic Center. By transitioning to a digital platform, the goal is to significantly enhance the efficiency and effectiveness of clinic management processes.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## Modules
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+### 1. Patient Management System
+- **Diagnosis Workflow**: Seamlessly manage the entire patient diagnosis process, from the creation of patient cards to the dispensing of medicines, all in a digital format.
+- **Medicine and Lab Test Orders**: Enable the digital ordering of medicines and lab tests through the system, providing a convenient and efficient solution.
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+### 2. Human Resource Management
+- **Employee Registration**: Efficiently register and manage new employees within the system.
+- **Leave Management**: Streamline the handling of employee leave requests, ensuring smooth operations.
+- **Work Experience and Education**: Maintain comprehensive records of employee work experience and educational backgrounds for reference and reporting.
+- **Account Management**: Securely manage employee accounts within the system, ensuring data integrity and confidentiality.
 
-## Project Detail
+### 3. Pharmacy Store Management
+- **Inventory Organization**: Categorize and list items within the pharmacy store, facilitating easy access and management.
+- **Expiration Tracking**: Monitor and manage the expiration status of medications, ensuring the timely removal of expired items.
+- **Addition of New Medicines**: Simplify the process of adding new medicines to the inventory, ensuring accurate and up-to-date stock information.
 
-This is my final Year project based on Laravel Framework for my Backend
+### 4. Store Management System
+- **Asset Management**: Effectively manage medical equipment and other assets of the clinic, ensuring their availability and maintenance.
+- **Inventory Tracking**: Keep track of inventory levels and usage, enabling timely restocking and replenishment.
 
-This project was development in order to manage and make Dire Dawa University student Clinic Center fully digiatal,
+## Actors
 
--Our Erp System has 4 Modules of tasks
+1. **Doctor**: Responsible for patient diagnosis, treatment, and management.
+2. **Pharmacist**: Manages the dispensing of medications and oversees pharmacy operations.
+3. **Lab Technician**: Conducts lab tests, analyzes results, and maintains lab equipment.
+4. **Receptionist**: Handles patient appointments, inquiries, and administrative tasks.
+5. **Manager**: Provides oversight and strategic direction for clinic operations and administration.
 
-    * Patient Management System Module:- used for managing every step in the dignosis of patients starting from Creating a new Card upto Reciving Medicine pharmacy in fully digital way, and also ordering medicines and lab tests via our system digitaly
+## Installation
 
-    * Human Resouce Management Module:- Register and Mange new employees, Manage Employee Leave ,Manage employee Word expriance and Edcation Backgoudn inforamtions , And also manage accounts of employees
+1. Clone the repository to your local machine.
+2. Run `composer install` to install project dependencies.
+3. Configure the `.env` file with your environment settings, including database credentials.
+4. Run `php artisan migrate` to set up the database schema.
+5. Start the development server with `php artisan serve`.
 
-    * Pharmacy Store Management Module:- This is apart of our system that is used to manage and organize our pharmacy store by catagorzing and listing expired items , instock and outstock items list , adding new medicins
+## Usage
 
-    * Store Management System Module: this is a separte module for Managin Medical Equipents and other Assets of the schools Clinic
+- Access different modules through the provided URLs.
+- Use appropriate credentials to log in based on your role.
+- Explore each module to perform relevant tasks efficiently.
+- Enjoy the streamlined and digitized clinic management experience!
 
-- Our System also has 5 actors
-  - Doctor
-  - Pharmacist
-  - Lab Technisian
-  - Reception
-  - Manager
+## Technologies Used
+
+- **Laravel**: The PHP framework for building robust web applications.
+- **MySQL**: The relational database management system for data storage.
+- **HTML/CSS**: Markup and styling languages for frontend development.
+- **JavaScript**: Enhances interactivity and user experience.
+
+## Contributors
+
+- [Bereket Zelalem](https://github.com/bereket-09)
+
+## License
+
+This project is licensed under the [MIT License](link to license file). Feel free to adapt and customize it to meet the specific needs of your clinic management system.
+
+---
+
+Feel free to copy and paste this markdown into your README.md file for your ERP-Based Clinic Management System project.
