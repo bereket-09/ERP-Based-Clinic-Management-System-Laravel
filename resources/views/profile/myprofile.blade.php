@@ -1,451 +1,143 @@
-@include('head')
-@if (Auth::user() == 'false')
-    {
-    return view('homepage');
-    }
-@endif
+@extends('layouts.portal')
 
-<body>
-    <div class="main-wrapper">
-        @include('navbar')
-        <div class="sidebar" id="sidebar">
-            <div class="sidebar-inner slimscroll">
-                <div id="sidebar-menu" class="sidebar-menu">
-                    <ul>
-                        <li class="menu-title">Main</li>
-                        <li>
-                            <a href="/home"><i class="fa fa-home"></i> <span>Back To Home</span></a>
-                        </li>
+@section('title', 'My Profile')
 
+@php
+    $me = \App\Models\User::find($user);
+    $roleNames = ['0' => 'Receptionist', '1' => 'Doctor', '2' => 'Labratorist', '3' => 'Pharmacist', '4' => 'Manager'];
+    $roleLabel = $roleNames[(string) ($me->role ?? '')] ?? 'Staff';
+@endphp
 
-                    </ul>
+@section('content')
+    <div class="profile-shell fade-in">
+        {{-- Cover / header band --}}
+        <div class="profile-cover">
+            <div class="profile-cover-band"></div>
+            <div class="profile-cover-body">
+                <div class="profile-avatar-wrap">
+                    <img class="profile-avatar"
+                        src="{{ $me && $me->profile_photo_path ? '/storage/' . $me->profile_photo_path : '/images/avatar.png' }}"
+                        onerror="this.onerror=null;this.src='/images/avatar.png'" alt="{{ $me->name ?? 'User' }}">
+                </div>
+                <div class="profile-identity">
+                    <h1 class="profile-name">{{ $me->name ?? 'Unknown user' }}</h1>
+                    <div class="profile-role">
+                        <span class="profile-role-tag">{{ $roleLabel }}</span>
+                        @if (!empty($me->speciality))
+                            <span class="profile-speciality">{{ $me->speciality }}</span>
+                        @endif
+                    </div>
+                    <div class="profile-chips">
+                        @if (!empty($me->phone))
+                            <span class="profile-chip"><i class="fa fa-phone"></i> {{ $me->phone }}</span>
+                        @endif
+                        @if (!empty($me->email))
+                            <span class="profile-chip"><i class="fa fa-envelope-o"></i> {{ $me->email }}</span>
+                        @endif
+                        @if (!empty($me->region))
+                            <span class="profile-chip"><i class="fa fa-map-marker"></i> {{ $me->region }}</span>
+                        @endif
+                    </div>
+                </div>
+                <div class="profile-cover-actions">
+                    <a href="{{ url('/edit-basic-info', $me->id ?? $user) }}" class="btn btn-primary btn-rounded">
+                        <i class="fa fa-pencil"></i> Edit profile
+                    </a>
                 </div>
             </div>
         </div>
-        <div class="page-wrapper">
-            <div class="content">
-                <div class="row">
-                    <div class="col-sm-7 col-6">
-                        <h4 class="page-title">My Profile</h4>
-                    </div>
 
-                    <div class="col-sm-5 col-6 text-right m-b-30">
-                        <a href="/user/profile" class="btn btn-primary btn-rounded"><i class="fa fa-pencil"></i>
-                            Edit Account</a>
-                        <a href="{{ url('/edit-basic-info', Auth::user()->id) }}" class="btn btn-primary btn-rounded"
-                            style="margin-left:25px"><i class="fa fa-plus"></i>
-                            Edit Basic Information</a>
-                    </div>
+        {{-- Tabbed section --}}
+        <div class="card profile-tabs-card">
+            <ul class="nav nav-tabs profile-nav" id="profileTabs" role="tablist">
+                <li class="nav-item"><a class="nav-link active" href="#tab-about" data-toggle="tab"><i class="fa fa-user-o"></i> About</a></li>
+                <li class="nav-item"><a class="nav-link" href="#tab-education" data-toggle="tab"><i class="fa fa-graduation-cap"></i> Education</a></li>
+                <li class="nav-item"><a class="nav-link" href="#tab-experience" data-toggle="tab"><i class="fa fa-briefcase"></i> Experience</a></li>
+            </ul>
+
+            <div class="tab-content profile-tab-content">
+                {{-- About --}}
+                <div class="tab-pane fade show active" id="tab-about">
+                    <h3 class="profile-section-title">Personal information</h3>
+                    <dl class="profile-dl">
+                        <div class="profile-dl-row"><dt>Employee ID</dt><dd class="tnum">{{ $me->id ?? '—' }}</dd></div>
+                        <div class="profile-dl-row"><dt>Full name</dt><dd>{{ $me->name ?? '—' }}</dd></div>
+                        <div class="profile-dl-row"><dt>Email</dt><dd>{{ $me->email ?: '—' }}</dd></div>
+                        <div class="profile-dl-row"><dt>Phone</dt><dd>{{ $me->phone ?: '—' }}</dd></div>
+                        <div class="profile-dl-row"><dt>Gender</dt><dd>{{ $me->gender ?: '—' }}</dd></div>
+                        <div class="profile-dl-row"><dt>Birthday</dt><dd class="tnum">{{ $me->birthday ?: '—' }}</dd></div>
+                        <div class="profile-dl-row"><dt>Nationality</dt><dd>{{ $me->nationality ?: '—' }}</dd></div>
+                        <div class="profile-dl-row"><dt>Region</dt><dd>{{ $me->region ?: '—' }}</dd></div>
+                        <div class="profile-dl-row"><dt>Address</dt><dd>{{ $me->address ?: '—' }}</dd></div>
+                        <div class="profile-dl-row"><dt>Speciality</dt><dd>{{ $me->speciality ?: '—' }}</dd></div>
+                        <div class="profile-dl-row"><dt>Joined</dt><dd class="tnum">{{ $me->joinned_at ?: '—' }}</dd></div>
+                    </dl>
                 </div>
-                <div class="card-box profile-header">
-                    <div class="row">
-                        <div class="col-md-12">
-                            <div class="profile-view">
-                                <div class="profile-img-wrap">
-                                    <div class="profile-img">
-                                        <a href="#">
 
-                                            {{-- <img class="avatar" src="{{ Auth::user()->profile_photo_url }}"
-                                                alt=""> --}}
-
-
-                                            <img class="avatar" id="currentPhoto"
-                                                src="{{ Auth::user()->profile_photo_url }}"
-                                                onerror="this.onerror=null; this.src='/images/avatar.png'"
-                                                alt="">
-
-                                        </a>
-
-
-                                    </div>
-                                </div>
-                                <br>
-                                <div class="profile-basic">
-                                    <div class="row">
-                                        <div class="col-md-5">
-                                            <div class="profile-info-left">
-                                                <h3 class="user-name m-t-0 mb-0">{{ Auth::user()->name }}</h3>
-
-                                                @if (Auth::user()->role == '0')
-                                                    <small class="text-muted">A Receptionist </small>
-                                                @elseif (Auth::user()->role == '1')
-                                                    <small class="text-muted">{{ Auth::user()->speciality }}</small>
-                                                @elseif (Auth::user()->role == '2')
-                                                    <small class="text-muted">A Labratorist </small>
-                                                @elseif (Auth::user()->role == '3')
-                                                    <small class="text-muted">A Pharmacist </small>
-                                                @elseif (Auth::user()->role == '4')
-                                                    <small class="text-muted">A Manager </small>
-                                                @endif
-                                                <small class="text-muted">{{ Auth::user()->speciality }}</small>
-
-
-                                                <div class="staff-id">Employee ID : {{ Auth::user()->id }}</div>
-
-                                                {{-- <div class="staff-msg"><a href="chat.html"
-                                                        class="btn btn-primary">Send Message</a></div> --}}
-                                            </div>
-                                        </div>
-                                        <div class="col-md-7">
-                                            <ul class="personal-info">
-                                                <li>
-                                                    <span class="title">Phone:</span>
-                                                    <span class="text"><a
-                                                            href="#">{{ Auth::user()->phone }}</a></span>
-                                                </li>
-                                                <li>
-                                                    <span class="title">Email:</span>
-                                                    <span class="text"><a
-                                                            href="#">{{ Auth::user()->email }}</a></span>
-                                                </li>
-                                                {{-- <li>
-                                                    <span class="title">Birth Day:</span>
-                                                    <span class="text">{{ Auth::user()->birthday }}</span>
-                                                </li> --}}
-                                                {{-- <li>
-                                                    <span class="title">Joined At:</span>
-                                                    <span class="text">{{ Auth::user()->joined_at }}</span>
-                                                </li> --}}
-                                                <li>
-                                                    <span class="title">Address:</span>
-                                                    <span class="text">{{ Auth::user()->address }}</span>
-                                                </li>
-                                                <li>
-                                                    <span class="title">Gender:</span>
-                                                    <span class="text">{{ Auth::user()->gender }}</span>
-                                                </li>
-                                            </ul>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                {{-- Education --}}
+                <div class="tab-pane fade" id="tab-education">
+                    <div class="profile-section-head">
+                        <h3 class="profile-section-title mb-0">Education</h3>
+                        <a href="/add-edu-exp" class="btn btn-sm btn-primary btn-rounded"><i class="fa fa-plus"></i> Add education</a>
                     </div>
-                </div>
-                <div class="profile-tabs">
-                    <ul class="nav nav-tabs nav-tabs-bottom">
-                        <li class="nav-item"><a class="nav-link active" href="#about-cont" data-toggle="tab">About</a>
-                        </li>
-                        {{-- {{-- <li class="nav-item"><a class="nav-link" href="#bottom-tab2" data-toggle="tab">Profile</a></li> --}}
-                        <li class=""><a class="nav-link" href="/my-leave-requests">MY Work
-                                Leave
-                                Requests</a></li>
-                        <li class=""><a class="nav-link" href="/my_assined_items">MY Assined Items</a></li>
-                    </ul>
-
-                    <div class="tab-content">
-                        <div class="tab-pane show active" id="about-cont">
-                            <div class="row">
-                                <div class="col-md-12">
-                                    <div class="card-box">
-                                        <h3 class="card-title">Education Informations</h3>
-                                        <div class="experience-box">
-                                            <ul class="experience-list">
-                                                @foreach ($Edu as $edu)
-                                                    <li>
-                                                        <div class="experience-user">
-                                                            <div class="before-circle"></div>
-                                                        </div>
-                                                        <div class="experience-content">
-                                                            <div class="timeline-content">
-                                                                <a href="#/" class="name">{{ $edu->inst }}
-                                                                    ({{ $edu->level }})
-                                                                </a>
-                                                                <div>{{ $edu->field }}</div>
-                                                                <span class="time">From: {{ $edu->from }} - Upto:
-                                                                    {{ $edu->to }}</span>
-                                                            </div>
-                                                        </div>
-                                                    </li>
-                                                @endforeach
-
-                                            </ul>
+                    @if ($Edu && count($Edu))
+                        <ul class="profile-timeline">
+                            @foreach ($Edu as $edu)
+                                <li class="profile-timeline-item">
+                                    <span class="profile-timeline-dot"></span>
+                                    <div class="profile-timeline-body">
+                                        <div class="profile-timeline-title">{{ $edu->inst ?: 'Institution' }}</div>
+                                        <div class="profile-timeline-sub">
+                                            {{ $edu->field ?: '—' }}@if (!empty($edu->level)) <span class="profile-badge">{{ $edu->level }}</span>@endif
                                         </div>
+                                        <div class="profile-timeline-time tnum">{{ $edu->from ?: '—' }} &ndash; {{ $edu->to ?: 'Present' }}</div>
                                     </div>
-                                    <div class="card-box mb-0">
-                                        <h3 class="card-title">Experience</h3>
-                                        <div class="experience-box">
-                                            <ul class="experience-list">
-                                                @foreach ($Work as $work)
-                                                    <li>
-                                                        <div class="experience-user">
-                                                            <div class="before-circle"></div>
-                                                        </div>
-                                                        <div class="experience-content">
-                                                            <div class="timeline-content"> As a
-                                                                <a href="#/"
-                                                                    class="name">{{ $work->field }}</a>
-                                                                at
-                                                                <a href="#/"
-                                                                    class="name">{{ $work->inst }}</a>
-                                                                <span class="time">From : {{ $work->started }} -
-                                                                    Present
-                                                                </span>
-                                                            </div>
-                                                        </div>
-                                                    </li>
-                                                @endforeach
-
-                                            </ul>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        {{-- <div class="tab-pane" id="bottom-tab2">
-
-                            123
-
-
-
-
-
-
-
-
-
-
-
-                        </div>
-                        <div class="tab-pane" id="bottom-tab3">
-                            Tab content 3
-                        </div> --}}
-                    </div>
-                </div>
-            </div>
-            <div class="notification-box">
-                <div class="msg-sidebar notifications msg-noti">
-                    <div class="topnav-dropdown-header">
-                        <span>Messages</span>
-                    </div>
-                    <div class="drop-scroll msg-list-scroll" id="msg_list">
-                        <ul class="list-box">
-                            <li>
-                                <a href="chat.html">
-                                    <div class="list-item">
-                                        <div class="list-left">
-                                            <span class="avatar">R</span>
-                                        </div>
-                                        <div class="list-body">
-                                            <span class="message-author">Richard Miles </span>
-                                            <span class="message-time">12:28 AM</span>
-                                            <div class="clearfix"></div>
-                                            <span class="message-content">Lorem ipsum dolor sit amet, consectetur
-                                                adipiscing</span>
-                                        </div>
-                                    </div>
-                                </a>
-                            </li>
-                            <li>
-                                <a href="chat.html">
-                                    <div class="list-item new-message">
-                                        <div class="list-left">
-                                            <span class="avatar">J</span>
-                                        </div>
-                                        <div class="list-body">
-                                            <span class="message-author">John Doe</span>
-                                            <span class="message-time">1 Aug</span>
-                                            <div class="clearfix"></div>
-                                            <span class="message-content">Lorem ipsum dolor sit amet, consectetur
-                                                adipiscing</span>
-                                        </div>
-                                    </div>
-                                </a>
-                            </li>
-                            <li>
-                                <a href="chat.html">
-                                    <div class="list-item">
-                                        <div class="list-left">
-                                            <span class="avatar">T</span>
-                                        </div>
-                                        <div class="list-body">
-                                            <span class="message-author"> Tarah Shropshire </span>
-                                            <span class="message-time">12:28 AM</span>
-                                            <div class="clearfix"></div>
-                                            <span class="message-content">Lorem ipsum dolor sit amet, consectetur
-                                                adipiscing</span>
-                                        </div>
-                                    </div>
-                                </a>
-                            </li>
-                            <li>
-                                <a href="chat.html">
-                                    <div class="list-item">
-                                        <div class="list-left">
-                                            <span class="avatar">M</span>
-                                        </div>
-                                        <div class="list-body">
-                                            <span class="message-author">Mike Litorus</span>
-                                            <span class="message-time">12:28 AM</span>
-                                            <div class="clearfix"></div>
-                                            <span class="message-content">Lorem ipsum dolor sit amet, consectetur
-                                                adipiscing</span>
-                                        </div>
-                                    </div>
-                                </a>
-                            </li>
-                            <li>
-                                <a href="chat.html">
-                                    <div class="list-item">
-                                        <div class="list-left">
-                                            <span class="avatar">C</span>
-                                        </div>
-                                        <div class="list-body">
-                                            <span class="message-author"> Catherine Manseau </span>
-                                            <span class="message-time">12:28 AM</span>
-                                            <div class="clearfix"></div>
-                                            <span class="message-content">Lorem ipsum dolor sit amet, consectetur
-                                                adipiscing</span>
-                                        </div>
-                                    </div>
-                                </a>
-                            </li>
-                            <li>
-                                <a href="chat.html">
-                                    <div class="list-item">
-                                        <div class="list-left">
-                                            <span class="avatar">D</span>
-                                        </div>
-                                        <div class="list-body">
-                                            <span class="message-author"> Domenic Houston </span>
-                                            <span class="message-time">12:28 AM</span>
-                                            <div class="clearfix"></div>
-                                            <span class="message-content">Lorem ipsum dolor sit amet, consectetur
-                                                adipiscing</span>
-                                        </div>
-                                    </div>
-                                </a>
-                            </li>
-                            <li>
-                                <a href="chat.html">
-                                    <div class="list-item">
-                                        <div class="list-left">
-                                            <span class="avatar">B</span>
-                                        </div>
-                                        <div class="list-body">
-                                            <span class="message-author"> Buster Wigton </span>
-                                            <span class="message-time">12:28 AM</span>
-                                            <div class="clearfix"></div>
-                                            <span class="message-content">Lorem ipsum dolor sit amet, consectetur
-                                                adipiscing</span>
-                                        </div>
-                                    </div>
-                                </a>
-                            </li>
-                            <li>
-                                <a href="chat.html">
-                                    <div class="list-item">
-                                        <div class="list-left">
-                                            <span class="avatar">R</span>
-                                        </div>
-                                        <div class="list-body">
-                                            <span class="message-author"> Rolland Webber </span>
-                                            <span class="message-time">12:28 AM</span>
-                                            <div class="clearfix"></div>
-                                            <span class="message-content">Lorem ipsum dolor sit amet, consectetur
-                                                adipiscing</span>
-                                        </div>
-                                    </div>
-                                </a>
-                            </li>
-                            <li>
-                                <a href="chat.html">
-                                    <div class="list-item">
-                                        <div class="list-left">
-                                            <span class="avatar">C</span>
-                                        </div>
-                                        <div class="list-body">
-                                            <span class="message-author"> Claire Mapes </span>
-                                            <span class="message-time">12:28 AM</span>
-                                            <div class="clearfix"></div>
-                                            <span class="message-content">Lorem ipsum dolor sit amet, consectetur
-                                                adipiscing</span>
-                                        </div>
-                                    </div>
-                                </a>
-                            </li>
-                            <li>
-                                <a href="chat.html">
-                                    <div class="list-item">
-                                        <div class="list-left">
-                                            <span class="avatar">M</span>
-                                        </div>
-                                        <div class="list-body">
-                                            <span class="message-author">Melita Faucher</span>
-                                            <span class="message-time">12:28 AM</span>
-                                            <div class="clearfix"></div>
-                                            <span class="message-content">Lorem ipsum dolor sit amet, consectetur
-                                                adipiscing</span>
-                                        </div>
-                                    </div>
-                                </a>
-                            </li>
-                            <li>
-                                <a href="chat.html">
-                                    <div class="list-item">
-                                        <div class="list-left">
-                                            <span class="avatar">J</span>
-                                        </div>
-                                        <div class="list-body">
-                                            <span class="message-author">Jeffery Lalor</span>
-                                            <span class="message-time">12:28 AM</span>
-                                            <div class="clearfix"></div>
-                                            <span class="message-content">Lorem ipsum dolor sit amet, consectetur
-                                                adipiscing</span>
-                                        </div>
-                                    </div>
-                                </a>
-                            </li>
-                            <li>
-                                <a href="chat.html">
-                                    <div class="list-item">
-                                        <div class="list-left">
-                                            <span class="avatar">L</span>
-                                        </div>
-                                        <div class="list-body">
-                                            <span class="message-author">Loren Gatlin</span>
-                                            <span class="message-time">12:28 AM</span>
-                                            <div class="clearfix"></div>
-                                            <span class="message-content">Lorem ipsum dolor sit amet, consectetur
-                                                adipiscing</span>
-                                        </div>
-                                    </div>
-                                </a>
-                            </li>
-                            <li>
-                                <a href="chat.html">
-                                    <div class="list-item">
-                                        <div class="list-left">
-                                            <span class="avatar">T</span>
-                                        </div>
-                                        <div class="list-body">
-                                            <span class="message-author">Tarah Shropshire</span>
-                                            <span class="message-time">12:28 AM</span>
-                                            <div class="clearfix"></div>
-                                            <span class="message-content">Lorem ipsum dolor sit amet, consectetur
-                                                adipiscing</span>
-                                        </div>
-                                    </div>
-                                </a>
-                            </li>
+                                </li>
+                            @endforeach
                         </ul>
+                    @else
+                        <div class="empty-state">
+                            <div class="empty-icon"><i class="fa fa-graduation-cap"></i></div>
+                            <h5>No education records yet</h5>
+                            <p>Add your education history to complete your profile.</p>
+                            <a href="/add-edu-exp" class="btn btn-primary btn-rounded mt-2"><i class="fa fa-plus"></i> Add education</a>
+                        </div>
+                    @endif
+                </div>
+
+                {{-- Experience --}}
+                <div class="tab-pane fade" id="tab-experience">
+                    <div class="profile-section-head">
+                        <h3 class="profile-section-title mb-0">Experience</h3>
+                        <a href="/add-work-exp" class="btn btn-sm btn-primary btn-rounded"><i class="fa fa-plus"></i> Add experience</a>
                     </div>
-                    <div class="topnav-dropdown-footer">
-                        <a href="chat.html">See all messages</a>
-                    </div>
+                    @if ($Work && count($Work))
+                        <ul class="profile-timeline">
+                            @foreach ($Work as $work)
+                                <li class="profile-timeline-item">
+                                    <span class="profile-timeline-dot"></span>
+                                    <div class="profile-timeline-body">
+                                        <div class="profile-timeline-title">{{ $work->field ?: 'Role' }}</div>
+                                        <div class="profile-timeline-sub">{{ $work->inst ?: '—' }}</div>
+                                        <div class="profile-timeline-time tnum">{{ $work->started ?: '—' }} &ndash; Present</div>
+                                    </div>
+                                </li>
+                            @endforeach
+                        </ul>
+                    @else
+                        <div class="empty-state">
+                            <div class="empty-icon"><i class="fa fa-briefcase"></i></div>
+                            <h5>No experience records yet</h5>
+                            <p>Add your work experience to complete your profile.</p>
+                            <a href="/add-work-exp" class="btn btn-primary btn-rounded mt-2"><i class="fa fa-plus"></i> Add experience</a>
+                        </div>
+                    @endif
                 </div>
             </div>
         </div>
     </div>
-    <div class="sidebar-overlay" data-reff=""></div>
-    <script src="assets/js/jquery-3.2.1.min.js"></script>
-    <script src="assets/js/popper.min.js"></script>
-    <script src="assets/js/bootstrap.min.js"></script>
-    <script src="assets/js/jquery.slimscroll.js"></script>
-    <script src="assets/js/app.js"></script>
-</body>
+@endsection
 
-
-<!-- profile23:03-->
-
-</html>
+@push('styles')
+@include('common.profile-styles')
+@endpush

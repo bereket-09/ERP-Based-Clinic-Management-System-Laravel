@@ -85,13 +85,19 @@ class HomeController extends Controller
  
         $role=Auth::user();
 
+        // Lab results returned and awaiting THIS doctor's further assessment.
+        $labReady=Visit::query()
+            ->where('statues','Lab Result Completed')
+            ->where('doc_id',Auth::id())
+            ->count();
+
         if(Auth::id()){
 
             if(Auth::user()->role=='0'){
             return  view('reception.home',compact('user','doctor','patient','visit','queued','pending','Completed','Item','DrugOrder','medicin','LabQueue','LabCompleted','LabPending','expire'));
         }
         else if(Auth::user()->role=='1'){
-            return view('doctor.home',compact('user','doctor','patient','visit','queued','pending','Completed','Item','DrugOrder','medicin','LabQueue','LabCompleted','LabPending','expire'));
+            return view('doctor.home',compact('user','doctor','patient','visit','queued','pending','Completed','Item','DrugOrder','medicin','LabQueue','LabCompleted','LabPending','expire','labReady'));
         }
         else if(Auth::user()->role=='2'){
             return view('lab.home',compact('user','doctor','patient','visit','queued','pending','Completed','Item','DrugOrder','medicin','LabQueue','LabCompleted','LabPending','expire'));

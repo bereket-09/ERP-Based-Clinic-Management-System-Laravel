@@ -1,8 +1,7 @@
-<div class="sidebar-overlay" data-reff=""></div>
-<script src="assets/js/jquery-3.2.1.min.js"></script>
-<script src="assets/js/popper.min.js"></script>
-<script src="assets/js/bootstrap.min.js"></script>
-<script src="assets/js/jquery.slimscroll.js"></script>
-<script src="assets/js/Chart.bundle.js"></script>
-<script src="assets/js/chart.js"></script>
-<script src="assets/js/app.js"></script>
+{{--
+    Pharmacy page-specific scripts.
+
+    Core libraries (jQuery, Popper, Bootstrap, slimscroll, Chart.js, app.js)
+    are loaded once by layouts/portal.blade.php — do NOT re-declare them here.
+    Add only pharmacy-page-specific JS below.
+--}}

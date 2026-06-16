@@ -5,6 +5,10 @@
         </x-slot>
 
         <div x-data="{ recovery: false }">
+            <div class="mb-6 text-center">
+                <h2 class="text-2xl font-bold" style="color:#0e6e5c;">Two-factor authentication</h2>
+            </div>
+
             <div class="mb-4 text-sm text-gray-600" x-show="! recovery">
                 {{ __('Please confirm access to your account by entering the authentication code provided by your authenticator application.') }}
             </div>
@@ -47,7 +51,10 @@
                         {{ __('Use an authentication code') }}
                     </button>
 
-                    <x-jet-button class="ml-4">
+                    <x-jet-button class="ml-4"
+                        style="background-color:#16a085; border:0;"
+                        onmouseover="this.style.backgroundColor='#138d75'"
+                        onmouseout="this.style.backgroundColor='#16a085'">
                         {{ __('Log in') }}
                     </x-jet-button>
                 </div>

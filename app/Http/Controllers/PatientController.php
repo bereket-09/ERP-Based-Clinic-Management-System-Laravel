@@ -55,7 +55,40 @@ foreach($patient as $patients){
 
 
              if(!$patient->isEmpty()){
-                return view("reception.actions.add_new_visit",compact('visits','patient','doctors','id'));
+                // Per-visit ordered lab tests / medications so reception can review what was ordered before.
+                $test=Labtest::all();
+                $drugname=Medcine_Name::all();
+                $historyLabs=[];
+                $historyDrugs=[];
+                if(!empty($visits) && count($visits)){
+                    foreach($visits as $v){
+                        $lo=LabOrder::where('v_id',$v->id)->first();
+                        if($lo){
+                            $rows=[];
+                            foreach(LabResult::where('o_id',$lo->id)->get() as $r){
+                                $rows[]=[
+                                    'name'=>optional($test->firstWhere('id',$r->test_id))->name ?? 'Test',
+                                    'result'=>$r->Result_of_Test,
+                                    'status'=>$r->status,
+                                ];
+                            }
+                            if(count($rows)){ $historyLabs[$v->id]=$rows; }
+                        }
+                        $do=DrugOrder::where('v_id',$v->id)->first();
+                        if($do){
+                            $rows=[];
+                            foreach(DrugOrdered::where('o_id',$do->id)->get() as $d){
+                                $rows[]=[
+                                    'name'=>optional($drugname->firstWhere('id',$d->drug_id))->m_name ?? 'Medicine',
+                                    'qty'=>$d->qty,
+                                    'status'=>$d->status,
+                                ];
+                            }
+                            if(count($rows)){ $historyDrugs[$v->id]=$rows; }
+                        }
+                    }
+                }
+                return view("reception.actions.add_new_visit",compact('visits','patient','doctors','id','historyLabs','historyDrugs'));
              }
 
 
@@ -195,8 +228,8 @@ public function treat_patient(Request $request,$id){
 
 
 public function treat(Request $request){
-        // 
-        $Result="";$drugs="";
+        // empty collections so views can safely foreach/count even with no orders
+        $Result=collect();$drugs=collect();
     $visits=Visit::query()
     ->where('id', $request->id) 
          ->first();
@@ -228,8 +261,46 @@ if( $order){
     $drugname=Medcine_Name::all();
     // dd( $Result);
 
+    // Previous visits for this patient (for the doctor to refer to prior diagnoses).
+    $history=Visit::query()
+        ->where('p_id', $patient->id)
+        ->where('id', '!=', $visits->id)
+        ->orderByDesc('id')
+        ->get();
+    $docs=User::where('role', '1')->get()->keyBy('id');
+
+    // Per-visit ordered lab tests / medications so the doctor can review what was ordered before.
+    $historyLabs=[];
+    $historyDrugs=[];
+    foreach($history as $h){
+        $lo=LabOrder::where('v_id',$h->id)->first();
+        if($lo){
+            $rows=[];
+            foreach(LabResult::where('o_id',$lo->id)->get() as $r){
+                $rows[]=[
+                    'name'=>optional($test->firstWhere('id',$r->test_id))->name ?? 'Test',
+                    'result'=>$r->Result_of_Test,
+                    'status'=>$r->status,
+                ];
+            }
+            if(count($rows)){ $historyLabs[$h->id]=$rows; }
+        }
+        $do=DrugOrder::where('v_id',$h->id)->first();
+        if($do){
+            $rows=[];
+            foreach(DrugOrdered::where('o_id',$do->id)->get() as $d){
+                $rows[]=[
+                    'name'=>optional($drugname->firstWhere('id',$d->drug_id))->m_name ?? 'Medicine',
+                    'qty'=>$d->qty,
+                    'status'=>$d->status,
+                ];
+            }
+            if(count($rows)){ $historyDrugs[$h->id]=$rows; }
+        }
+    }
+
             //   dd($patient->id);
- return view("doctor.actions.treat_patient",compact('patient','visits','order','Result','test','DrugsOrder','drugs','drugname'));
+ return view("doctor.actions.treat_patient",compact('patient','visits','order','Result','test','DrugsOrder','drugs','drugname','history','docs','historyLabs','historyDrugs'));
 
     
 }
@@ -346,6 +417,15 @@ public function completed_visits(){
    
 
     return view("common.view_completed_visits",compact('patient','visit','doctors'));
+}
+
+// Visits whose lab results are back and awaiting the doctor's further assessment.
+public function lab_results_ready(){
+    if(!Auth::user()){
+        return redirect('login');
+    }
+
+    return view("common.lab_results_ready");
 }
 
 }

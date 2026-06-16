@@ -1,121 +1,98 @@
-@include('head');
+@extends('layouts.portal')
 
-<body>
-    <div class="main-wrapper">
-        @include('navbar');
-        @include('lab.sidebar');
-        <div class="page-wrapper">
-            <div class="content">
-                <div class="row">
+@section('title', 'Laboratory Dashboard')
 
-                    {{-- <div class="col-md-6 col-sm-6 col-lg-6 col-xl-3">
-                        <div class="dash-widget">
-                            <span class="dash-widget-bg1"><i class="fa fa-user-o" aria-hidden="true"></i></span>
-                            <div class="dash-widget-info text-right">
-                                <h3></h3>
-                                <span class="widget-title1">Users <i class="fa fa-check" aria-hidden="true"></i></span>
-                            </div>
-                        </div>
-                    </div> --}}
-
-
-                    <div class="col-md-6 col-sm-6 col-lg-6 col-xl-3">
-                        <div class="dash-widget">
-                            <span class="dash-widget-bg3"><i class="fa fa-clock-o" aria-hidden="true"></i></span>
-                            <div class="dash-widget-info text-right">
-                                <h3>{{ $LabQueue }}</h3>
-                                <span class="widget-title3">Queued Lab Orders <i class="fa fa-check"
-                                        aria-hidden="true"></i></span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-6 col-sm-6 col-lg-6 col-xl-3">
-                        <div class="dash-widget">
-                            <span class="dash-widget-bg4"><i class="fa fa-info" aria-hidden="true"></i></span>
-                            <div class="dash-widget-info text-right">
-                                <h3>{{ $LabPending }}</h3>
-                                <span class="widget-title4">Pending Lab Orders<i class="fa fa-check"></i></span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-6 col-sm-6 col-lg-6 col-xl-3">
-                        <div class="dash-widget">
-                            <span class="dash-widget-bg2"><i class="fa fa-book" aria-hidden="true"></i></span>
-                            <div class="dash-widget-info text-right">
-                                <h3>{{ $LabCompleted }}</h3>
-                                <span class="widget-title4">Completed Lab ORDERS<i class="fa fa-check"></i></span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-6 col-sm-6 col-lg-6 col-xl-3">
-                        <div class="dash-widget">
-                            <span class="dash-widget-bg2"><i class="fa fa-stethoscope"></i></span>
-                            <div class="dash-widget-info text-right">
-                                <h3>{{ $patient }}</h3>
-                                <span class="widget-title2">Total Patient <i class="fa fa-check"
-                                        aria-hidden="true"></i></span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <br><br>
-
-                {{-- Appointemetn Section --}}
-
-                {{-- <div class="row">
-                    <div class="col-12 col-md-6 col-lg-8 col-xl-8">
-                        <div class="card">
-                            <div class="card-header">
-                                <h4 class="card-title d-inline-block">Queued Patients </h4> <a href="/queued_patients"
-                                    class="btn btn-primary float-right">View all</a>
-                            </div>
-
-                        </div>
-                    </div> --}}
-
-                {{-- DOCTORS SECTION --}}
-
-                <center>
-                    <div class="col-12 col-md-2 col-lg-4 col-xl-4">
-                        <div class="card member-panel">
-
-                            <div class="card-footer text-center bg-white">
-                                <a href="/view_lab_order" class="text-muted">View Queued Orders</a>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-12 col-md-2 col-lg-4 col-xl-4">
-                        <div class="card member-panel">
-
-                            <div class="card-footer text-center bg-white">
-                                <a href="/view_pending_lab_results" class="text-muted">View Pending Orders</a>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-12 col-md-2 col-lg-4 col-xl-4">
-                        <div class="card member-panel">
-
-                            <div class="card-footer text-center bg-white">
-                                <a href="/view_completed_lab_results" class="text-muted">View Completed Orders</a>
-                            </div>
-                        </div>
-                    </div>
-                </center>
-                {{-- </div> --}}
-
-
-                {{-- Patient section --}}
-
-
-            </div>
-
+@section('content')
+    <div class="page-head">
+        <div>
+            <h4 class="page-title">Laboratory Dashboard</h4>
+            <div class="page-sub">Welcome back, {{ Auth::user()->name }}</div>
         </div>
     </div>
 
-    @include('scripts')
-</body>
+    {{-- Stat widgets (real counts) --}}
+    <div class="row">
+        <div class="col-md-6 col-lg-3">
+            <a href="/view_lab_order" class="text-decoration-none">
+                <div class="dash-widget">
+                    <span class="stat-icon is-warning"><i class="fa fa-clock-o"></i></span>
+                    <div class="dash-widget-info text-right">
+                        <h3>{{ $LabQueue }}</h3>
+                        <span class="widget-title3">Queued Orders</span>
+                    </div>
+                </div>
+            </a>
+        </div>
+        <div class="col-md-6 col-lg-3">
+            <a href="/view_pending_lab_results" class="text-decoration-none">
+                <div class="dash-widget">
+                    <span class="stat-icon is-info"><i class="fa fa-hourglass-half"></i></span>
+                    <div class="dash-widget-info text-right">
+                        <h3>{{ $LabPending }}</h3>
+                        <span class="widget-title4">Pending Results</span>
+                    </div>
+                </div>
+            </a>
+        </div>
+        <div class="col-md-6 col-lg-3">
+            <a href="/view_completed_lab_results" class="text-decoration-none">
+                <div class="dash-widget">
+                    <span class="stat-icon is-success"><i class="fa fa-check-circle"></i></span>
+                    <div class="dash-widget-info text-right">
+                        <h3>{{ $LabCompleted }}</h3>
+                        <span class="widget-title4">Completed Tests</span>
+                    </div>
+                </div>
+            </a>
+        </div>
+        <div class="col-md-6 col-lg-3">
+            <div class="dash-widget">
+                <span class="stat-icon is-primary"><i class="fa fa-wheelchair"></i></span>
+                <div class="dash-widget-info text-right">
+                    <h3>{{ $patient }}</h3>
+                    <span class="widget-title2">Total Patients</span>
+                </div>
+            </div>
+        </div>
+    </div>
 
-
-
-</html>
+    {{-- Quick actions --}}
+    <div class="row mt-2">
+        <div class="col-md-6 col-lg-3">
+            <a href="/view_lab_order" class="card member-panel text-decoration-none d-block">
+                <div class="card-body text-center">
+                    <div class="stat-icon is-warning mx-auto mb-3"><i class="fa fa-stethoscope"></i></div>
+                    <h6 class="mb-1">Ordered Tests</h6>
+                    <span class="text-muted-2">Start queued lab orders</span>
+                </div>
+            </a>
+        </div>
+        <div class="col-md-6 col-lg-3">
+            <a href="/view_pending_lab_results" class="card member-panel text-decoration-none d-block">
+                <div class="card-body text-center">
+                    <div class="stat-icon is-info mx-auto mb-3"><i class="fa fa-pencil-square-o"></i></div>
+                    <h6 class="mb-1">Pending Results</h6>
+                    <span class="text-muted-2">Edit saved results</span>
+                </div>
+            </a>
+        </div>
+        <div class="col-md-6 col-lg-3">
+            <a href="/view_completed_lab_results" class="card member-panel text-decoration-none d-block">
+                <div class="card-body text-center">
+                    <div class="stat-icon is-success mx-auto mb-3"><i class="fa fa-check"></i></div>
+                    <h6 class="mb-1">Completed Tests</h6>
+                    <span class="text-muted-2">Review finished tests</span>
+                </div>
+            </a>
+        </div>
+        <div class="col-md-6 col-lg-3">
+            <a href="/view_all_tests" class="card member-panel text-decoration-none d-block">
+                <div class="card-body text-center">
+                    <div class="stat-icon is-primary mx-auto mb-3"><i class="fa fa-flask"></i></div>
+                    <h6 class="mb-1">Test Types</h6>
+                    <span class="text-muted-2">Manage lab test catalogue</span>
+                </div>
+            </a>
+        </div>
+    </div>
+@endsection

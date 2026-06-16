@@ -237,6 +237,70 @@ public function save_results(Request $request,$id){
 
                                 }
         
+ // Append more test types to an existing lab order (doctor, before finalising).
+ public function add_tests_to_order(Request $request,$order){
+    $labOrder=LabOrder::find($order);
+    if(!$labOrder){
+        return redirect()->back();
+    }
+    $visit=Visit::find($labOrder->v_id);
+
+    // Do not allow editing once the visit is finalised.
+    if($visit && $visit->statues=='Completed'){
+        return redirect()->back();
+    }
+
+    if($request->testType){
+        foreach($request->testType as $requests){
+            $t=Labtest::query()->where('name',$requests)->first();
+            if(!$t){ continue; }
+            // Skip a test already attached to this order.
+            $exists=LabResult::query()
+                ->where('o_id',$labOrder->id)
+                ->where('test_id',$t->id)
+                ->first();
+            if($exists){ continue; }
+            $result=new LabResult;
+            $result->o_id=$labOrder->id;
+            $result->test_id=$t->id;
+            $result->status='Not started';
+            $result->save();
+        }
+    }
+
+    return redirect('/treat/'.$labOrder->v_id);
+ }
+
+ // Remove a single ordered lab test from an order (doctor, before finalising).
+ public function remove_lab_result($id){
+    $result=LabResult::find($id);
+    if(!$result){
+        return redirect()->back();
+    }
+    $labOrder=LabOrder::find($result->o_id);
+    $visit=$labOrder?Visit::find($labOrder->v_id):null;
+    if($visit && $visit->statues=='Completed'){
+        return redirect()->back();
+    }
+    $vId=$labOrder?$labOrder->v_id:null;
+    $result->delete();
+    return $vId?redirect('/treat/'.$vId):redirect()->back();
+ }
+
+ // Lab updates the lifecycle status of a single ordered test.
+ public function update_lab_result_status(Request $request,$id){
+    $result=LabResult::find($id);
+    if(!$result){
+        return redirect()->back();
+    }
+    $allowed=['Not started','In progress','Done','Skipped'];
+    if(in_array($request->status,$allowed)){
+        $result->status=$request->status;
+        $result->save();
+    }
+    return redirect('/lab_test_results/'.$result->o_id);
+ }
+
  public function view_pending_lab_results(){
       $data=LabOrder::all();
       $patient=Patient::all();

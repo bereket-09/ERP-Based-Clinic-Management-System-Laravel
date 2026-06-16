@@ -1,375 +1,171 @@
-<!DOCTYPE html>
-<html lang="en">
+@extends('layouts.portal')
 
-@if (!Auth::user())
-    @php
-        header('Location: ' . URL::to('/login'), true, 302);
-        exit();
-    @endphp
-@endif
+@section('title', 'Order Lab Test')
 
-@include('head');
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=0">
-<link rel="shortcut icon" type="image/x-icon" href="assets/img/favicon.ico">
-<title>Dire Dawa University CLinic Center</title>
-<link rel="stylesheet" type="text/css" href="assets/css/bootstrap.min.css">
-<link rel="stylesheet" type="text/css" href="assets/css/font-awesome.min.css">
-<link rel="stylesheet" type="text/css" href="assets/css/dataTables.bootstrap4.min.css">
-<link rel="stylesheet" type="text/css" href="assets/css/select2.min.css">
-<link rel="stylesheet" type="text/css" href="assets/css/bootstrap-datetimepicker.min.css">
-<link rel="stylesheet" type="text/css" href="assets/css/style.css">
-<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/v/dt/dt-1.11.5/datatables.min.css" />
-<link rel="stylesheet" type="text/css" href="assets/css/datatables.min.css" />
+@section('content')
+    <div class="row">
+        <div class="col-lg-8 offset-lg-2">
+            <div class="page-head">
+                <div>
+                    <h4 class="page-title">Order lab test
+                        <span class="text-success">#{{ $patient->id }}</span></h4>
+                    <div class="page-sub">Search and select the tests to order for this patient's visit.</div>
+                </div>
+                <a href="/treat/{{ $visits->id }}" class="btn btn-light-soft"><i class="fa fa-arrow-left"></i> Back</a>
+            </div>
 
-<base href="/public">
-
-<body>
-    <div class="main-wrapper">
-
-        @include('navbar');
-
-        @if (Auth::user()->role == '4')
-            {
-            @include('admin.sidebar')
-            }
-        @elseif (Auth::user()->role == '0')
-            {
-            @include('reception.sidebar')
-            }
-        @elseif (Auth::user()->role == '1')
-            {
-            @include('doctor.sidebar')
-            }
-        @elseif (Auth::user()->role == '2')
-            {
-            @include('lab.sidebar')
-            }
-        @elseif (Auth::user()->role == '3')
-            {
-            @include('pharmacy.sidebar')
-            }
-        @endif
-
-
-        <div class="page-wrapper">
-            <div class="content">
-                <div class="row">
-
-                    <div class="col-lg-8 offset-lg-2">
-                        <center>
-                            <h4 class="page-title"><b>Add Lab order for Patient with ID number </b><span
-                                    class="text-success">'
-                                    {{ $patient->id, $visits->id }} '</span> </h4>
-
-                        </center>
-
-                        <hr>
-                        <br>
-
-                        <h1 for="">Name: &nbsp&nbsp<b>{{ $patient->name }}</b></h1>
-                        <h1 for="">MRN: &nbsp&nbsp<b>{{ $patient->mrn }}</b> </h1>
-                        <h1 for="">ID: &nbsp&nbsp<b>{{ $patient->stud_id }}</b> </h1>
-                        <h1 for="">Departement: &nbsp&nbsp<b>{{ $patient->dept }}</b></h1>
-                        <h1 for="">Year:&nbsp &nbsp<b>{{ $patient->year }}</b></h1>
-                        <br>
-                        <hr><br>
-                        <form action="/order_lab_test/{{ $visits->id }}" method="get" enctype="multipart/form-data">
-                            @csrf
-
-
-                            <div class="row">
-
-                                @foreach ($test as $tests)
-                                    <div class="col-sm-12">
-                                        <div class="form-group">
-                                            <h1 class="page-title"><b>{{ $tests->name }}</b> &nbsp;&nbsp;&nbsp;
-                                                <input type="checkbox" name="testType[]" value="{{ $tests->name }}">
-
-                                        </div>
-                                    </div>
-
-                                    <hr>
-                                @endforeach
-
-
-
-                                <div class="col-sm-12">
-                                    <hr><br>
-                                    <center>
-                                        <input type="submit" class="btn btn-primary submit-btn"
-                                            style="background: #16a085;" value="Order Lab Test">
-                                    </center>
-                                </div>
-                        </form>
+            {{-- Patient information --}}
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="card-title mb-0"><i class="fa fa-user-o"></i> Patient information</h4>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6"><p class="mb-2"><strong>Name:</strong> {{ $patient->name }}</p></div>
+                        <div class="col-md-6"><p class="mb-2"><strong>MRN:</strong> {{ $patient->mrn }}</p></div>
+                        <div class="col-md-6"><p class="mb-2"><strong>ID:</strong> {{ $patient->stud_id }}</p></div>
+                        <div class="col-md-6"><p class="mb-2"><strong>Departement:</strong> {{ $patient->dept }}</p></div>
+                        <div class="col-md-6"><p class="mb-0"><strong>Year:</strong> {{ $patient->year }}</p></div>
                     </div>
                 </div>
             </div>
-        </div>
 
-        </tbody>
-        </table>
-    </div>
-    </div>
-    </div>
-    </div>
-    <div class="notification-box">
-        <div class="msg-sidebar notifications msg-noti">
-            <div class="topnav-dropdown-header">
-                <span>Messages</span>
-            </div>
-            <div class="drop-scroll msg-list-scroll" id="msg_list">
-                <ul class="list-box">
-                    <li>
-                        <a href="chat.html">
-                            <div class="list-item">
-                                <div class="list-left">
-                                    <span class="avatar">R</span>
-                                </div>
-                                <div class="list-body">
-                                    <span class="message-author">Richard Miles </span>
-                                    <span class="message-time">12:28 AM</span>
-                                    <div class="clearfix"></div>
-                                    <span class="message-content">Lorem ipsum dolor sit amet, consectetur
-                                        adipiscing</span>
-                                </div>
-                            </div>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="chat.html">
-                            <div class="list-item new-message">
-                                <div class="list-left">
-                                    <span class="avatar">J</span>
-                                </div>
-                                <div class="list-body">
-                                    <span class="message-author">John Doe</span>
-                                    <span class="message-time">1 Aug</span>
-                                    <div class="clearfix"></div>
-                                    <span class="message-content">Lorem ipsum dolor sit amet, consectetur
-                                        adipiscing</span>
-                                </div>
-                            </div>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="chat.html">
-                            <div class="list-item">
-                                <div class="list-left">
-                                    <span class="avatar">T</span>
-                                </div>
-                                <div class="list-body">
-                                    <span class="message-author"> Tarah Shropshire </span>
-                                    <span class="message-time">12:28 AM</span>
-                                    <div class="clearfix"></div>
-                                    <span class="message-content">Lorem ipsum dolor sit amet, consectetur
-                                        adipiscing</span>
-                                </div>
-                            </div>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="chat.html">
-                            <div class="list-item">
-                                <div class="list-left">
-                                    <span class="avatar">M</span>
-                                </div>
-                                <div class="list-body">
-                                    <span class="message-author">Mike Litorus</span>
-                                    <span class="message-time">12:28 AM</span>
-                                    <div class="clearfix"></div>
-                                    <span class="message-content">Lorem ipsum dolor sit amet, consectetur
-                                        adipiscing</span>
-                                </div>
-                            </div>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="chat.html">
-                            <div class="list-item">
-                                <div class="list-left">
-                                    <span class="avatar">C</span>
-                                </div>
-                                <div class="list-body">
-                                    <span class="message-author"> Catherine Manseau </span>
-                                    <span class="message-time">12:28 AM</span>
-                                    <div class="clearfix"></div>
-                                    <span class="message-content">Lorem ipsum dolor sit amet, consectetur
-                                        adipiscing</span>
-                                </div>
-                            </div>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="chat.html">
-                            <div class="list-item">
-                                <div class="list-left">
-                                    <span class="avatar">D</span>
-                                </div>
-                                <div class="list-body">
-                                    <span class="message-author"> Domenic Houston </span>
-                                    <span class="message-time">12:28 AM</span>
-                                    <div class="clearfix"></div>
-                                    <span class="message-content">Lorem ipsum dolor sit amet, consectetur
-                                        adipiscing</span>
-                                </div>
-                            </div>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="chat.html">
-                            <div class="list-item">
-                                <div class="list-left">
-                                    <span class="avatar">B</span>
-                                </div>
-                                <div class="list-body">
-                                    <span class="message-author"> Buster Wigton </span>
-                                    <span class="message-time">12:28 AM</span>
-                                    <div class="clearfix"></div>
-                                    <span class="message-content">Lorem ipsum dolor sit amet, consectetur
-                                        adipiscing</span>
-                                </div>
-                            </div>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="chat.html">
-                            <div class="list-item">
-                                <div class="list-left">
-                                    <span class="avatar">R</span>
-                                </div>
-                                <div class="list-body">
-                                    <span class="message-author"> Rolland Webber </span>
-                                    <span class="message-time">12:28 AM</span>
-                                    <div class="clearfix"></div>
-                                    <span class="message-content">Lorem ipsum dolor sit amet, consectetur
-                                        adipiscing</span>
-                                </div>
-                            </div>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="chat.html">
-                            <div class="list-item">
-                                <div class="list-left">
-                                    <span class="avatar">C</span>
-                                </div>
-                                <div class="list-body">
-                                    <span class="message-author"> Claire Mapes </span>
-                                    <span class="message-time">12:28 AM</span>
-                                    <div class="clearfix"></div>
-                                    <span class="message-content">Lorem ipsum dolor sit amet, consectetur
-                                        adipiscing</span>
-                                </div>
-                            </div>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="chat.html">
-                            <div class="list-item">
-                                <div class="list-left">
-                                    <span class="avatar">M</span>
-                                </div>
-                                <div class="list-body">
-                                    <span class="message-author">Melita Faucher</span>
-                                    <span class="message-time">12:28 AM</span>
-                                    <div class="clearfix"></div>
-                                    <span class="message-content">Lorem ipsum dolor sit amet, consectetur
-                                        adipiscing</span>
-                                </div>
-                            </div>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="chat.html">
-                            <div class="list-item">
-                                <div class="list-left">
-                                    <span class="avatar">J</span>
-                                </div>
-                                <div class="list-body">
-                                    <span class="message-author">Jeffery Lalor</span>
-                                    <span class="message-time">12:28 AM</span>
-                                    <div class="clearfix"></div>
-                                    <span class="message-content">Lorem ipsum dolor sit amet, consectetur
-                                        adipiscing</span>
-                                </div>
-                            </div>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="chat.html">
-                            <div class="list-item">
-                                <div class="list-left">
-                                    <span class="avatar">L</span>
-                                </div>
-                                <div class="list-body">
-                                    <span class="message-author">Loren Gatlin</span>
-                                    <span class="message-time">12:28 AM</span>
-                                    <div class="clearfix"></div>
-                                    <span class="message-content">Lorem ipsum dolor sit amet, consectetur
-                                        adipiscing</span>
-                                </div>
-                            </div>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="chat.html">
-                            <div class="list-item">
-                                <div class="list-left">
-                                    <span class="avatar">T</span>
-                                </div>
-                                <div class="list-body">
-                                    <span class="message-author">Tarah Shropshire</span>
-                                    <span class="message-time">12:28 AM</span>
-                                    <div class="clearfix"></div>
-                                    <span class="message-content">Lorem ipsum dolor sit amet, consectetur
-                                        adipiscing</span>
-                                </div>
-                            </div>
-                        </a>
-                    </li>
-                </ul>
-            </div>
-            <div class="topnav-dropdown-footer">
-                <a href="chat.html">See all messages</a>
-            </div>
-        </div>
-    </div>
-    </div>
-    <div id="delete_patient" class="modal fade delete-modal" role="dialog">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-body text-center">
-                    <img src="assets/img/sent.png" alt="" width="50" height="46">
-                    <h3>Are you sure want to delete this Patient?</h3>
-                    <div class="m-t-20"> <a href="#" class="btn btn-white" data-dismiss="modal">Close</a>
-                        <button type="submit" class="btn btn-danger">Delete</button>
+            <form action="/order_lab_test/{{ $visits->id }}" method="get" enctype="multipart/form-data">
+                @csrf
+                <div class="card">
+                    <div class="card-header d-flex align-items-center justify-content-between">
+                        <h4 class="card-title mb-0"><i class="fa fa-flask"></i> Available lab tests</h4>
+                        @if (count($test))
+                            <span class="pick-count"><strong id="testCount">0</strong> selected</span>
+                        @endif
                     </div>
+                    <div class="card-body">
+                        @if (count($test))
+                            <div class="pick-toolbar">
+                                <div class="search-box">
+                                    <i class="fa fa-search"></i>
+                                    <input type="text" class="form-control" id="testSearch"
+                                        placeholder="Search lab tests…" autocomplete="off">
+                                </div>
+                                <div class="pick-actions">
+                                    <button type="button" class="btn btn-light-soft btn-sm" id="testSelectAll"><i class="fa fa-check-square-o"></i> Select all</button>
+                                    <button type="button" class="btn btn-light-soft btn-sm" id="testClear"><i class="fa fa-eraser"></i> Clear</button>
+                                </div>
+                            </div>
+                        @endif
+
+                        <div id="testList" class="pick-list">
+                            @forelse ($test as $tests)
+                                <label class="pick-item" data-name="{{ strtolower($tests->name) }}">
+                                    <input type="checkbox" class="pick-check" name="testType[]" value="{{ $tests->name }}">
+                                    <span class="pick-box"><i class="fa fa-check"></i></span>
+                                    <span class="pick-label">{{ $tests->name }}</span>
+                                </label>
+                            @empty
+                                <div class="empty-state">
+                                    <div class="empty-icon"><i class="fa fa-flask"></i></div>
+                                    <h5>No lab tests available</h5>
+                                    <p>There are no lab tests configured to order.</p>
+                                </div>
+                            @endforelse
+                            <div class="pick-nomatch" id="testNoMatch" style="display:none">
+                                <i class="fa fa-search"></i> No tests match your search.
+                            </div>
+                        </div>
+                    </div>
+                    @if (count($test))
+                        <div class="card-footer text-center">
+                            <input type="submit" class="btn btn-primary" value="Order Lab Test">
+                        </div>
+                    @endif
                 </div>
-            </div>
+            </form>
         </div>
-
     </div>
-    </div>
-    <div class="sidebar-overlay" data-reff=""></div>
-    <script src="assets/js/jquery-3.2.1.min.js"></script>
-    <script src="assets/js/popper.min.js"></script>
-    <script src="assets/js/bootstrap.min.js"></script>
-    <script src="assets/js/jquery.slimscroll.js"></script>
-    <script src="assets/js/select2.min.js"></script>
-    <script src="assets/js/jquery.dataTables.min.js"></script>
-    <script src="assets/js/dataTables.bootstrap4.min.js"></script>
-    <script src="assets/js/moment.min.js"></script>
-    <script src="assets/js/bootstrap-datetimepicker.min.js"></script>
-    <script src="assets/js/app.js"></script>
-</body>
 
+    @push('styles')
+    <style>
+        .pick-toolbar { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: 14px; }
+        .pick-toolbar .search-box { position: relative; flex: 1 1 240px; }
+        .pick-toolbar .search-box i { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--c-ink-muted); }
+        .pick-toolbar .search-box input { padding-left: 40px; }
+        .pick-actions { display: flex; gap: 8px; align-items: center; }
+        .pick-count { font-size: 12.5px; font-weight: 700; color: var(--c-primary-700); background: var(--c-primary-50); padding: 4px 12px; border-radius: 999px; }
 
-<!-- patients23:19-->
+        .pick-list { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+        @media (max-width: 767px) { .pick-list { grid-template-columns: 1fr; } }
+        .pick-item {
+            display: flex; align-items: center; gap: 12px; cursor: pointer; margin: 0;
+            border: 1.5px solid var(--c-border); border-radius: var(--radius-sm);
+            padding: 11px 14px; transition: border-color var(--t-fast), background var(--t-fast);
+        }
+        .pick-item:hover { border-color: var(--c-primary-300); background: var(--c-primary-50); }
+        .pick-item .pick-check { position: absolute; opacity: 0; pointer-events: none; }
+        .pick-item .pick-box {
+            width: 20px; height: 20px; min-width: 20px; border-radius: 6px;
+            border: 2px solid var(--c-border); display: grid; place-items: center;
+            color: #fff; transition: background var(--t-fast), border-color var(--t-fast);
+        }
+        .pick-item .pick-box i { font-size: 11px; opacity: 0; }
+        .pick-item .pick-label { font-weight: 600; color: var(--c-ink); font-size: 14px; }
+        .pick-item:has(.pick-check:checked),
+        .pick-item.is-checked {
+            border-color: var(--c-primary); background: var(--c-primary-50);
+        }
+        .pick-item:has(.pick-check:checked) .pick-box,
+        .pick-item.is-checked .pick-box { background: var(--c-primary); border-color: var(--c-primary); }
+        .pick-item:has(.pick-check:checked) .pick-box i,
+        .pick-item.is-checked .pick-box i { opacity: 1; }
+        .pick-nomatch { grid-column: 1 / -1; text-align: center; color: var(--c-ink-muted); padding: 26px; font-weight: 600; }
+        .pick-nomatch i { color: var(--c-primary-300); margin-right: 6px; }
+    </style>
+    @endpush
 
-</html>
-<script type="text/javascript">
-    $(document).ready(function() {
-        $('#myTable').DataTable();
-    });
-</script>
+    @push('scripts')
+    <script>
+        (function () {
+            var search = document.getElementById('testSearch');
+            var list = document.getElementById('testList');
+            if (!list) { return; }
+            var items = Array.prototype.slice.call(list.querySelectorAll('.pick-item'));
+            var noMatch = document.getElementById('testNoMatch');
+            var countEl = document.getElementById('testCount');
+
+            function updateCount() {
+                var n = items.filter(function (it) { return it.querySelector('.pick-check').checked; }).length;
+                if (countEl) { countEl.textContent = n; }
+                items.forEach(function (it) { it.classList.toggle('is-checked', it.querySelector('.pick-check').checked); });
+            }
+            function filter() {
+                var q = (search.value || '').trim().toLowerCase();
+                var shown = 0;
+                items.forEach(function (it) {
+                    var match = it.getAttribute('data-name').indexOf(q) !== -1;
+                    it.style.display = match ? '' : 'none';
+                    if (match) { shown++; }
+                });
+                if (noMatch) { noMatch.style.display = shown ? 'none' : 'block'; }
+            }
+
+            if (search) { search.addEventListener('input', filter); }
+            list.addEventListener('change', updateCount);
+
+            var selectAll = document.getElementById('testSelectAll');
+            var clear = document.getElementById('testClear');
+            if (selectAll) {
+                selectAll.addEventListener('click', function () {
+                    items.forEach(function (it) { if (it.style.display !== 'none') { it.querySelector('.pick-check').checked = true; } });
+                    updateCount();
+                });
+            }
+            if (clear) {
+                clear.addEventListener('click', function () {
+                    items.forEach(function (it) { it.querySelector('.pick-check').checked = false; });
+                    updateCount();
+                });
+            }
+            updateCount();
+        })();
+    </script>
+    @endpush
+@endsection

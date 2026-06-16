@@ -1,141 +1,187 @@
-{{-- @include('head'); --}}
 <div class="header">
     <div class="header-left">
         <a href="/home" class="logo">
-            <img src="assets/img/logo.png" width="35" height="35" alt=""> <span>Dire Dawa Clinic
-                center</span>
+            <img src="assets/img/logo.png" width="35" height="35" alt="DDU Clinic">
+            <span>Dire Dawa Clinic Center</span>
         </a>
     </div>
+
     <a id="toggle_btn" href="javascript:void(0);"><i class="fa fa-bars"></i></a>
     <a id="mobile_btn" class="mobile_btn float-left" href="#sidebar"><i class="fa fa-bars"></i></a>
 
-    {{-- <div class="nav-item header-left d-none d-sm-block"> --}}
-    <ul class="nav user-menu float-right">
+    @auth
+        @php
+            $__user = Auth::user();
+            $__roleLabels = [
+                '0' => 'Reception',
+                '1' => 'Doctor',
+                '2' => 'Labratorist',
+                '3' => 'Pharmacist',
+                '4' => 'Manager',
+            ];
+            $__roleIcons = [
+                '0' => 'fa-headphones',
+                '1' => 'fa-user-md',
+                '2' => 'fa-flask',
+                '3' => 'fa-medkit',
+                '4' => 'fa-shield',
+            ];
+            $__role = (string) ($__user->role ?? '');
+            $__roleLabel = $__roleLabels[$__role] ?? 'Staff';
+            $__roleIcon = $__roleIcons[$__role] ?? 'fa-user';
+            $__first = strtok(trim($__user->name ?? 'there'), ' ');
+            $__hour = (int) now()->format('G');
+            $__hello = $__hour < 12 ? 'Good morning' : ($__hour < 17 ? 'Good afternoon' : 'Good evening');
+            $__avatar = $__user->profile_photo_path ? '/storage/' . $__user->profile_photo_path : '/images/avatar.png';
 
-        <li class="">
-            @if (Auth::user()->role == '0')
-                <a href="/home">You are Logged in as A Reception</a>
-            @elseif (Auth::user()->role == '1')
-                <a href="/home">You are Logged in as A DOCTOR</a>
-            @elseif (Auth::user()->role == '2')
-                <a href="/home">You are Logged in as A Labratorist</a>
-            @elseif (Auth::user()->role == '3')
-                <a href="/home"> You are Logged in as A Pharmacist</a>
-            @elseif (Auth::user()->role == '4')
-                <a href="/home">You are Logged in as A Manager</a>
-            @endif
+            // Build role-aware notification list from the shared $navCounts.
+            $__c = $navCounts ?? [];
+            $__notes = [];
+            if ($__role === '1') {
+                if (($__c['labReady'] ?? 0) > 0) $__notes[] = ['t' => $__c['labReady'].' lab result'.($__c['labReady']>1?'s':'').' ready for review', 'u' => '/lab_results_ready', 'i' => 'fa-flask', 'c' => 'is-primary'];
+                if (($__c['queued'] ?? 0) > 0)   $__notes[] = ['t' => $__c['queued'].' patient'.($__c['queued']>1?'s':'').' waiting in queue', 'u' => '/queued_patients', 'i' => 'fa-stethoscope', 'c' => 'is-warning'];
+            } elseif ($__role === '0') {
+                if (($__c['queued'] ?? 0) > 0) $__notes[] = ['t' => $__c['queued'].' patient'.($__c['queued']>1?'s':'').' in the queue', 'u' => '/queued_patients', 'i' => 'fa-stethoscope', 'c' => 'is-warning'];
+            } elseif ($__role === '2') {
+                if (($__c['labQueue'] ?? 0) > 0)   $__notes[] = ['t' => $__c['labQueue'].' new lab order'.($__c['labQueue']>1?'s':''), 'u' => '/view_lab_order', 'i' => 'fa-flask', 'c' => 'is-primary'];
+                if (($__c['labPending'] ?? 0) > 0) $__notes[] = ['t' => $__c['labPending'].' result'.($__c['labPending']>1?'s':'').' in progress', 'u' => '/view_pending_lab_results', 'i' => 'fa-hourglass-half', 'c' => 'is-info'];
+            } elseif ($__role === '3') {
+                if (($__c['drugNew'] ?? 0) > 0)     $__notes[] = ['t' => $__c['drugNew'].' new medication order'.($__c['drugNew']>1?'s':''), 'u' => '/view_orderd_drugs', 'i' => 'fa-medkit', 'c' => 'is-primary'];
+                if (($__c['drugPending'] ?? 0) > 0) $__notes[] = ['t' => $__c['drugPending'].' order'.($__c['drugPending']>1?'s':'').' in progress', 'u' => '/view_orderd_drugs', 'i' => 'fa-hourglass-half', 'c' => 'is-info'];
+            } elseif ($__role === '4') {
+                if (($__c['leaves'] ?? 0) > 0) $__notes[] = ['t' => $__c['leaves'].' pending leave request'.($__c['leaves']>1?'s':''), 'u' => '/view-leave-request', 'i' => 'fa-plane', 'c' => 'is-info'];
+            }
+            $__noteCount = $__c['total'] ?? 0;
+        @endphp
 
-        </li>
-
-        {{-- </div> --}}
-        {{-- <li class="nav-item dropdown d-none d-sm-block">
-        <a href="#" class="dropdown-toggle nav-link" data-toggle="dropdown"><i class="fa fa-bell-o"></i> <span
-                class="badge badge-pill bg-danger float-right">3</span></a>
-        <div class="dropdown-menu notifications">
-            <div class="topnav-dropdown-header">
-                <span>Notifications</span>
-            </div>
-            <div class="drop-scroll">
-                <ul class="notification-list">
-                    <li class="notification-message">
-                        <a href="activities.html">
-                            <div class="media">
-                                <span class="avatar">
-                                    <img alt="John Doe" src="assets/img/user.jpg" class="img-fluid">
-                                </span>
-                                <div class="media-body">
-                                    <p class="noti-details"><span class="noti-title">John Doe</span> added new
-                                        task <span class="noti-title">Patient appointment booking</span></p>
-                                    <p class="noti-time"><span class="notification-time">4 mins ago</span></p>
-                                </div>
-                            </div>
-                        </a>
-                    </li>
-                    <li class="notification-message">
-                        <a href="activities.html">
-                            <div class="media">
-                                <span class="avatar">V</span>
-                                <div class="media-body">
-                                    <p class="noti-details"><span class="noti-title">Tarah Shropshire</span>
-                                        changed the task name <span class="noti-title">Appointment booking with
-                                            payment gateway</span></p>
-                                    <p class="noti-time"><span class="notification-time">6 mins ago</span></p>
-                                </div>
-                            </div>
-                        </a>
-                    </li>
-                    <li class="notification-message">
-                        <a href="activities.html">
-                            <div class="media">
-                                <span class="avatar">L</span>
-                                <div class="media-body">
-                                    <p class="noti-details"><span class="noti-title">Misty Tison</span> added
-                                        <span class="noti-title">Domenic Houston</span> and <span
-                                            class="noti-title">Claire Mapes</span> to project <span
-                                            class="noti-title">Doctor available module</span>
-                                    </p>
-                                    <p class="noti-time"><span class="notification-time">8 mins ago</span></p>
-                                </div>
-                            </div>
-                        </a>
-                    </li>
-                    <li class="notification-message">
-                        <a href="activities.html">
-                            <div class="media">
-                                <span class="avatar">G</span>
-                                <div class="media-body">
-                                    <p class="noti-details"><span class="noti-title">Rolland Webber</span>
-                                        completed task <span class="noti-title">Patient and Doctor video
-                                            conferencing</span></p>
-                                    <p class="noti-time"><span class="notification-time">12 mins ago</span></p>
-                                </div>
-                            </div>
-                        </a>
-                    </li>
-                    <li class="notification-message">
-                        <a href="activities.html">
-                            <div class="media">
-                                <span class="avatar">V</span>
-                                <div class="media-body">
-                                    <p class="noti-details"><span class="noti-title">Bernardo Galaviz</span>
-                                        added new task <span class="noti-title">Private chat module</span></p>
-                                    <p class="noti-time"><span class="notification-time">2 days ago</span></p>
-                                </div>
-                            </div>
-                        </a>
-                    </li>
-                </ul>
-            </div>
-            <div class="topnav-dropdown-footer">
-                <a href="activities.html">View all Notifications</a>
-            </div>
+        {{-- Center: greeting + live date/clock --}}
+        <div class="hdr-context d-none d-lg-flex">
+            <span class="hdr-hello">{{ $__hello }}, {{ $__first }}</span>
+            <span class="hdr-dot"></span>
+            <span class="hdr-when">
+                <i class="fa fa-calendar-o"></i>
+                <span id="hdrDate">{{ now()->format('D, d M Y') }}</span>
+                <span class="hdr-time" id="hdrClock">{{ now()->format('g:i A') }}</span>
+            </span>
         </div>
-    </li> --}}
-        {{-- <li class="nav-item dropdown d-none d-sm-block">
-        <a href="javascript:void(0);" id="open_msg_box" class="hasnotifications nav-link"><i
-                class="fa fa-comment-o"></i>
-            <span class="badge badge-pill bg-danger float-right">8</span></a>
-    </li> --}}
-        <li class="nav-item dropdown has-arrow">
-            <x-app-layout>
 
-            </x-app-layout>
-
-
-        </li>
-    </ul>
-    <div class="dropdown mobile-user-menu float-right">
-
-        <a href="#" class="dropdown-toggle" data-toggle="dropdown" aria-expanded="false"><i
-                class="fa fa-ellipsis-v"></i></a>
-        <div class="dropdown-menu dropdown-menu-right">
-            {{-- <li class="nav-item dropdown has-arrow"> --}}
-
-            <x-app-layout>
-
-            </x-app-layout>
-
+        <ul class="nav user-menu float-right">
+            {{-- Notifications bell --}}
+            <li class="nav-item dropdown hdr-bell-li">
+                <a href="#" class="dropdown-toggle nav-link hdr-bell" data-toggle="dropdown" aria-expanded="false" title="Notifications">
+                    <i class="fa fa-bell-o"></i>
+                    @if ($__noteCount > 0)<span class="hdr-bell-dot">{{ $__noteCount > 9 ? '9+' : $__noteCount }}</span>@endif
+                </a>
+                <div class="dropdown-menu dropdown-menu-right hdr-menu hdr-noti">
+                    <div class="hdr-noti-head">
+                        <span>Notifications</span>
+                        @if ($__noteCount > 0)<span class="hdr-noti-count">{{ $__noteCount }} new</span>@endif
+                    </div>
+                    @forelse ($__notes as $n)
+                        <a class="hdr-noti-item" href="{{ $n['u'] }}">
+                            <span class="hdr-noti-ic stat-icon {{ $n['c'] }}"><i class="fa {{ $n['i'] }}"></i></span>
+                            <span class="hdr-noti-txt">{{ $n['t'] }}</span>
+                            <i class="fa fa-angle-right hdr-noti-go"></i>
+                        </a>
+                    @empty
+                        <div class="hdr-noti-empty">
+                            <i class="fa fa-check-circle"></i>
+                            <p>You're all caught up.</p>
+                        </div>
+                    @endforelse
+                </div>
             </li>
+
+            {{-- Role badge --}}
+            <li class="nav-item d-none d-md-flex align-items-center">
+                <span class="hdr-role"><i class="fa {{ $__roleIcon }}"></i> {{ $__roleLabel }}</span>
+            </li>
+
+            {{-- User pill + dropdown --}}
+            <li class="nav-item dropdown has-arrow user-dropdown">
+                <a href="#" class="dropdown-toggle nav-link hdr-user" data-toggle="dropdown" aria-expanded="false">
+                    <span class="user-img">
+                        <img class="rounded-circle" src="{{ $__avatar }}" alt="{{ $__user->name }}"
+                            onerror="this.onerror=null;this.src='/images/avatar.png'">
+                        <span class="status online"></span>
+                    </span>
+                    <span class="hdr-user-meta d-none d-sm-flex">
+                        <span class="hdr-user-name">{{ $__user->name ?? 'Account' }}</span>
+                        <span class="hdr-user-role">{{ $__roleLabel }}</span>
+                    </span>
+                    <i class="fa fa-angle-down hdr-caret"></i>
+                </a>
+                <div class="dropdown-menu dropdown-menu-right hdr-menu">
+                    <div class="user-header">
+                        <img class="user-header-img" src="{{ $__avatar }}" alt="{{ $__user->name }}"
+                            onerror="this.onerror=null;this.src='/images/avatar.png'">
+                        <div class="user-text">
+                            <h6>{{ $__user->name ?? 'User' }}</h6>
+                            <p>{{ $__user->email }}</p>
+                            <span class="hdr-menu-role"><i class="fa {{ $__roleIcon }}"></i> {{ $__roleLabel }}</span>
+                        </div>
+                    </div>
+                    <a class="dropdown-item" href="/myprofile"><i class="fa fa-user-o"></i> My profile</a>
+                    <a class="dropdown-item" href="/home"><i class="fa fa-th-large"></i> Dashboard</a>
+                    <div class="dropdown-divider"></div>
+                    <form method="POST" action="{{ route('logout') }}" class="m-0">
+                        @csrf
+                        <button type="submit" class="dropdown-item is-logout"><i class="fa fa-sign-out"></i> Log out</button>
+                    </form>
+                </div>
+            </li>
+        </ul>
+
+        {{-- Mobile compact menu --}}
+        <div class="dropdown mobile-user-menu float-right">
+            <a href="#" class="dropdown-toggle" data-toggle="dropdown" aria-expanded="false"><i class="fa fa-ellipsis-v"></i></a>
+            <div class="dropdown-menu dropdown-menu-right hdr-menu">
+                <a class="dropdown-item" href="/myprofile"><i class="fa fa-user-o"></i> My profile</a>
+                <a class="dropdown-item" href="/home"><i class="fa fa-th-large"></i> Dashboard</a>
+                <div class="dropdown-divider"></div>
+                <form method="POST" action="{{ route('logout') }}" class="m-0">
+                    @csrf
+                    <button type="submit" class="dropdown-item is-logout"><i class="fa fa-sign-out"></i> Log out</button>
+                </form>
+            </div>
         </div>
-    </div>
+    @endauth
 </div>
+
+@push('scripts')
+<script>
+    (function () {
+        var clock = document.getElementById('hdrClock');
+        if (!clock) return;
+        function tick() {
+            var d = new Date();
+            var h = d.getHours(), m = d.getMinutes();
+            var ap = h >= 12 ? 'PM' : 'AM';
+            h = h % 12; if (h === 0) h = 12;
+            clock.textContent = h + ':' + (m < 10 ? '0' + m : m) + ' ' + ap;
+        }
+        tick();
+        setInterval(tick, 30000);
+    })();
+
+    // Once-per-session summary toast of pending items (not on every page load).
+    (function () {
+        @auth
+        var notes = @json($__notes);
+        var role = @json($__role);
+        if (!notes || !notes.length) { return; }
+        try {
+            var key = 'ddu_noti_' + role + '_' + notes.length + '_' + notes[0].t;
+            if (sessionStorage.getItem(key)) { return; }
+            sessionStorage.setItem(key, '1');
+        } catch (e) {}
+        document.addEventListener('DOMContentLoaded', function () {
+            if (typeof Toast === 'undefined') { return; }
+            setTimeout(function () {
+                Toast.fire({ icon: 'info', title: notes[0].t });
+            }, 900);
+        });
+        @endauth
+    })();
+</script>
+@endpush
