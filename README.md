@@ -33,23 +33,15 @@ A role-based ERP that digitises the full patient journey at the **Dire Dawa Univ
 
 ## 📸 Screenshots
 
-> Drop the images into [`docs/screenshots/`](docs/screenshots) (see the [capture guide](docs/screenshots/README.md)).
-
 | Landing | Sign in |
 |---|---|
-| ![Landing](docs/screenshots/landing.png) | ![Login](docs/screenshots/login.png) |
+| ![Landing page](docs/screenshots/landing.png) | ![Split-view login](docs/screenshots/login.png) |
 
-| Admin dashboard | Doctor consult workspace |
+| Manager dashboard | Doctor dashboard |
 |---|---|
-| ![Admin dashboard](docs/screenshots/admin-dashboard.png) | ![Treat workspace](docs/screenshots/treat-workspace.png) |
+| ![Manager dashboard with charts](docs/screenshots/admin-dashboard.png) | ![Doctor dashboard with nav badges](docs/screenshots/doctor-dashboard.png) |
 
-| Patient registration | Patient record & history |
-|---|---|
-| ![Patient registration](docs/screenshots/patient-registration.png) | ![Patient record](docs/screenshots/patient-record.png) |
-
-| Patients list | Notifications |
-|---|---|
-| ![Patients](docs/screenshots/patients-list.png) | ![Notifications](docs/screenshots/notifications.png) |
+> More views (consult workspace, patient registration & records, lab/pharmacy) can be added — see the [capture guide](docs/screenshots/README.md).
 
 ---
 
