@@ -1,68 +1,174 @@
-# ERP-Based Clinic Management System (Laravel)
+<div align="center">
 
-## Project Overview
+<img src="public/assets/img/logo.png" alt="DDU Clinic" width="84" />
 
-This project represents the culmination of my final year studies, centered around the Laravel framework, aimed at modernizing and streamlining the operations of the Dire Dawa University Student Clinic Center. By transitioning to a digital platform, the goal is to significantly enhance the efficiency and effectiveness of clinic management processes.
+# DDU Clinic — ERP Clinic Management System
 
-## Modules
+### One secure portal for the entire campus clinic — front desk to lab, pharmacy and management.
 
-### 1. Patient Management System
-- **Diagnosis Workflow**: Seamlessly manage the entire patient diagnosis process, from the creation of patient cards to the dispensing of medicines, all in a digital format.
-- **Medicine and Lab Test Orders**: Enable the digital ordering of medicines and lab tests through the system, providing a convenient and efficient solution.
+A role-based ERP that digitises the full patient journey at the **Dire Dawa University Student Clinic Center**: registration → consultation → lab → pharmacy → records — with real-time queues, in-app notifications, and printable medical documents.
 
-### 2. Human Resource Management
-- **Employee Registration**: Efficiently register and manage new employees within the system.
-- **Leave Management**: Streamline the handling of employee leave requests, ensuring smooth operations.
-- **Work Experience and Education**: Maintain comprehensive records of employee work experience and educational backgrounds for reference and reporting.
-- **Account Management**: Securely manage employee accounts within the system, ensuring data integrity and confidentiality.
+[![Laravel](https://img.shields.io/badge/Laravel-9.x-FF2D20?logo=laravel&logoColor=white)](https://laravel.com)
+[![PHP](https://img.shields.io/badge/PHP-8.x-777BB4?logo=php&logoColor=white)](https://php.net)
+[![Livewire](https://img.shields.io/badge/Livewire-2.x-FB70A9?logo=livewire&logoColor=white)](https://laravel-livewire.com)
+[![Bootstrap](https://img.shields.io/badge/UI-Bootstrap%20%2B%20Custom-16a085)](#)
+[![License: MIT](https://img.shields.io/badge/License-MIT-22c55e.svg)](#license)
 
-### 3. Pharmacy Store Management
-- **Inventory Organization**: Categorize and list items within the pharmacy store, facilitating easy access and management.
-- **Expiration Tracking**: Monitor and manage the expiration status of medications, ensuring the timely removal of expired items.
-- **Addition of New Medicines**: Simplify the process of adding new medicines to the inventory, ensuring accurate and up-to-date stock information.
-
-### 4. Store Management System
-- **Asset Management**: Effectively manage medical equipment and other assets of the clinic, ensuring their availability and maintenance.
-- **Inventory Tracking**: Keep track of inventory levels and usage, enabling timely restocking and replenishment.
-
-## Actors
-
-1. **Doctor**: Responsible for patient diagnosis, treatment, and management.
-2. **Pharmacist**: Manages the dispensing of medications and oversees pharmacy operations.
-3. **Lab Technician**: Conducts lab tests, analyzes results, and maintains lab equipment.
-4. **Receptionist**: Handles patient appointments, inquiries, and administrative tasks.
-5. **Manager**: Provides oversight and strategic direction for clinic operations and administration.
-
-## Installation
-
-1. Clone the repository to your local machine.
-2. Run `composer install` to install project dependencies.
-3. Configure the `.env` file with your environment settings, including database credentials.
-4. Run `php artisan migrate` to set up the database schema.
-5. Start the development server with `php artisan serve`.
-
-## Usage
-
-- Access different modules through the provided URLs.
-- Use appropriate credentials to log in based on your role.
-- Explore each module to perform relevant tasks efficiently.
-- Enjoy the streamlined and digitized clinic management experience!
-
-## Technologies Used
-
-- **Laravel**: The PHP framework for building robust web applications.
-- **MySQL**: The relational database management system for data storage.
-- **HTML/CSS**: Markup and styling languages for frontend development.
-- **JavaScript**: Enhances interactivity and user experience.
-
-## Contributors
-
-- [Bereket Zelalem](https://github.com/bereket-09)
-
-## License
-
-This project is licensed under the [MIT License](link to license file). Feel free to adapt and customize it to meet the specific needs of your clinic management system.
+</div>
 
 ---
 
-Feel free to copy and paste this markdown into your README.md file for your ERP-Based Clinic Management System project.
+## ✨ Highlights
+
+- 🩺 **End-to-end patient journey** — register, queue, diagnose, order labs & medication, dispense, and archive records in one flow.
+- ⚡ **No-refresh interactions** — lists and forms are built with **Livewire 2** (live search, sort, pagination, inline validation, toast feedback).
+- 🔔 **Built-in notifications** — role-aware count badges, a header bell, and a sign-in summary so nothing falls through the cracks.
+- 🧪 **Smart lab routing** — completed lab results flow **back to the ordering doctor** ("Lab Results Ready") for further assessment, then on to reception.
+- 💊 **Editable orders + status lifecycle** — add / edit / remove lab tests and medicines after ordering; per-item status (Not started · In progress · Done · Skipped). Pharmacy stays editable after the doctor finishes (they're off-site).
+- 📄 **Printable documents** — clean A4 **sick-leave certificate** and **prescription** straight from the consult screen.
+- 🗂️ **Clinical history** — past visits with diagnoses, plus one-click popups of exactly which tests/medicines were ordered.
+- 🎨 **Refined green design system** — a modern, consistent UI anchored on the clinic's brand green `#16a085`.
+
+---
+
+## 📸 Screenshots
+
+> Drop the images into [`docs/screenshots/`](docs/screenshots) (see the [capture guide](docs/screenshots/README.md)).
+
+| Landing | Sign in |
+|---|---|
+| ![Landing](docs/screenshots/landing.png) | ![Login](docs/screenshots/login.png) |
+
+| Admin dashboard | Doctor consult workspace |
+|---|---|
+| ![Admin dashboard](docs/screenshots/admin-dashboard.png) | ![Treat workspace](docs/screenshots/treat-workspace.png) |
+
+| Patient registration | Patient record & history |
+|---|---|
+| ![Patient registration](docs/screenshots/patient-registration.png) | ![Patient record](docs/screenshots/patient-record.png) |
+
+| Patients list | Notifications |
+|---|---|
+| ![Patients](docs/screenshots/patients-list.png) | ![Notifications](docs/screenshots/notifications.png) |
+
+---
+
+## 👥 Roles & what they do
+
+| Role | Lands on | Can do |
+|---|---|---|
+| **Receptionist** | Reception dashboard | Search/register patients, create visits, queue patients to doctors |
+| **Doctor** | Doctor dashboard | Diagnose, order labs & medication, review lab results, print sick-leave & prescriptions, view clinical history |
+| **Lab Technician** | Lab dashboard | See ordered tests, enter results, manage test types, set item status |
+| **Pharmacist** | Pharmacy dashboard | Manage medicine stock, dispense drug orders, update dispensing status |
+| **Manager / Admin** | Admin dashboard | Oversee everything — staff, departments, pharmacy & property, leave requests, clinic-wide stats |
+
+### Demo accounts
+
+> Seed demo data first (see Quick start), then sign in with:
+
+| Role | Email | Password |
+|---|---|---|
+| Manager / Admin | `admin@clinic.test` | `password` |
+| Doctor | `doctor@clinic.test` | `password` |
+| Receptionist | `reception@clinic.test` | `password` |
+| Lab Technician | `lab@clinic.test` | `password` |
+| Pharmacist | `pharmacy@clinic.test` | `password` |
+
+---
+
+## 🧩 Modules
+
+### Patient management
+Patient cards, visit queues (Queued · Pending · Lab Result Completed · Completed), the doctor consult workspace (symptoms / diagnosis / disease), and a full clinical history with drill-down into past lab/medication orders.
+
+### Laboratory
+Order tests, enter & submit results to the doctor, manage test types, and track each item through its status lifecycle.
+
+### Pharmacy
+Medicine inventory with in-stock / out-of-stock / expiring views, drug-order dispensing, and stock-aware quantities. Pharmacy can update dispensing status even after the visit is closed.
+
+### Human resources
+Employee registration & profiles (with education and work-experience records), and a leave workflow with an on-leave notice and early-return request/approval.
+
+### Store / property
+Asset registration, assignment to staff, records, and stock requests.
+
+---
+
+## 🛠️ Tech stack
+
+| Layer | Tech |
+|---|---|
+| Framework | Laravel 9 (PHP 8) |
+| Reactivity | Livewire 2 |
+| Auth | Laravel Jetstream + Fortify (Sanctum) |
+| UI | Bootstrap admin theme + a custom design layer (`public/assets/css/enhance.css`), Tailwind on auth pages |
+| Charts & UX | Chart.js, SweetAlert2, DataTables |
+| Database | SQLite (dev) / MySQL (prod) |
+| Build | Laravel Mix |
+
+---
+
+## 🚀 Quick start
+
+```bash
+# 1. Install dependencies
+composer install
+npm install
+
+# 2. Environment
+cp .env.example .env
+php artisan key:generate
+# default DB is SQLite — create the file (or set MySQL creds in .env)
+touch database/database.sqlite
+
+# 3. Database + demo data
+php artisan migrate
+php artisan db:seed          # creates the demo accounts + sample clinic data
+
+# 4. Build assets & run
+npm run dev                  # or: npm run prod
+php artisan serve
+```
+
+Then open **http://127.0.0.1:8000** and sign in with a demo account above.
+
+> ⚠️ **`db:seed` is destructive for demo purposes** — `DemoDataSeeder` clears the domain tables (patients, visits, orders, etc.) and reseeds them. **Do not run it against production data.**
+
+---
+
+## 🗺️ Project structure
+
+```
+app/Http/Controllers      # Patient, Lab, Medicine, Admin, Home controllers
+app/Http/Livewire         # Livewire components (lists, forms, search)
+app/Providers             # AppServiceProvider — role-aware nav counts (badges/notifications)
+resources/views
+ ├─ layouts/portal.blade.php   # master layout (sidebar, navbar, toasts)
+ ├─ livewire/                  # Livewire component views
+ ├─ admin|doctor|lab|pharmacy|reception/   # per-role dashboards, sidebars, actions
+ └─ partials/                  # navbar, leave-notice, shared bits
+public/assets/css/enhance.css  # the green design system
+database/migrations|seeders    # schema + DemoDataSeeder
+docs/                          # modernization guide + screenshots
+```
+
+---
+
+## 🧭 Roadmap ideas
+
+- Appointment scheduling & calendar
+- Inline lab result values inside clinical history
+- Real-time notifications (broadcasting)
+- Reporting & analytics exports (PDF/Excel)
+
+---
+
+## 👤 Author
+
+**[Bereket Zelalem](https://github.com/bereket-09)** — final-year project for the Dire Dawa University Student Clinic Center.
+
+## 📄 License
+
+Released under the [MIT License](#license). Free to adapt for your own clinic.
