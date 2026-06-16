@@ -114,6 +114,34 @@ section:nth-child(even){
     color: var(--green);
 }
 
+/* compact auth buttons in the header nav */
+.header .navbar a.auth-btn{
+    margin-top: 0;
+    padding: .6rem 1.2rem;
+    font-size: 1.4rem;
+    color: var(--green);
+}
+
+.header .navbar a.auth-btn:hover{
+    color: #fff;
+}
+
+.header .navbar a.auth-btn span{
+    padding: .4rem .7rem;
+    font-size: 1.3rem;
+}
+
+/* shared section intro paragraph */
+.section-intro{
+    text-align: center;
+    max-width: 75rem;
+    margin: -1rem auto 3rem;
+    font-size: 1.6rem;
+    line-height: 1.9;
+    color: var(--light-color);
+    text-transform: none;
+}
+
 #menu-btn{
     font-size: 2.5rem;
     border-radius: .5rem;
@@ -529,6 +557,152 @@ section:nth-child(even){
 
 
 
+
+/* service cards lift on hover */
+.services .box-container .box{
+    text-align: center;
+}
+
+.services .box-container .box:hover{
+    transform: translateY(-1rem);
+}
+
+/* how it works section */
+.how .steps-container{
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(24rem, 1fr));
+    gap: 2rem;
+}
+
+.how .steps-container .step{
+    background: #fff;
+    border: var(--border);
+    box-shadow: var(--box-shadow);
+    border-radius: .5rem;
+    padding: 2.5rem 2rem;
+    text-align: center;
+    position: relative;
+}
+
+.how .steps-container .step:hover{
+    transform: translateY(-1rem);
+}
+
+.how .steps-container .step .step-num{
+    position: relative;
+    height: 8rem;
+    width: 8rem;
+    margin: 0 auto 1.5rem;
+    border-radius: 50%;
+    background: var(--green);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.how .steps-container .step .step-num i{
+    font-size: 3rem;
+    color: #fff;
+}
+
+.how .steps-container .step .step-num span{
+    position: absolute;
+    top: -.8rem;
+    right: -.8rem;
+    height: 3rem;
+    width: 3rem;
+    line-height: 3rem;
+    border-radius: 50%;
+    background: #fff;
+    border: var(--border);
+    color: var(--green);
+    font-size: 1.6rem;
+    font-weight: 600;
+}
+
+.how .steps-container .step h3{
+    color: var(--black);
+    font-size: 2.2rem;
+    padding-bottom: .5rem;
+}
+
+.how .steps-container .step p{
+    color: var(--light-color);
+    font-size: 1.4rem;
+    line-height: 1.9;
+    text-transform: none;
+}
+
+/* contact section */
+.contact .contact-row{
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2rem;
+    align-items: stretch;
+}
+
+.contact .contact-info{
+    flex: 1 1 35rem;
+    display: grid;
+    gap: 1.5rem;
+    align-content: start;
+}
+
+.contact .contact-info .info-box{
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    background: #fff;
+    border: var(--border);
+    box-shadow: var(--box-shadow);
+    border-radius: .5rem;
+    padding: 1.8rem 2rem;
+}
+
+.contact .contact-info .info-box i{
+    font-size: 2.2rem;
+    color: #fff;
+    background: var(--green);
+    height: 5rem;
+    width: 5rem;
+    line-height: 5rem;
+    text-align: center;
+    border-radius: .5rem;
+    flex-shrink: 0;
+}
+
+.contact .contact-info .info-box h3{
+    color: var(--black);
+    font-size: 1.9rem;
+}
+
+.contact .contact-info .info-box a{
+    color: var(--light-color);
+    font-size: 1.5rem;
+    text-transform: none;
+    display: block;
+    word-break: break-word;
+}
+
+.contact .contact-info .info-box a:hover{
+    color: var(--green);
+}
+
+.contact .contact-map{
+    flex: 1 1 45rem;
+    min-height: 35rem;
+    border: var(--border);
+    box-shadow: var(--box-shadow);
+    border-radius: .5rem;
+    overflow: hidden;
+}
+
+.contact .contact-map iframe{
+    display: block;
+    height: 100%;
+    width: 100%;
+    min-height: 35rem;
+}
 
 /* media queries  */
 @media (max-width:991px){

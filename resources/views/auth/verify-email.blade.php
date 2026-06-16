@@ -4,6 +4,10 @@
             <x-jet-authentication-card-logo />
         </x-slot>
 
+        <div class="mb-6 text-center">
+            <h2 class="text-2xl font-bold" style="color:#0e6e5c;">Verify your email</h2>
+        </div>
+
         <div class="mb-4 text-sm text-gray-600">
             {{ __('Thanks for signing up! Before getting started, could you verify your email address by clicking on the link we just emailed to you? If you didn\'t receive the email, we will gladly send you another.') }}
         </div>
@@ -19,7 +23,10 @@
                 @csrf
 
                 <div>
-                    <x-jet-button type="submit">
+                    <x-jet-button type="submit"
+                        style="background-color:#16a085; border:0;"
+                        onmouseover="this.style.backgroundColor='#138d75'"
+                        onmouseout="this.style.backgroundColor='#16a085'">
                         {{ __('Resend Verification Email') }}
                     </x-jet-button>
                 </div>

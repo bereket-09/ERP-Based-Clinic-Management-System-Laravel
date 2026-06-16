@@ -2,12 +2,12 @@
     <x-jet-authentication-card>
         <x-slot name="logo">
             <x-jet-authentication-card-logo />
-            <center>
-                {{-- <label for="name" class="text"> REGISTER USER</label> --}}
-                <br>
-                <x-jet-label for="name" value="Register User" style="font-size: 20px" />
-            </center>
         </x-slot>
+
+        <div class="mb-6 text-center">
+            <h2 class="text-2xl font-bold" style="color:#0e6e5c;">Register a new user</h2>
+            <p class="text-sm text-gray-500 mt-1">Create a staff account for the clinic portal</p>
+        </div>
 
         <x-jet-validation-errors class="mb-4" />
 
@@ -56,12 +56,15 @@
                 </div>
             @endif
 
-            <div class="flex items-center justify-end mt-4">
-                <a class="underline text-sm text-gray-600 hover:text-gray-900" href="{{ route('login') }}">
+            <div class="flex items-center justify-between mt-6">
+                <a class="text-sm hover:underline" style="color:#138d75;" href="{{ route('login') }}">
                     {{ __('Already registered?') }}
                 </a>
 
-                <x-jet-button class="ml-4">
+                <x-jet-button class="ml-4"
+                    style="background-color:#16a085; border:0;"
+                    onmouseover="this.style.backgroundColor='#138d75'"
+                    onmouseout="this.style.backgroundColor='#16a085'">
                     {{ __('Register') }}
                 </x-jet-button>
             </div>

@@ -96,8 +96,9 @@ Route::get('/all_patients', [PatientController::class,'all_patients']);
 route::get('/deletePatient/{id}',[PatientController::class,'deletePatient']);
 Route::get('/treat/{id}', [PatientController::class,'treat']);
 
-Route::get('/queued_patients', [PatientController::class,'queued_patients']); 
-Route::get('/pending_patients', [PatientController::class,'pending_patients_list']); 
+Route::get('/queued_patients', [PatientController::class,'queued_patients']);
+Route::get('/pending_patients', [PatientController::class,'pending_patients_list']);
+Route::get('/lab_results_ready', [PatientController::class,'lab_results_ready']);
 
 // ADDING visits to already existing patients
 Route::post('/insert_new_visit/{id}',[PatientController::class,'insert_new_visit']);
@@ -118,6 +119,11 @@ Route::post('/update_lab_test/{id}',[LabtestController::class,'update_lab_test']
 //LAB ORDERS
 Route::get('/view_lab_order',[LabtestController::class,'view_lab_order']);
 Route::get('/lab_test_results/{id}',[LabtestController::class,'lab_test_results']);
+
+// Manage tests on an existing lab order (add / remove) + lab item status lifecycle.
+Route::post('/lab_order/{order}/add',[LabtestController::class,'add_tests_to_order']);
+Route::get('/lab_result/{id}/remove',[LabtestController::class,'remove_lab_result']);
+Route::post('/lab_result/{id}/status',[LabtestController::class,'update_lab_result_status']);
 
 
 // Lab results
@@ -150,7 +156,13 @@ Route::get('/view_oreder_for_each/{id}', [MedicineController::class,'view_ordere
 
 
 Route::get('/update_drug_orders/{id}', [MedicineController::class,'update_drug_orders']);
-Route::POST('/confirm_all/{id}', [MedicineController::class,'confirm_all_drugs']); 
+Route::POST('/confirm_all/{id}', [MedicineController::class,'confirm_all_drugs']);
+
+// Manage drugs on an existing drug order (add / edit qty / remove) + pharmacy item status lifecycle.
+Route::post('/drug_order/{order}/add',[MedicineController::class,'add_drugs_to_order']);
+Route::post('/drug_ordered/{id}/update',[MedicineController::class,'update_drug_ordered']);
+Route::get('/drug_ordered/{id}/remove',[MedicineController::class,'remove_drug_ordered']);
+Route::post('/drug_ordered/{id}/status',[MedicineController::class,'update_drug_ordered_status']);
 Route::get('/view_completed_drug_orders',[MedicineController::class,'view_completed_drug_orders']);
 
 Route::get('/completed_visits', [PatientController::class,'completed_visits']); 
@@ -166,7 +178,10 @@ Route::get('/view-leave-request', [AdminController::class,'view_leave_request'])
 Route::get('/view-each-leave-request/{id}', [AdminController::class,'view_each_leave_request']); 
 Route::get('/my-leave-requests', [AdminController::class,'my_leave_requests']); 
 
-Route::post('/submit_request_result/{id}', [AdminController::class,'submit_request_result']); 
+Route::post('/submit_request_result/{id}', [AdminController::class,'submit_request_result']);
+
+Route::post('/leave/{id}/request-return', [AdminController::class,'request_return']);
+Route::post('/leave/{id}/approve-return', [AdminController::class,'approve_return']);
 
 // Property Management
 

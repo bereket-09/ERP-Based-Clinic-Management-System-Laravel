@@ -1,181 +1,92 @@
-<!DOCTYPE html>
-<html lang="en">
+@extends('layouts.portal')
 
-@if (!Auth::user())
-    @php
-        header('Location: ' . URL::to('/login'), true, 302);
-        exit();
-    @endphp
-@endif
+@section('title', 'Ordered Drugs')
 
-<!-- employees23:21-->
-
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=0">
-    <link rel="shortcut icon" type="image/x-icon" href="assets/img/favicon.ico">
-    <title>DDU Clnic Center</title>
-    <link rel="stylesheet" type="text/css" href="assets/css/bootstrap.min.css">
-    <link rel="stylesheet" type="text/css" href="assets/css/font-awesome.min.css">
-    <link rel="stylesheet" type="text/css" href="assets/css/dataTables.bootstrap4.min.css">
-    <link rel="stylesheet" type="text/css" href="assets/css/select2.min.css">
-    <link rel="stylesheet" type="text/css" href="assets/css/bootstrap-datetimepicker.min.css">
-    <link rel="stylesheet" type="text/css" href="assets/css/style.css">
-    {{-- <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/v/dt/dt-1.11.5/datatables.min.css" /> --}}
-    <link rel="stylesheet" type="text/css" href="assets/css/datatables.min.css" />
-
-
-    <!--[if lt IE 9]>
-  <script src="assets/js/html5shiv.min.js"></script>
-  <script src="assets/js/respond.min.js"></script>
- <![endif]-->
-</head>
-
-<body>
-    <div class="main-wrapper">
-        @include('navbar')
-        @if (Auth::user()->role == '4')
-            {
-            @include('admin.sidebar')
-            }
-        @elseif (Auth::user()->role == '0')
-            {
-            @include('reception.sidebar')
-            }
-        @elseif (Auth::user()->role == '1')
-            {
-            @include('doctor.sidebar')
-            }
-        @elseif (Auth::user()->role == '2')
-            {
-            @include('lab.sidebar')
-            }
-        @elseif (Auth::user()->role == '3')
-            {
-            @include('pharmacy.sidebar')
-            }
-        @endif
-
-        @if (Auth::user()->role == '0')
-            {
-            $dd('Auth::user()->role == '0'');
-            }
-        @endif
-        <div class="page-wrapper">
-            <div class="content">
-                <div class="row">
-                    <div class="col-sm-4 col-3">
-                        <h4 class="page-title">ORDERED Drugs List</h4>
-                    </div>
-                    <div class="col-sm-8 col-9 text-right m-b-20">
-                        {{-- <a href="{{ url('/add_test_type') }}" class="btn btn-primary float-right btn-rounded"><i
-                                class="fa fa-plus"></i> Add Lab Test</a> --}}
-                    </div>
-                </div>
-
-                <div class="row">
-                    <div class="col-md-12">
-                        <div class="table-responsive">
-                            <table class="table table-striped custom-table " name="myTable" id="myTable">
-                                {{--  --}}
-                                <thead>
-                                    <tr>
-
-
-                                        <th>Order ID</th>
-                                        <th>Patient Name</th>
-                                        <th>Patient MRN</th>
-                                        <th>Patient ID</th>
-                                        <th>Doctors Name</th>
-                                        <th>Status</th>
-                                        {{-- <th style="min-width:200px;">Description</th>
-                                        <th>statues</th> --}}
-                                        <th style="">Actions </th>
-
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach ($data as $data)
-                                        <tr>
-                                            @foreach ($visits as $visit)
-                                                @if ($visit->id == $data->v_id && $data->status == 'Queued')
-                                                    <td>
-                                                        {{ $data->id }}
-                                                    </td>
-                                                    <td>
-                                                        @foreach ($patient as $patients)
-                                                            @if ($patients->id == $visit->p_id)
-                                                                {{ $patients->name }}
-
-                                                    </td>
-                                                    <td>{{ $patients->mrn }}</td>
-                                                    <td>{{ $patients->stud_id }}</td>
-
-                                                    <td>
-                                                        @foreach ($doctors as $doctor)
-                                                            @if ($visit->doc_id == $doctor->id)
-                                                                {{ $doctor->name }}
-                                                            @endif
-                                                        @endforeach
-                                                    </td>
-                                                @endif
-                                            @endforeach
-                                            <td>
-                                                @if ($data->status == 'Completed')
-                                                    <span class="custom-badge status-green">
-
-                                                        {{ $data->status }}
-
-                                                    </span>
-                                                @else
-                                                    <span class="custom-badge status-orange">
-
-                                                        {{ $data->status }}
-
-                                                    </span>
-                                                @endif
-                                            </td>
-                                            <td class="">
-                                                <a href="/view_oreder_for_each/{{ $data->v_id }}"
-                                                    class="btn btn-outline-primary take-btn">VIEW OREDER</a>
-                                            </td>
-                                    @endif
-                                    @endforeach
-                                    </tr>
-                                    @endforeach
-
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
+@section('content')
+    <div class="page-head">
+        <div>
+            <h4 class="page-title">Ordered Drugs List</h4>
+            <div class="page-sub">Queued drug orders awaiting dispensing.</div>
         </div>
-
+        <a href="/view_completed_drug_orders" class="btn btn-light-soft">
+            <i class="fa fa-check"></i> Completed orders
+        </a>
     </div>
-    <div class="sidebar-overlay" data-reff=""></div>
-    <script src="assets/js/jquery-3.2.1.min.js"></script>
-    <script src="assets/js/popper.min.js"></script>
-    <script src="assets/js/bootstrap.min.js"></script>
-    <script src="assets/js/jquery.dataTables.min.js"></script>
-    <script src="assets/js/dataTables.bootstrap4.min.js"></script>
-    <script src="assets/js/jquery.slimscroll.js"></script>
-    <script src="assets/js/select2.min.js"></script>
-    <script src="assets/js/moment.min.js"></script>
-    <script src="assets/js/bootstrap-datetimepicker.min.js"></script>
-    <script src="assets/js/app.js"></script>
 
-    <script type="text/javascript" src="https://cdn.datatables.net/v/dt/dt-1.11.5/datatables.min.js"></script>
+    @php($hasRows = false)
 
-</body>
+    <div class="table-card">
+        <div class="table-responsive">
+            <table class="table custom-table mb-0">
+                <thead>
+                    <tr>
+                        <th>Order ID</th>
+                        <th>Patient Name</th>
+                        <th>Patient MRN</th>
+                        <th>Patient ID</th>
+                        <th>Doctor's Name</th>
+                        <th>Status</th>
+                        <th class="text-right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach ($data as $order)
+                        @foreach ($visits as $visit)
+                            @if ($visit->id == $order->v_id && $order->status == 'Queued')
+                                @php($hasRows = true)
+                                <tr>
+                                    <td class="num">{{ $order->id }}</td>
+                                    @foreach ($patient as $patients)
+                                        @if ($patients->id == $visit->p_id)
+                                            <td>{{ $patients->name }}</td>
+                                            <td class="num">{{ $patients->mrn }}</td>
+                                            <td class="num">{{ $patients->stud_id }}</td>
+                                        @endif
+                                    @endforeach
+                                    <td>
+                                        @foreach ($doctors as $doctor)
+                                            @if ($visit->doc_id == $doctor->id)
+                                                {{ $doctor->name }}
+                                            @endif
+                                        @endforeach
+                                    </td>
+                                    <td>
+                                        @if ($order->status == 'Completed')
+                                            <span class="status-pill is-completed">{{ $order->status }}</span>
+                                        @else
+                                            <span class="status-pill is-queued">{{ $order->status }}</span>
+                                        @endif
+                                    </td>
+                                    <td class="text-right">
+                                        <a href="/view_oreder_for_each/{{ $order->v_id }}"
+                                            class="btn btn-outline-primary btn-sm">
+                                            <i class="fa fa-eye"></i> View order
+                                        </a>
+                                    </td>
+                                </tr>
+                            @endif
+                        @endforeach
+                    @endforeach
 
+                    @unless ($hasRows)
+                        <tr>
+                            <td colspan="7">
+                                <div class="empty-state">
+                                    <div class="empty-icon"><i class="fa fa-shopping-bag"></i></div>
+                                    <h5>No queued drug orders</h5>
+                                    <p>New orders from doctors will appear here.</p>
+                                </div>
+                            </td>
+                        </tr>
+                    @endunless
+                </tbody>
+            </table>
+        </div>
+    </div>
 
-<!-- employees23:22-->
-
-</html>
-<script type="text/javascript">
-    $(document).ready(function() {
-        $('#myTable').DataTable();
-    });
-</script>
+    @push('styles')
+        <style>
+            .table td.num { font-variant-numeric: tabular-nums; }
+        </style>
+    @endpush
+@endsection

@@ -409,6 +409,29 @@ $leave=WorkLeave::all();
 return view('common.my_leave_requests',compact('leave'));
 }
 
+// User requests an early return from an approved leave. Keeps the approved
+// state intact (banner stays) but flags it as awaiting admin approval.
+public function request_return($id){
+    $leave=WorkLeave::find($id);
+    if($leave){
+        $leave->status='Return Requested';
+        $leave->save();
+    }
+    return back()->with('success','Early return request sent — awaiting admin approval.');
+}
+
+// Admin approves the early return: end the leave so its date range no longer
+// covers today and the on-leave banner clears.
+public function approve_return($id){
+    $leave=WorkLeave::find($id);
+    if($leave){
+        $leave->status='Returned';
+        $leave->to=now()->toDateString();
+        $leave->save();
+    }
+    return back()->with('success','Early return approved — the staff member is now back from leave.');
+}
+
 
 
 public function add_item(Request $request){

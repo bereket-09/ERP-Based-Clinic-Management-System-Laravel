@@ -17,18 +17,18 @@ return new class extends Migration
             $table->id();
             $table->string('stud_id')->unique();
             $table->string('mrn')->unique();
-            $table->string('name')->nullable;
-            $table->string('gender')->nullable;
-            $table->date('birthday')->nullable;
-            $table->string('dept')->nullable;
-            $table->string('block')->nullable;
-            $table->integer('dorm')->nullable;
-            $table->integer('year')->nullable;
-            $table->string('address')->nullable;
-            $table->string('region')->nullable;
-            $table->string('phone')->nullable;
-            $table->string('nationality')->nullable;
-            $table->string('bloodtype')->nullable;
+            $table->string('name')->nullable();
+            $table->string('gender')->nullable();
+            $table->date('birthday')->nullable();
+            $table->string('dept')->nullable();
+            $table->string('block')->nullable();
+            $table->integer('dorm')->nullable();
+            $table->integer('year')->nullable();
+            $table->string('address')->nullable();
+            $table->string('region')->nullable();
+            $table->string('phone')->nullable();
+            $table->string('nationality')->nullable();
+            $table->string('bloodtype')->nullable();
 
 
             $table->timestamps();

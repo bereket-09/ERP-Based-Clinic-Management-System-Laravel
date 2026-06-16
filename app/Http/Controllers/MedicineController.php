@@ -339,6 +339,93 @@ $checks=DrugOrdered::query()
      return redirect('/view_orderd_drugs');
 }
 
+// Append more medicines to an existing drug order (doctor, before finalising).
+public function add_drugs_to_order(Request $request,$order){
+    $drugOrder=DrugOrder::find($order);
+    if(!$drugOrder){
+        return redirect()->back();
+    }
+    $visit=Visit::find($drugOrder->v_id);
+    if($visit && $visit->statues=='Completed'){
+        return redirect()->back();
+    }
+
+    if($request->drugName){
+        for($i=0;$i<count($request->drugName);$i++){
+            if(isset($request->drugType[$i]) && !($request->drugType[$i]=='') && $request->drugType[$i]>0){
+                $t=Medcine_Name::query()->where('m_name',$request->drugName[$i])->first();
+                if(!$t){ continue; }
+                $result=new DrugOrdered();
+                $result->o_id=$drugOrder->id;
+                $result->drug_id=$t->id;
+                $result->qty=$request->drugType[$i];
+                $result->status='Not started';
+                $result->save();
+            }
+        }
+    }
+
+    return redirect('/treat/'.$drugOrder->v_id);
+}
+
+// Update the quantity of a single ordered drug row (doctor, before finalising).
+public function update_drug_ordered(Request $request,$id){
+    $ordered=DrugOrdered::find($id);
+    if(!$ordered){
+        return redirect()->back();
+    }
+    $order=DrugOrder::find($ordered->o_id);
+    $visit=$order?Visit::find($order->v_id):null;
+    if($visit && $visit->statues=='Completed'){
+        return redirect()->back();
+    }
+    if($request->qty!=='' && $request->qty!==null && $request->qty>0){
+        $ordered->qty=$request->qty;
+        $ordered->save();
+    }
+    return $order?redirect('/treat/'.$order->v_id):redirect()->back();
+}
+
+// Remove a single ordered drug row (doctor, before finalising).
+public function remove_drug_ordered($id){
+    $ordered=DrugOrdered::find($id);
+    if(!$ordered){
+        return redirect()->back();
+    }
+    $order=DrugOrder::find($ordered->o_id);
+    $visit=$order?Visit::find($order->v_id):null;
+    if($visit && $visit->statues=='Completed'){
+        return redirect()->back();
+    }
+    $vId=$order?$order->v_id:null;
+    $ordered->delete();
+    return $vId?redirect('/treat/'.$vId):redirect()->back();
+}
+
+// Pharmacy updates the lifecycle status of a single ordered drug.
+// Allowed even after the visit is completed (pharmacy works off-site).
+public function update_drug_ordered_status(Request $request,$id){
+    $ordered=DrugOrdered::find($id);
+    if(!$ordered){
+        return redirect()->back();
+    }
+    $allowed=['Not started','In progress','Done','Skipped'];
+    if(in_array($request->status,$allowed)){
+        // When a drug is marked Done from this control, deduct stock once.
+        if($request->status=='Done' && !in_array($ordered->status,['Done','Completed'])){
+            $med_Left=Medcine_Name::find($ordered->drug_id);
+            if($med_Left){
+                $med_Left->total=($med_Left->total-$ordered->qty);
+                $med_Left->save();
+            }
+        }
+        $ordered->status=$request->status;
+        $ordered->save();
+    }
+    $order=DrugOrder::find($ordered->o_id);
+    return $order?redirect('/view_oreder_for_each/'.$order->v_id):redirect()->back();
+}
+
 public function view_completed_drug_orders(){
 $data=DrugOrder::all();
     $patient=Patient::all();

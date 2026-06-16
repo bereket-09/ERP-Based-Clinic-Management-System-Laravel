@@ -1,121 +1,143 @@
-@include('head');
+@extends('layouts.portal')
 
-<body>
-    <div class="main-wrapper">
-        @include('navbar');
-        @include('pharmacy.sidebar');
-        <div class="page-wrapper">
-            <div class="content">
-                <div class="row">
+@section('title', 'Pharmacy Dashboard')
 
-                    {{-- <div class="col-md-6 col-sm-6 col-lg-6 col-xl-3">
-                        <div class="dash-widget">
-                            <span class="dash-widget-bg1"><i class="fa fa-user-o" aria-hidden="true"></i></span>
-                            <div class="dash-widget-info text-right">
-                                <h3></h3>
-                                <span class="widget-title1">Users <i class="fa fa-check" aria-hidden="true"></i></span>
-                            </div>
-                        </div>
-                    </div> --}}
+@section('content')
+    <div class="page-head">
+        <div>
+            <h4 class="page-title">Welcome, {{ Auth::user()->name }}</h4>
+            <div class="page-sub">Overview of the pharmacy store and drug orders.</div>
+        </div>
+        <a href="/add_medicine" class="btn btn-primary btn-rounded">
+            <i class="fa fa-plus"></i> Add medicine
+        </a>
+    </div>
 
-
-                    <div class="col-md-6 col-sm-6 col-lg-6 col-xl-3">
-                        <div class="dash-widget">
-                            <span class="dash-widget-bg3"><i class="fa fa-book" aria-hidden="true"></i></span>
-                            <div class="dash-widget-info text-right">
-                                <h3>{{ $DrugOrder }}</h3>
-                                <span class="widget-title3">Total Drug Orders <i class="fa fa-check"
-                                        aria-hidden="true"></i></span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-6 col-sm-6 col-lg-6 col-xl-3">
-                        <div class="dash-widget">
-                            <span class="dash-widget-bg4"><i class="fa fa-info" aria-hidden="true"></i></span>
-                            <div class="dash-widget-info text-right">
-                                <h3>{{ $medicin }}</h3>
-                                <span class="widget-title4">Total Number of Medicine<i class="fa fa-check"></i></span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-6 col-sm-6 col-lg-6 col-xl-3">
-                        <div class="dash-widget">
-                            <span class="dash-widget-bg3"><i class="fa fa-book" aria-hidden="true"></i></span>
-                            <div class="dash-widget-info text-right">
-                                <h3>{{ $expire }}</h3>
-                                <span class="widget-title3">Expired Medicines<i class="fa fa-check"></i></span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-6 col-sm-6 col-lg-6 col-xl-3">
-                        <div class="dash-widget">
-                            <span class="dash-widget-bg2"><i class="fa fa-stethoscope"></i></span>
-                            <div class="dash-widget-info text-right">
-                                <h3>{{ $patient }}</h3>
-                                <span class="widget-title2">Total Patient <i class="fa fa-check"
-                                        aria-hidden="true"></i></span>
-                            </div>
-                        </div>
-                    </div>
+    {{-- Stat widgets --}}
+    <div class="row">
+        <div class="col-md-6 col-xl-3">
+            <div class="dash-widget">
+                <span class="stat-icon is-primary"><i class="fa fa-book"></i></span>
+                <div class="dash-widget-info">
+                    <h3>{{ $DrugOrder }}</h3>
+                    <span class="widget-title">Total drug orders</span>
                 </div>
-
-                <br><br>
-
-                {{-- Appointemetn Section --}}
-
-                {{-- <div class="row">
-                    <div class="col-12 col-md-6 col-lg-8 col-xl-8">
-                        <div class="card">
-                            <div class="card-header">
-                                <h4 class="card-title d-inline-block">Queued Patients </h4> <a href="/queued_patients"
-                                    class="btn btn-primary float-right">View all</a>
-                            </div>
-
-                        </div>
-                    </div> --}}
-
-                {{-- DOCTORS SECTION --}}
-
-                <center>
-                    <div class="col-12 col-md-2 col-lg-4 col-xl-4">
-                        <div class="card member-panel">
-
-                            <div class="card-footer text-center bg-white">
-                                <a href="/view_orderd_drugs" class="text-muted">View Drug Orders</a>
-                            </div>
-                        </div>
-                    </div>
-                    {{-- <div class="col-12 col-md-2 col-lg-4 col-xl-4">
-                        <div class="card member-panel">
-
-                            <div class="card-footer text-center bg-white">
-                                <a href="/view_pending_lab_results" class="text-muted">View Pending Orders</a>
-                            </div>
-                        </div>
-                    </div> --}}
-                    <div class="col-12 col-md-2 col-lg-4 col-xl-4">
-                        <div class="card member-panel">
-
-                            <div class="card-footer text-center bg-white">
-                                <a href="/view_completed_drug_orders" class="text-muted">View Completed Orders</a>
-                            </div>
-                        </div>
-                    </div>
-                </center>
-                {{-- </div> --}}
-
-
-                {{-- Patient section --}}
-
-
             </div>
-
+        </div>
+        <div class="col-md-6 col-xl-3">
+            <div class="dash-widget">
+                <span class="stat-icon is-info"><i class="fa fa-medkit"></i></span>
+                <div class="dash-widget-info">
+                    <h3>{{ $medicin }}</h3>
+                    <span class="widget-title">Medicines in catalogue</span>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 col-xl-3">
+            <div class="dash-widget">
+                <span class="stat-icon is-danger"><i class="fa fa-exclamation-triangle"></i></span>
+                <div class="dash-widget-info">
+                    <h3>{{ $expire }}</h3>
+                    <span class="widget-title">Expired medicines</span>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 col-xl-3">
+            <div class="dash-widget">
+                <span class="stat-icon is-success"><i class="fa fa-stethoscope"></i></span>
+                <div class="dash-widget-info">
+                    <h3>{{ $patient }}</h3>
+                    <span class="widget-title">Registered patients</span>
+                </div>
+            </div>
         </div>
     </div>
 
-    @include('scripts')
-</body>
+    {{-- Quick actions --}}
+    <div class="page-head mt-2">
+        <h4 class="page-title">Quick actions</h4>
+    </div>
+    <div class="row">
+        <div class="col-md-4">
+            <a href="/view_all_drugs" class="card quick-action-card">
+                <div class="card-body d-flex align-items-center">
+                    <span class="stat-icon is-primary"><i class="fa fa-list"></i></span>
+                    <div class="ml-3">
+                        <h5 class="mb-0">All medicines</h5>
+                        <span class="text-muted-2">Browse the full drug record</span>
+                    </div>
+                    <i class="fa fa-angle-right ml-auto quick-action-arrow"></i>
+                </div>
+            </a>
+        </div>
+        <div class="col-md-4">
+            <a href="/view_instock_drugs" class="card quick-action-card">
+                <div class="card-body d-flex align-items-center">
+                    <span class="stat-icon is-success"><i class="fa fa-check-circle"></i></span>
+                    <div class="ml-3">
+                        <h5 class="mb-0">In-stock drugs</h5>
+                        <span class="text-muted-2">Medicines available now</span>
+                    </div>
+                    <i class="fa fa-angle-right ml-auto quick-action-arrow"></i>
+                </div>
+            </a>
+        </div>
+        <div class="col-md-4">
+            <a href="/view_outstock_drugs" class="card quick-action-card">
+                <div class="card-body d-flex align-items-center">
+                    <span class="stat-icon is-warning"><i class="fa fa-times-circle"></i></span>
+                    <div class="ml-3">
+                        <h5 class="mb-0">Out-of-stock drugs</h5>
+                        <span class="text-muted-2">Needs restocking</span>
+                    </div>
+                    <i class="fa fa-angle-right ml-auto quick-action-arrow"></i>
+                </div>
+            </a>
+        </div>
+        <div class="col-md-4">
+            <a href="/view_expired_drugs" class="card quick-action-card">
+                <div class="card-body d-flex align-items-center">
+                    <span class="stat-icon is-danger"><i class="fa fa-exclamation-triangle"></i></span>
+                    <div class="ml-3">
+                        <h5 class="mb-0">Expired drugs</h5>
+                        <span class="text-muted-2">{{ $expire }} expired</span>
+                    </div>
+                    <i class="fa fa-angle-right ml-auto quick-action-arrow"></i>
+                </div>
+            </a>
+        </div>
+        <div class="col-md-4">
+            <a href="/view_orderd_drugs" class="card quick-action-card">
+                <div class="card-body d-flex align-items-center">
+                    <span class="stat-icon is-info"><i class="fa fa-shopping-bag"></i></span>
+                    <div class="ml-3">
+                        <h5 class="mb-0">Ordered drugs</h5>
+                        <span class="text-muted-2">Orders awaiting dispensing</span>
+                    </div>
+                    <i class="fa fa-angle-right ml-auto quick-action-arrow"></i>
+                </div>
+            </a>
+        </div>
+        <div class="col-md-4">
+            <a href="/view_completed_drug_orders" class="card quick-action-card">
+                <div class="card-body d-flex align-items-center">
+                    <span class="stat-icon is-success"><i class="fa fa-check"></i></span>
+                    <div class="ml-3">
+                        <h5 class="mb-0">Completed orders</h5>
+                        <span class="text-muted-2">Dispensed drug orders</span>
+                    </div>
+                    <i class="fa fa-angle-right ml-auto quick-action-arrow"></i>
+                </div>
+            </a>
+        </div>
+    </div>
 
-
-
-</html>
+    @push('styles')
+        <style>
+            .quick-action-card { display: block; text-decoration: none; color: inherit; transition: transform .15s ease, box-shadow .15s ease; }
+            .quick-action-card:hover { transform: translateY(-2px); box-shadow: 0 .5rem 1.25rem rgba(22,160,133,.12); }
+            .quick-action-card .ml-3 { margin-left: 1rem; }
+            .quick-action-arrow { font-size: 1.4rem; color: var(--c-primary, #16a085); }
+        </style>
+    @endpush
+@endsection

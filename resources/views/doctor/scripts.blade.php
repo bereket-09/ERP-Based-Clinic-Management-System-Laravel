@@ -1,8 +1,8 @@
-<div class="sidebar-overlay" data-reff=""></div>
-<script src="assets/js/jquery-3.2.1.min.js"></script>
-<script src="assets/js/popper.min.js"></script>
-<script src="assets/js/bootstrap.min.js"></script>
-<script src="assets/js/jquery.slimscroll.js"></script>
-<script src="assets/js/Chart.bundle.js"></script>
-<script src="assets/js/chart.js"></script>
-<script src="assets/js/app.js"></script>
+{{--
+    Page-specific JS for the doctor module.
+
+    jQuery, Popper, Bootstrap, slimscroll, select2, Chart.js and app.js are all
+    loaded globally by layouts/portal.blade.php, so this file no longer needs to
+    re-declare them. Add only doctor-page-specific scripts here, inside an
+    @push('scripts') block, if a view ever needs them.
+--}}

@@ -17,7 +17,11 @@
         <script src="{{ mix('js/app.js') }}" defer></script>
     </head>
     <body>
-        <div class="font-sans text-gray-900 antialiased">
+        <div class="font-sans text-gray-900 antialiased"
+            style="min-height:100vh; background:
+                radial-gradient(900px 500px at 80% -10%, rgba(22,160,133,.18), transparent 60%),
+                radial-gradient(700px 500px at 0% 110%, rgba(22,160,133,.12), transparent 55%),
+                linear-gradient(180deg,#f4f7f9 0%,#eafaf4 100%);">
             {{ $slot }}
         </div>
     </body>

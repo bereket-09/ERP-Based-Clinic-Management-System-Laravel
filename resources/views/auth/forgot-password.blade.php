@@ -4,6 +4,10 @@
             <x-jet-authentication-card-logo />
         </x-slot>
 
+        <div class="mb-6 text-center">
+            <h2 class="text-2xl font-bold" style="color:#0e6e5c;">Reset your password</h2>
+        </div>
+
         <div class="mb-4 text-sm text-gray-600">
             {{ __('Forgot your password? No problem. Just let us know your email address and we will email you a password reset link that will allow you to choose a new one.') }}
         </div>
@@ -24,8 +28,11 @@
                 <x-jet-input id="email" class="block mt-1 w-full" type="email" name="email" :value="old('email')" required autofocus />
             </div>
 
-            <div class="flex items-center justify-end mt-4">
-                <x-jet-button>
+            <div class="flex items-center justify-end mt-6">
+                <x-jet-button
+                    style="background-color:#16a085; border:0;"
+                    onmouseover="this.style.backgroundColor='#138d75'"
+                    onmouseout="this.style.backgroundColor='#16a085'">
                     {{ __('Email Password Reset Link') }}
                 </x-jet-button>
             </div>
