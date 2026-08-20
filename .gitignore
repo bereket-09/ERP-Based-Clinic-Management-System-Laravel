@@ -11,3 +11,6 @@ npm-debug.log
 yarn-error.log
 /.idea
 /.vscode
+
+# Never commit real secrets
+.env
