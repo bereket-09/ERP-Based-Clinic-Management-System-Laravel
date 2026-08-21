@@ -1,16 +1,50 @@
-/node_modules
-/public/hot
-/public/storage
-/storage/*.key
-/vendor
-.env.backup
-.phpunit.result.cache
-Homestead.json
-Homestead.yaml
-npm-debug.log
-yarn-error.log
-/.idea
-/.vscode
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
-# Never commit real secrets
-.env
+# dependencies
+/node_modules
+/.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+
+# testing
+/coverage
+
+# next.js
+/.next/
+/out/
+
+# production
+/build
+
+# misc
+.DS_Store
+*.pem
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# env files (can opt-in for committing if needed)
+.env*
+
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+
+# keep the example env in the repo
+!.env.example
+
+# the previous Laravel app, preserved locally for reference (lives in git history on main)
+/legacy/
+
+# local editor/agent config
+/.claude/settings.local.json

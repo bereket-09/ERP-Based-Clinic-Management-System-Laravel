@@ -1,0 +1,834 @@
+// DDU Clinic — domain model.
+// One schema for the whole platform: identity/RBAC, the clinical spine (visits →
+// consultation → lab → pharmacy → records), HR & leave, store/assets, referrals,
+// wards/admissions, notifications, and a central FSM transition log.
+//
+// State fields are backed by enums; the XState-based FSM engine in src/server/fsm
+// is the single authority on which transitions are legal and who may trigger them.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Identity & RBAC
+// ─────────────────────────────────────────────────────────────────────────────
+
+enum Role {
+  MANAGER // admin / clinic head — oversees everything
+  DOCTOR
+  LAB_TECH
+  PHARMACIST
+  RECEPTIONIST
+  NURSE // triage + wards
+  HR
+  STORE_KEEPER
+}
+
+enum EmploymentStatus {
+  ACTIVE
+  ON_LEAVE // set automatically while an approved leave is active → blocks login
+  SUSPENDED
+  TERMINATED
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
+model User {
+  id               String           @id @default(cuid())
+  name             String
+  email            String           @unique
+  passwordHash     String
+  role             Role
+  employmentStatus EmploymentStatus @default(ACTIVE)
+
+  phone       String?
+  gender      Gender?
+  birthday    DateTime?
+  address     String?
+  nationality String?
+  speciality  String? // for doctors
+  title       String? // Dr., Sr., etc.
+  photoUrl    String?
+
+  departmentId String?
+  department   Department? @relation(fields: [departmentId], references: [id])
+
+  joinedAt  DateTime @default(now())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  isActive  Boolean  @default(true)
+
+  // relations
+  visitsAsDoctor   Visit[]           @relation("VisitDoctor")
+  visitsCreated    Visit[]           @relation("VisitCreatedBy")
+  vitalsTaken      Vitals[]
+  clinicalNotes    ClinicalNote[]
+  labOrders        LabOrder[]        @relation("LabOrderedBy")
+  labResults       LabOrderItem[]    @relation("LabResultedBy")
+  drugOrders       DrugOrder[]       @relation("DrugPrescribedBy")
+  dispensed        DrugOrderItem[]   @relation("DrugDispensedBy")
+  referralsMade    Referral[]        @relation("ReferredBy")
+  admissionsMade   Admission[]       @relation("AdmittedBy")
+  leaveRequests    LeaveRequest[]    @relation("LeaveEmployee")
+  leaveApprovals   LeaveRequest[]    @relation("LeaveApprover")
+  education        Education[]
+  experience       WorkExperience[]
+  assetAssignments AssetAssignment[]
+  stockRequests    StockRequest[]
+  stockMovements   StockMovement[]
+  notifications    Notification[]
+  transitions      StateTransition[]
+  auditLogs        AuditLog[]
+  issuedDocuments  IssuedDocument[]
+
+  @@index([role])
+  @@index([employmentStatus])
+}
+
+model Department {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  kind      String   @default("CLINICAL") // CLINICAL | ACADEMIC (student college) | ADMIN
+  code      String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  staff    User[]
+  patients Patient[]
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Patients (students first, plus staff/dependents/external)
+// ─────────────────────────────────────────────────────────────────────────────
+
+enum PatientType {
+  STUDENT
+  STAFF
+  DEPENDENT
+  EXTERNAL
+}
+
+enum PatientSource {
+  MANUAL
+  SIMS // fetched from the university Student Information System
+}
+
+model Patient {
+  id     String        @id @default(cuid())
+  mrn    String        @unique // clinic medical record number
+  type   PatientType   @default(STUDENT)
+  source PatientSource @default(MANUAL)
+
+  // identity
+  studentId   String?   @unique // university ID (for STUDENT); used for portal login
+  name        String
+  gender      Gender?
+  birthday    DateTime?
+  phone       String?
+  email       String?
+  address     String?
+  region      String?
+  nationality String?
+  bloodType   String?
+  photoUrl    String?
+
+  // student-specific / SIMS fields
+  departmentId          String?
+  department            Department? @relation(fields: [departmentId], references: [id])
+  college               String?
+  program               String?
+  yearOfStudy           String?
+  block                 String?
+  dorm                  String?
+  emergencyContactName  String?
+  emergencyContactPhone String?
+
+  // self-service portal access (student signs in with studentId + password)
+  portalPasswordHash String?
+  portalEnabled      Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  visits          Visit[]
+  admissions      Admission[]
+  referrals       Referral[]
+  issuedDocuments IssuedDocument[]
+
+  @@index([studentId])
+  @@index([name])
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Clinical spine: Visit (encounter) is the hub the FSM drives
+// ─────────────────────────────────────────────────────────────────────────────
+
+enum VisitState {
+  REGISTERED // reception created the visit
+  TRIAGE // nurse taking vitals
+  WAITING_FOR_DOCTOR // in the doctor queue
+  IN_CONSULTATION // doctor is seeing the patient
+  WAITING_FOR_LAB // labs ordered, awaiting results
+  LAB_RESULTS_READY // results back with the doctor for re-assessment
+  WAITING_FOR_PHARMACY // meds prescribed, awaiting dispensing
+  REFERRED // referred to an external facility
+  ADMITTED // admitted to a ward
+  COMPLETED
+  CANCELLED
+}
+
+enum Priority {
+  ROUTINE
+  URGENT
+  EMERGENCY
+}
+
+model Visit {
+  id       String     @id @default(cuid())
+  visitNo  String     @unique // human-friendly, e.g. V-2026-000123
+  state    VisitState @default(REGISTERED)
+  priority Priority   @default(ROUTINE)
+
+  patientId String
+  patient   Patient @relation(fields: [patientId], references: [id])
+
+  doctorId String?
+  doctor   User?   @relation("VisitDoctor", fields: [doctorId], references: [id])
+
+  createdById String?
+  createdBy   User?   @relation("VisitCreatedBy", fields: [createdById], references: [id])
+
+  chiefComplaint String?
+  symptoms       String?
+  diagnosis      String?
+  disease        String? // primary condition / ICD text
+  icdCode        String?
+  notes          String?
+
+  openedAt  DateTime  @default(now())
+  closedAt  DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  vitals          Vitals[]
+  clinicalNotes   ClinicalNote[]
+  labOrders       LabOrder[]
+  drugOrders      DrugOrder[]
+  referrals       Referral[]
+  admission       Admission?
+  issuedDocuments IssuedDocument[]
+
+  @@index([state])
+  @@index([doctorId])
+  @@index([patientId])
+}
+
+model Vitals {
+  id        String  @id @default(cuid())
+  visitId   String
+  visit     Visit   @relation(fields: [visitId], references: [id], onDelete: Cascade)
+  takenById String?
+  takenBy   User?   @relation(fields: [takenById], references: [id])
+
+  temperatureC Float?
+  pulseBpm     Int?
+  systolic     Int?
+  diastolic    Int?
+  respRate     Int?
+  spo2         Int?
+  weightKg     Float?
+  heightCm     Float?
+  notes        String?
+
+  createdAt DateTime @default(now())
+}
+
+model ClinicalNote {
+  id       String  @id @default(cuid())
+  visitId  String
+  visit    Visit   @relation(fields: [visitId], references: [id], onDelete: Cascade)
+  authorId String?
+  author   User?   @relation(fields: [authorId], references: [id])
+
+  kind      String   @default("PROGRESS") // PROGRESS | ASSESSMENT | PLAN
+  body      String
+  createdAt DateTime @default(now())
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Laboratory
+// ─────────────────────────────────────────────────────────────────────────────
+
+model LabTest {
+  id           String   @id @default(cuid())
+  name         String   @unique
+  category     String?
+  specimen     String? // Blood, Urine, ...
+  unit         String?
+  refRangeLow  Float?
+  refRangeHigh Float?
+  refRangeText String?
+  price        Float    @default(0)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+
+  items LabOrderItem[]
+}
+
+enum LabOrderState {
+  DRAFT
+  ORDERED
+  COLLECTING
+  IN_PROGRESS
+  RESULTS_READY
+  COMPLETED
+  CANCELLED
+}
+
+enum LabItemState {
+  PENDING
+  COLLECTED
+  IN_PROGRESS
+  RESULTED
+  VERIFIED
+  CANCELLED
+}
+
+enum ResultFlag {
+  NORMAL
+  LOW
+  HIGH
+  CRITICAL
+}
+
+model LabOrder {
+  id       String        @id @default(cuid())
+  orderNo  String        @unique
+  state    LabOrderState @default(ORDERED)
+  priority Priority      @default(ROUTINE)
+
+  visitId String
+  visit   Visit  @relation(fields: [visitId], references: [id], onDelete: Cascade)
+
+  orderedById String?
+  orderedBy   User?   @relation("LabOrderedBy", fields: [orderedById], references: [id])
+
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  items LabOrderItem[]
+
+  @@index([state])
+}
+
+model LabOrderItem {
+  id      String       @id @default(cuid())
+  orderId String
+  order   LabOrder     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  testId  String
+  test    LabTest      @relation(fields: [testId], references: [id])
+  state   LabItemState @default(PENDING)
+
+  resultValue  String?
+  resultFlag   ResultFlag?
+  resultNotes  String?
+  resultedById String?
+  resultedBy   User?       @relation("LabResultedBy", fields: [resultedById], references: [id])
+  resultedAt   DateTime?
+
+  createdAt DateTime @default(now())
+
+  @@index([state])
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Pharmacy — drug master + real batch/expiry stock + dispensing
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Supplier {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  phone     String?
+  email     String?
+  address   String?
+  createdAt DateTime @default(now())
+
+  batches MedicationBatch[]
+}
+
+model Medication {
+  id           String   @id @default(cuid())
+  name         String
+  form         String? // Tablet, Syrup, Injection, ...
+  strength     String? // 500mg, 250mg/5ml, ...
+  category     String?
+  unit         String   @default("unit")
+  reorderLevel Int      @default(20)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+
+  batches    MedicationBatch[]
+  orderItems DrugOrderItem[]
+
+  @@unique([name, strength, form])
+  @@index([name])
+}
+
+model MedicationBatch {
+  id           String     @id @default(cuid())
+  medicationId String
+  medication   Medication @relation(fields: [medicationId], references: [id], onDelete: Cascade)
+  supplierId   String?
+  supplier     Supplier?  @relation(fields: [supplierId], references: [id])
+
+  batchNo    String
+  expiryDate DateTime
+  quantity   Int      @default(0) // current quantity on hand for this lot
+  costPrice  Float    @default(0)
+  sellPrice  Float    @default(0)
+  receivedAt DateTime @default(now())
+
+  movements StockMovement[]
+
+  @@index([medicationId])
+  @@index([expiryDate])
+}
+
+enum StockMovementType {
+  RECEIVE
+  DISPENSE
+  ADJUST_UP
+  ADJUST_DOWN
+  EXPIRE
+  RETURN
+}
+
+model StockMovement {
+  id        String            @id @default(cuid())
+  batchId   String
+  batch     MedicationBatch   @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  type      StockMovementType
+  quantity  Int
+  reason    String?
+  refType   String? // DrugOrderItem, Adjustment, ...
+  refId     String?
+  byUserId  String?
+  byUser    User?             @relation(fields: [byUserId], references: [id])
+  createdAt DateTime          @default(now())
+
+  @@index([batchId])
+  @@index([type])
+}
+
+enum DrugOrderState {
+  DRAFT
+  ORDERED
+  PARTIALLY_DISPENSED
+  DISPENSED
+  CANCELLED
+}
+
+enum DrugItemState {
+  PENDING
+  DISPENSED
+  SUBSTITUTED
+  OUT_OF_STOCK
+  CANCELLED
+}
+
+model DrugOrder {
+  id      String         @id @default(cuid())
+  orderNo String         @unique
+  state   DrugOrderState @default(ORDERED)
+
+  visitId String
+  visit   Visit  @relation(fields: [visitId], references: [id], onDelete: Cascade)
+
+  prescribedById String?
+  prescribedBy   User?   @relation("DrugPrescribedBy", fields: [prescribedById], references: [id])
+
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  items DrugOrderItem[]
+
+  @@index([state])
+}
+
+model DrugOrderItem {
+  id           String        @id @default(cuid())
+  orderId      String
+  order        DrugOrder     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  medicationId String
+  medication   Medication    @relation(fields: [medicationId], references: [id])
+  state        DrugItemState @default(PENDING)
+
+  dose         String? // "1 tablet"
+  frequency    String? // "TID", "BID"
+  duration     String? // "5 days"
+  quantity     Int     @default(0)
+  instructions String?
+
+  dispensedQty  Int       @default(0)
+  dispensedById String?
+  dispensedBy   User?     @relation("DrugDispensedBy", fields: [dispensedById], references: [id])
+  dispensedAt   DateTime?
+
+  createdAt DateTime @default(now())
+
+  @@index([state])
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Referrals (external hospital) — printable
+// ─────────────────────────────────────────────────────────────────────────────
+
+enum ReferralState {
+  DRAFT
+  ISSUED
+  ACKNOWLEDGED
+  COMPLETED
+  CANCELLED
+}
+
+enum ReferralUrgency {
+  ROUTINE
+  URGENT
+  EMERGENCY
+}
+
+model Referral {
+  id         String          @id @default(cuid())
+  referralNo String          @unique
+  state      ReferralState   @default(DRAFT)
+  urgency    ReferralUrgency @default(ROUTINE)
+
+  visitId   String?
+  visit     Visit?  @relation(fields: [visitId], references: [id])
+  patientId String
+  patient   Patient @relation(fields: [patientId], references: [id])
+
+  referredById String?
+  referredBy   User?   @relation("ReferredBy", fields: [referredById], references: [id])
+
+  toFacility      String
+  toDepartment    String?
+  reason          String
+  clinicalSummary String?
+  investigations  String?
+  treatmentGiven  String?
+
+  issuedAt  DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@index([state])
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Wards / admissions
+// ─────────────────────────────────────────────────────────────────────────────
+
+enum BedStatus {
+  AVAILABLE
+  OCCUPIED
+  MAINTENANCE
+}
+
+enum AdmissionState {
+  ADMITTED
+  ON_WARD
+  TRANSFERRED
+  DISCHARGED
+  CANCELLED
+}
+
+model Ward {
+  id       String  @id @default(cuid())
+  name     String  @unique
+  gender   Gender?
+  capacity Int     @default(0)
+  isActive Boolean @default(true)
+
+  beds       Bed[]
+  admissions Admission[]
+}
+
+model Bed {
+  id     String    @id @default(cuid())
+  wardId String
+  ward   Ward      @relation(fields: [wardId], references: [id], onDelete: Cascade)
+  label  String
+  status BedStatus @default(AVAILABLE)
+
+  admissions Admission[]
+
+  @@unique([wardId, label])
+}
+
+model Admission {
+  id    String         @id @default(cuid())
+  admNo String         @unique
+  state AdmissionState @default(ADMITTED)
+
+  visitId   String? @unique
+  visit     Visit?  @relation(fields: [visitId], references: [id])
+  patientId String
+  patient   Patient @relation(fields: [patientId], references: [id])
+
+  wardId String?
+  ward   Ward?   @relation(fields: [wardId], references: [id])
+  bedId  String?
+  bed    Bed?    @relation(fields: [bedId], references: [id])
+
+  admittedById String?
+  admittedBy   User?   @relation("AdmittedBy", fields: [admittedById], references: [id])
+
+  reason         String?
+  dischargeNotes String?
+  admittedAt     DateTime  @default(now())
+  dischargedAt   DateTime?
+
+  @@index([state])
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// HR — education, experience, leave (leave drives the ON_LEAVE login lock)
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Education {
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  institution String
+  field       String?
+  level       String?
+  startDate   DateTime?
+  endDate     DateTime?
+}
+
+model WorkExperience {
+  id           String    @id @default(cuid())
+  userId       String
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization String
+  role         String?
+  startDate    DateTime?
+  endDate      DateTime?
+}
+
+enum LeaveType {
+  SICK
+  ANNUAL
+  MATERNITY
+  PATERNITY
+  UNPAID
+  BEREAVEMENT
+  STUDY
+}
+
+enum LeaveState {
+  DRAFT
+  SUBMITTED
+  APPROVED
+  REJECTED
+  ACTIVE // approved and currently within the leave window → employee is ON_LEAVE
+  RETURN_REQUESTED
+  RETURNED
+  CANCELLED
+}
+
+model LeaveRequest {
+  id    String     @id @default(cuid())
+  state LeaveState @default(SUBMITTED)
+  type  LeaveType
+
+  employeeId String
+  employee   User   @relation("LeaveEmployee", fields: [employeeId], references: [id], onDelete: Cascade)
+
+  approverId String?
+  approver   User?   @relation("LeaveApprover", fields: [approverId], references: [id])
+
+  startDate       DateTime
+  endDate         DateTime
+  reason          String?
+  decisionComment String?
+  returnedAt      DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([state])
+  @@index([employeeId])
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Store / property (non-medical assets + general supply requests)
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Asset {
+  id        String   @id @default(cuid())
+  tag       String   @unique // asset tag / inventory code
+  name      String
+  category  String?
+  serialNo  String?
+  quantity  Int      @default(1)
+  unitPrice Float    @default(0)
+  receiptNo String?
+  createdAt DateTime @default(now())
+
+  assignments AssetAssignment[]
+}
+
+enum AssetAssignmentState {
+  ASSIGNED
+  RETURNED
+  LOST
+  DAMAGED
+}
+
+model AssetAssignment {
+  id         String               @id @default(cuid())
+  assetId    String
+  asset      Asset                @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  userId     String
+  user       User                 @relation(fields: [userId], references: [id])
+  quantity   Int                  @default(1)
+  state      AssetAssignmentState @default(ASSIGNED)
+  assignedAt DateTime             @default(now())
+  returnedAt DateTime?
+
+  @@index([state])
+}
+
+enum StockRequestState {
+  SUBMITTED
+  APPROVED
+  REJECTED
+  FULFILLED
+}
+
+model StockRequest {
+  id          String            @id @default(cuid())
+  requesterId String
+  requester   User              @relation(fields: [requesterId], references: [id])
+  itemName    String
+  quantity    Int
+  reason      String?
+  state       StockRequestState @default(SUBMITTED)
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  @@index([state])
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Cross-cutting: issued documents, notifications, FSM log, audit log
+// ─────────────────────────────────────────────────────────────────────────────
+
+enum DocumentType {
+  SICK_LEAVE
+  PRESCRIPTION
+  REFERRAL
+  LAB_REPORT
+  ADMISSION_SUMMARY
+}
+
+model IssuedDocument {
+  id         String       @id @default(cuid())
+  docNo      String       @unique
+  type       DocumentType
+  visitId    String?
+  visit      Visit?       @relation(fields: [visitId], references: [id])
+  patientId  String?
+  patient    Patient?     @relation(fields: [patientId], references: [id])
+  issuedById String?
+  issuedBy   User?        @relation(fields: [issuedById], references: [id])
+
+  // sick-leave specifics (nullable for other doc types)
+  fromDate       DateTime?
+  toDate         DateTime?
+  days           Int?
+  recommendation String?
+
+  payload  Json? // snapshot of what was printed
+  issuedAt DateTime @default(now())
+
+  @@index([type])
+}
+
+enum NotificationType {
+  LAB_ORDER_NEW
+  LAB_RESULTS_READY
+  DRUG_ORDER_NEW
+  DRUG_DISPENSED
+  VISIT_COMPLETED
+  REFERRAL_ISSUED
+  ADMISSION
+  LEAVE_SUBMITTED
+  LEAVE_DECISION
+  STOCK_LOW
+  GENERIC
+}
+
+model Notification {
+  id            String           @id @default(cuid())
+  type          NotificationType @default(GENERIC)
+  title         String
+  body          String?
+  link          String?
+  // target: a specific user, and/or a whole role (broadcast)
+  recipientId   String?
+  recipient     User?            @relation(fields: [recipientId], references: [id], onDelete: Cascade)
+  recipientRole Role?
+  readAt        DateTime?
+  meta          Json?
+  createdAt     DateTime         @default(now())
+
+  @@index([recipientId, readAt])
+  @@index([recipientRole, readAt])
+}
+
+// Central, generic log of every FSM transition across the platform.
+model StateTransition {
+  id         String   @id @default(cuid())
+  entityType String // "Visit", "LabOrder", "DrugOrder", "LeaveRequest", ...
+  entityId   String
+  event      String
+  fromState  String
+  toState    String
+  actorId    String?
+  actor      User?    @relation(fields: [actorId], references: [id])
+  note       String?
+  meta       Json?
+  createdAt  DateTime @default(now())
+
+  @@index([entityType, entityId])
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  actorId    String?
+  actor      User?    @relation(fields: [actorId], references: [id])
+  action     String
+  entityType String?
+  entityId   String?
+  ip         String?
+  meta       Json?
+  createdAt  DateTime @default(now())
+
+  @@index([actorId])
+  @@index([entityType, entityId])
+}

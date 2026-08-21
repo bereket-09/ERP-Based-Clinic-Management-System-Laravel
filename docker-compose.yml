@@ -1,0 +1,24 @@
+# DDU Clinic — local/on-prem infrastructure.
+# Dev usage:  docker compose up -d db      (Postgres on host port 5544)
+# The app itself runs with `npm run dev` (or `docker compose up app` in prod).
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: ddu-clinic-pg
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: clinic
+      POSTGRES_PASSWORD: clinic_dev_pw
+      POSTGRES_DB: ddu_clinic
+    ports:
+      - "5544:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U clinic -d ddu_clinic"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  pgdata:
