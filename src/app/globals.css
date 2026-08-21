@@ -4,31 +4,40 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 /* ─────────────────────────────────────────────────────────────────────────
-   Design tokens — brand green #16a085, refined into a full semantic system.
+   Design tokens — Dire Dawa University identity: deep academic BLUE primary,
+   warm GOLD accent. Every colour is a CSS variable so the whole product can be
+   re-themed (white-labelled) at runtime from admin Appearance settings.
    ───────────────────────────────────────────────────────────────────────── */
 :root {
-  --background: #f3f6f5;
-  --foreground: #0f1f1b;
+  --background: #f3f6fb;
+  --foreground: #0e1a2f;
   --card: #ffffff;
-  --card-foreground: #0f1f1b;
+  --card-foreground: #0e1a2f;
   --popover: #ffffff;
-  --popover-foreground: #0f1f1b;
+  --popover-foreground: #0e1a2f;
 
-  --muted: #eaf0ee;
-  --muted-foreground: #5b6b66;
-  --border: #dde5e2;
-  --input: #dde5e2;
-  --ring: #16a085;
+  --muted: #e9eef6;
+  --muted-foreground: #566379;
+  --border: #dbe2ee;
+  --input: #dbe2ee;
+  --ring: #1a56b0;
 
-  --primary: #16a085;
-  --primary-hover: #12876f;
+  --primary: #1a56b0;
+  --primary-hover: #14468f;
   --primary-foreground: #ffffff;
 
-  --secondary: #eaf0ee;
-  --secondary-foreground: #16352d;
+  --secondary: #e9eef6;
+  --secondary-foreground: #16305a;
 
-  --accent: #e2f4ef;
-  --accent-foreground: #0d6b58;
+  --accent: #e5eefb;
+  --accent-foreground: #14468f;
+
+  /* secondary brand — gold */
+  --gold: #e0a112;
+  --gold-hover: #c78d08;
+  --gold-foreground: #33260a;
+  --gold-soft: #fbf1d6;
+  --gold-soft-foreground: #8a6708;
 
   --destructive: #e11d48;
   --destructive-foreground: #ffffff;
@@ -39,52 +48,58 @@
   --info: #0ea5e9;
   --info-foreground: #ffffff;
 
-  /* brand scale (badges, charts, tints) */
-  --brand-50: #e8f8f3;
-  --brand-100: #c9efe4;
-  --brand-200: #97e0cd;
-  --brand-300: #5fccb1;
-  --brand-400: #2fb598;
-  --brand-500: #16a085;
-  --brand-600: #12876f;
-  --brand-700: #0f6b58;
-  --brand-800: #0d5445;
-  --brand-900: #0b3f35;
+  /* brand blue scale (charts, tints, badges) */
+  --brand-50: #eaf1fb;
+  --brand-100: #d2e1f6;
+  --brand-200: #a7c3ec;
+  --brand-300: #79a2e0;
+  --brand-400: #4076c9;
+  --brand-500: #1a56b0;
+  --brand-600: #14468f;
+  --brand-700: #103a75;
+  --brand-800: #0d2e5c;
+  --brand-900: #0b2247;
 
-  /* deep-green sidebar */
-  --sidebar: #0c2b25;
-  --sidebar-foreground: #cfe6df;
-  --sidebar-muted: #8fb3aa;
+  /* deep-navy sidebar with a gold active accent */
+  --sidebar: #0c1f3d;
+  --sidebar-foreground: #c8d6ec;
+  --sidebar-muted: #7f92b4;
   --sidebar-accent: rgba(255, 255, 255, 0.07);
-  --sidebar-active: #16a085;
+  --sidebar-active: #e0a112;
   --sidebar-border: rgba(255, 255, 255, 0.08);
 
   --radius: 0.7rem;
 }
 
 .dark {
-  --background: #0a1211;
-  --foreground: #e4ede9;
-  --card: #101a18;
-  --card-foreground: #e4ede9;
-  --popover: #101a18;
-  --popover-foreground: #e4ede9;
+  --background: #0a1120;
+  --foreground: #e2e9f4;
+  --card: #101a2f;
+  --card-foreground: #e2e9f4;
+  --popover: #101a2f;
+  --popover-foreground: #e2e9f4;
 
-  --muted: #17211f;
-  --muted-foreground: #93a7a0;
-  --border: #223029;
-  --input: #263630;
-  --ring: #2fb598;
+  --muted: #16223c;
+  --muted-foreground: #8fa1bf;
+  --border: #22314f;
+  --input: #26375a;
+  --ring: #4d86e6;
 
-  --primary: #1cbd9c;
-  --primary-hover: #2fb598;
-  --primary-foreground: #05201a;
+  --primary: #3f82e6;
+  --primary-hover: #5a97f0;
+  --primary-foreground: #04122b;
 
-  --secondary: #17211f;
-  --secondary-foreground: #d6e5df;
+  --secondary: #16223c;
+  --secondary-foreground: #d3e0f3;
 
-  --accent: #14322b;
-  --accent-foreground: #7fe3cb;
+  --accent: #152949;
+  --accent-foreground: #9cc2ff;
+
+  --gold: #f0b52c;
+  --gold-hover: #ffc94d;
+  --gold-foreground: #221800;
+  --gold-soft: #2a2413;
+  --gold-soft-foreground: #f3ca6b;
 
   --destructive: #fb5c7d;
   --destructive-foreground: #2a0810;
@@ -92,16 +107,16 @@
   --warning: #f5a524;
   --info: #38bdf8;
 
-  --sidebar: #071a16;
-  --sidebar-foreground: #bcd8d0;
-  --sidebar-muted: #6f938a;
+  --sidebar: #060f1f;
+  --sidebar-foreground: #bccbe4;
+  --sidebar-muted: #6f83a6;
   --sidebar-accent: rgba(255, 255, 255, 0.05);
-  --sidebar-active: #16a085;
+  --sidebar-active: #f0b52c;
   --sidebar-border: rgba(255, 255, 255, 0.06);
 }
 
 /* ─────────────────────────────────────────────────────────────────────────
-   Map tokens → Tailwind utilities (bg-primary, text-muted-foreground, …).
+   Map tokens → Tailwind utilities.
    ───────────────────────────────────────────────────────────────────────── */
 @theme inline {
   --color-background: var(--background);
@@ -123,6 +138,12 @@
   --color-secondary-foreground: var(--secondary-foreground);
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
+
+  --color-gold: var(--gold);
+  --color-gold-hover: var(--gold-hover);
+  --color-gold-foreground: var(--gold-foreground);
+  --color-gold-soft: var(--gold-soft);
+  --color-gold-soft-foreground: var(--gold-soft-foreground);
 
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
@@ -179,7 +200,6 @@
   ::selection {
     background: color-mix(in oklab, var(--primary) 25%, transparent);
   }
-  /* nicer scrollbars */
   * {
     scrollbar-width: thin;
     scrollbar-color: var(--border) transparent;
@@ -190,17 +210,23 @@
   .text-balance {
     text-wrap: balance;
   }
-  /* subtle brand gradient used on hero / auth panels */
+  /* deep-navy hero with a warm gold glow — used on auth & landing */
   .bg-brand-gradient {
     background:
-      radial-gradient(1200px 600px at 15% -10%, rgba(47, 181, 152, 0.35), transparent 55%),
-      radial-gradient(900px 500px at 110% 20%, rgba(16, 107, 88, 0.35), transparent 50%),
-      linear-gradient(160deg, #0c2b25 0%, #0f4a3d 55%, #12876f 100%);
+      radial-gradient(1200px 620px at 12% -10%, rgba(64, 118, 201, 0.45), transparent 55%),
+      radial-gradient(820px 460px at 108% 8%, rgba(224, 161, 18, 0.22), transparent 52%),
+      linear-gradient(160deg, #0b1c39 0%, #12315f 52%, #1a56b0 100%);
+  }
+  .bg-gold-gradient {
+    background: linear-gradient(140deg, #e0a112 0%, #f0b52c 100%);
   }
   .card-shadow {
     box-shadow:
-      0 1px 2px rgba(15, 31, 27, 0.04),
-      0 1px 3px rgba(15, 31, 27, 0.06);
+      0 1px 2px rgba(14, 26, 47, 0.04),
+      0 1px 3px rgba(14, 26, 47, 0.07);
+  }
+  .ring-gold {
+    box-shadow: 0 0 0 3px color-mix(in oklab, var(--gold) 35%, transparent);
   }
 }
 

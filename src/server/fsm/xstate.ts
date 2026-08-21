@@ -7,10 +7,12 @@ import type { MachineDef } from "./engine";
  * hints XState doesn't model) and mirror it here so the statechart can be
  * visualized (Stately) and cross-checked in tests.
  */
+type MirrorStateNode = { type: "final" } | { on: Record<string, string> };
+
 export function toXStateMachine<S extends string, E extends string>(
   def: MachineDef<S, E>,
 ) {
-  const states: Record<string, unknown> = {};
+  const states: Record<string, MirrorStateNode> = {};
 
   for (const state of def.states) {
     if (def.final.includes(state)) {
@@ -25,9 +27,6 @@ export function toXStateMachine<S extends string, E extends string>(
     states[state] = { on };
   }
 
-  return createMachine({
-    id: def.entity,
-    initial: def.initial,
-    states,
-  });
+  const config = { id: def.entity, initial: def.initial, states };
+  return createMachine(config as unknown as Parameters<typeof createMachine>[0]);
 }

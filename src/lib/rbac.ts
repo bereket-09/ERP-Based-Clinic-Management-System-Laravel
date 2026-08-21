@@ -44,5 +44,5 @@ export type Section = keyof typeof SECTION_ACCESS;
 export function canAccess(section: Section, role: Role | null | undefined): boolean {
   const allowed = SECTION_ACCESS[section];
   if (allowed === null) return !!role;
-  return !!role && allowed.includes(role);
+  return !!role && (allowed as readonly Role[]).includes(role);
 }
