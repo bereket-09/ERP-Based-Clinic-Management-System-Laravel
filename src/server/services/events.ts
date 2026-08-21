@@ -52,7 +52,9 @@ export async function notifyUser(
   });
 }
 
-/** Write a general audit-log entry. */
+/** Write a general audit-log entry. Best-effort: a logging failure must never
+ *  break the primary operation. If the actorId can't be resolved (e.g. a session
+ *  that predates a DB reseed → FK violation), fall back to a system entry. */
 export async function audit(
   actorId: string | null,
   action: string,
@@ -60,7 +62,13 @@ export async function audit(
   entityId?: string,
   meta?: Prisma.InputJsonValue,
 ) {
-  await db.auditLog.create({
-    data: { actorId, action, entityType, entityId, meta },
-  });
+  try {
+    await db.auditLog.create({ data: { actorId, action, entityType, entityId, meta } });
+  } catch {
+    try {
+      await db.auditLog.create({ data: { actorId: null, action, entityType, entityId, meta } });
+    } catch (err) {
+      console.warn("[audit] failed to record", action, err);
+    }
+  }
 }

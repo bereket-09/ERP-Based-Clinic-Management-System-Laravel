@@ -256,13 +256,16 @@ function UserMenu({
           </Link>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <form action={signOutAction}>
-          <button type="submit" className="w-full">
-            <DropdownMenuItem className="text-destructive focus:text-destructive">
-              <LogOut className="size-4" /> Sign out
-            </DropdownMenuItem>
-          </button>
-        </form>
+        <DropdownMenuItem
+          className="text-destructive focus:text-destructive"
+          onSelect={(e) => {
+            // Fire the sign-out RPC before Radix closes/unmounts the menu.
+            e.preventDefault();
+            void signOutAction();
+          }}
+        >
+          <LogOut className="size-4" /> Sign out
+        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );
