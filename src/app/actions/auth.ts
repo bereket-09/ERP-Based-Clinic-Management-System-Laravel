@@ -2,13 +2,15 @@
 import { AuthError } from "next-auth";
 import { signIn, signOut } from "@/auth";
 
-export type LoginState = { error?: string };
+export type LoginState = { error?: string; mfaRequired?: boolean };
 
 export async function staffLogin(_prev: LoginState, formData: FormData): Promise<LoginState> {
+  const token = String(formData.get("token") ?? "").trim();
   try {
     await signIn("staff", {
       email: String(formData.get("email") ?? "").trim(),
       password: String(formData.get("password") ?? ""),
+      token,
       redirectTo: "/dashboard",
     });
     return {};
@@ -16,6 +18,9 @@ export async function staffLogin(_prev: LoginState, formData: FormData): Promise
     if (err instanceof AuthError) {
       const code = (err as AuthError & { code?: string }).code;
       if (err.type === "CredentialsSignin") {
+        if (code === "mfa_required") return { mfaRequired: true };
+        if (code === "mfa_invalid")
+          return { mfaRequired: true, error: "That authentication code didn't match. Try again." };
         return {
           error:
             code === "blocked"

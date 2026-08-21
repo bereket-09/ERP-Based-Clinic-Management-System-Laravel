@@ -60,6 +60,12 @@ model User {
   title       String? // Dr., Sr., etc.
   photoUrl    String?
 
+  // account & security
+  username      String?   @unique // optional friendly handle, editable by the user
+  mfaEnabled    Boolean   @default(false) // TOTP authenticator second factor
+  totpSecret    String? // base32 TOTP secret, present once enrolled
+  mfaEnrolledAt DateTime?
+
   departmentId String?
   department   Department? @relation(fields: [departmentId], references: [id])
 
@@ -97,9 +103,41 @@ model User {
   attendance       Attendance[]
   shifts           Shift[]
   leaveBalances    LeaveBalance[]
+  recoveryCodes    RecoveryCode[]
+  authenticators   Authenticator[]
 
   @@index([role])
   @@index([employmentStatus])
+}
+
+/// One-time MFA recovery/backup code (stored hashed). Consumed on use.
+model RecoveryCode {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  codeHash  String
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId])
+}
+
+/// A registered WebAuthn passkey (Touch ID / security key) for passwordless login.
+model Authenticator {
+  id                  String    @id @default(cuid())
+  userId              String
+  user                User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  credentialId        String    @unique // base64url credential id
+  publicKey           String // base64url COSE public key
+  counter             BigInt    @default(0)
+  transports          String? // comma-separated hints (usb, ble, internal, hybrid)
+  deviceType          String? // singleDevice | multiDevice
+  backedUp            Boolean   @default(false)
+  label               String? // user-facing name ("MacBook Touch ID")
+  createdAt           DateTime  @default(now())
+  lastUsedAt          DateTime?
+
+  @@index([userId])
 }
 
 model Department {
