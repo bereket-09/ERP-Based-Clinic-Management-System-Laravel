@@ -9,6 +9,7 @@ import {
   ClipboardList,
   Stethoscope,
   UserRound,
+  Printer,
 } from "lucide-react";
 import { requireRole } from "@/server/session";
 import { db } from "@/server/db";
@@ -59,9 +60,19 @@ export default async function AdmissionDetail({ params }: { params: Promise<{ id
 
   return (
     <div className="space-y-6">
-      <Link href="/wards" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
-        <ArrowLeft className="size-4" /> Bed board
-      </Link>
+      <div className="flex items-center justify-between gap-3">
+        <Link href="/wards" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
+          <ArrowLeft className="size-4" /> Bed board
+        </Link>
+        <a
+          href={`/print/discharge/${admission.id}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-1.5 text-sm font-medium hover:bg-muted"
+        >
+          <Printer className="size-4" /> Discharge summary
+        </a>
+      </div>
 
       {/* Patient banner */}
       <Card>

@@ -50,6 +50,8 @@ const registerSchema = z.object({
 
 export interface RegisterState {
   error?: string;
+  /** Set when a matching record already exists — surfaced so the desk can open it instead of creating a duplicate. */
+  duplicate?: { id: string; name: string; mrn: string; studentId: string | null };
 }
 
 export async function registerAndVisit(_prev: RegisterState, formData: FormData): Promise<RegisterState> {
@@ -58,19 +60,45 @@ export async function registerAndVisit(_prev: RegisterState, formData: FormData)
   if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Invalid data" };
   const d = parsed.data;
 
-  const patient = await registerPatient({
-    studentId: d.studentId || undefined,
-    name: d.name,
-    gender: d.gender as Gender | undefined,
-    phone: d.phone,
-    college: d.college,
-    program: d.program,
-    yearOfStudy: d.yearOfStudy,
-    bloodType: d.bloodType,
-    emergencyContactName: d.emergencyContactName,
-    emergencyContactPhone: d.emergencyContactPhone,
-    fromSims: d.fromSims,
-  });
+  // Dedupe guard: never create a second card for a student who is already on file.
+  // studentId + mrn are unique in the schema, so this also prevents a hard 500 on
+  // concurrent registrations from two reception desks.
+  if (d.studentId) {
+    const existing = await db.patient.findUnique({ where: { studentId: d.studentId } });
+    if (existing) {
+      return {
+        duplicate: { id: existing.id, name: existing.name, mrn: existing.mrn, studentId: existing.studentId },
+      };
+    }
+  }
+
+  let patient: Awaited<ReturnType<typeof registerPatient>>;
+  try {
+    patient = await registerPatient({
+      studentId: d.studentId || undefined,
+      name: d.name,
+      gender: d.gender as Gender | undefined,
+      phone: d.phone,
+      college: d.college,
+      program: d.program,
+      yearOfStudy: d.yearOfStudy,
+      bloodType: d.bloodType,
+      emergencyContactName: d.emergencyContactName,
+      emergencyContactPhone: d.emergencyContactPhone,
+      fromSims: d.fromSims,
+    });
+  } catch (err) {
+    // Unique-constraint race (studentId/mrn taken between the check and the insert).
+    if (typeof err === "object" && err !== null && (err as { code?: string }).code === "P2002" && d.studentId) {
+      const existing = await db.patient.findUnique({ where: { studentId: d.studentId } });
+      if (existing) {
+        return {
+          duplicate: { id: existing.id, name: existing.name, mrn: existing.mrn, studentId: existing.studentId },
+        };
+      }
+    }
+    return { error: "Could not register patient. Please try again." };
+  }
 
   await createVisitAndQueue(
     patient.id,

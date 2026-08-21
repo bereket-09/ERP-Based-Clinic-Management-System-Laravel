@@ -10,8 +10,16 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { StatusBadge } from "@/components/status-badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { canFire, leaveMachine } from "@/server/fsm";
 import { AccountForm, PasswordForm } from "./account-form";
 import { SecuritySection, type PasskeyView } from "./security-section";
+import {
+  LeaveSection,
+  type LeaveBalanceView,
+  type LeaveRequestView,
+} from "./leave-section";
+
+const MS_PER_DAY = 86_400_000;
 
 export const metadata = { title: "My profile" };
 
@@ -28,6 +36,38 @@ export default async function ProfilePage() {
     },
   });
   if (!user) return null;
+
+  // ── Leave tab data (own requests + current-year balances) ────────────────
+  const currentYear = new Date().getFullYear();
+  const [leaveRows, balanceRows] = await Promise.all([
+    db.leaveRequest.findMany({
+      where: { employeeId: actor.id },
+      orderBy: { createdAt: "desc" },
+    }),
+    db.leaveBalance.findMany({
+      where: { userId: actor.id, year: currentYear },
+      orderBy: { type: "asc" },
+    }),
+  ]);
+
+  const leaveRequests: LeaveRequestView[] = leaveRows.map((l) => ({
+    id: l.id,
+    type: l.type,
+    startDate: l.startDate.toISOString(),
+    endDate: l.endDate.toISOString(),
+    days:
+      Math.round((l.endDate.getTime() - l.startDate.getTime()) / MS_PER_DAY) + 1,
+    state: l.state,
+    createdAt: l.createdAt.toISOString(),
+    canCancel: canFire(leaveMachine, l.state, "cancel", { role: actor.role }),
+  }));
+
+  const leaveBalances: LeaveBalanceView[] = balanceRows.map((b) => ({
+    type: b.type,
+    entitled: b.entitled,
+    used: b.used,
+    remaining: b.entitled - b.used,
+  }));
 
   const passkeys: PasskeyView[] = user.authenticators.map((a) => ({
     id: a.id,
@@ -47,6 +87,7 @@ export default async function ProfilePage() {
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="account">Account</TabsTrigger>
           <TabsTrigger value="security">Security</TabsTrigger>
+          <TabsTrigger value="leave">Leave</TabsTrigger>
         </TabsList>
 
         {/* ── Overview ─────────────────────────────────────────────── */}
@@ -129,6 +170,15 @@ export default async function ProfilePage() {
           <div className="mx-auto max-w-2xl">
             <SecuritySection mfaEnabled={user.mfaEnabled} passkeys={passkeys} />
           </div>
+        </TabsContent>
+
+        {/* ── Leave ────────────────────────────────────────────────── */}
+        <TabsContent value="leave">
+          <LeaveSection
+            requests={leaveRequests}
+            balances={leaveBalances}
+            year={currentYear}
+          />
         </TabsContent>
       </Tabs>
     </div>

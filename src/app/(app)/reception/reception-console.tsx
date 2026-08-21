@@ -1,7 +1,8 @@
 "use client";
 import * as React from "react";
+import Link from "next/link";
 import { useActionState } from "react";
-import { Loader2, Search, UserCheck, UserPlus, Sparkles } from "lucide-react";
+import { Loader2, Search, UserCheck, UserPlus, Sparkles, AlertCircle, ArrowRight } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -158,6 +159,24 @@ function RegisterForm({
         <VisitFields doctors={doctors} />
       </div>
 
+      {state.duplicate && (
+        <div className="flex flex-col gap-2 rounded-lg border border-warning/40 bg-warning/10 p-3 text-sm sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-start gap-2">
+            <AlertCircle className="mt-0.5 size-4 shrink-0 text-warning" />
+            <span>
+              A record already exists for this student ID —{" "}
+              <span className="font-medium">{state.duplicate.name}</span>{" "}
+              <span className="font-mono tabular-nums text-muted-foreground">({state.duplicate.mrn})</span>. No duplicate
+              was created.
+            </span>
+          </div>
+          <Button asChild variant="outline" size="sm" className="shrink-0">
+            <Link href={`/patients/${state.duplicate.id}`}>
+              Open record <ArrowRight />
+            </Link>
+          </Button>
+        </div>
+      )}
       {state.error && <p className="text-sm text-destructive">{state.error}</p>}
       <Button type="submit" variant="primary" disabled={pending}>
         {pending ? <Loader2 className="animate-spin" /> : <UserPlus />} Register & start visit

@@ -140,6 +140,28 @@ export async function issueDocument(
   return { ...doc, verifyCode, signature };
 }
 
+/**
+ * Idempotently get (or, on first print, create + sign) the single document of a
+ * given type for a visit — e.g. the VISIT_SUMMARY reception hands the student on
+ * the way out. Re-printing returns the same signed record + verify code.
+ */
+export async function getOrIssueForVisit(
+  type: DocumentType,
+  opts: { visitId: string; patientId: string; payload?: Prisma.InputJsonValue },
+  actor: Actor,
+) {
+  const existing = await db.issuedDocument.findFirst({ where: { visitId: opts.visitId, type } });
+  if (existing) return existing;
+
+  const docNo = await nextDocNo();
+  const doc = await db.issuedDocument.create({
+    data: { docNo, type, visitId: opts.visitId, patientId: opts.patientId, issuedById: actor.id, payload: opts.payload },
+  });
+  const { verifyCode, signature } = await signIssuedDocument(doc);
+  await audit(actor.id, "document.issue", "IssuedDocument", doc.id, { type, docNo });
+  return { ...doc, verifyCode, signature };
+}
+
 /** Load an issued document with its relations. */
 export async function getDocument(id: string) {
   return db.issuedDocument.findUnique({

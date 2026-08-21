@@ -1,6 +1,7 @@
 import "server-only";
 import { revalidatePath } from "next/cache";
-import type { Gender, Prisma } from "@prisma/client";
+import type { Gender } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 import { db } from "@/server/db";
 import type { Actor } from "@/server/session";
 import { makeCode } from "./ids";
@@ -48,32 +49,46 @@ export async function findPatients(q: string | undefined, take = 30) {
 }
 
 export async function registerPatient(input: RegisterPatientInput) {
-  const seq = (await db.patient.count()) + 1001;
-  const patient = await db.patient.create({
-    data: {
-      mrn: `MRN-${seq}`,
-      type: "STUDENT",
-      source: input.fromSims ? "SIMS" : "MANUAL",
-      studentId: input.studentId?.trim() || null,
-      name: input.name,
-      gender: input.gender,
-      birthday: input.birthday,
-      phone: input.phone,
-      email: input.email,
-      college: input.college,
-      program: input.program,
-      yearOfStudy: input.yearOfStudy,
-      block: input.block,
-      dorm: input.dorm,
-      bloodType: input.bloodType,
-      region: input.region,
-      nationality: input.nationality ?? "Ethiopian",
-      emergencyContactName: input.emergencyContactName,
-      emergencyContactPhone: input.emergencyContactPhone,
-    },
-  });
-  revalidatePath("/patients");
-  return patient;
+  const data = {
+    type: "STUDENT" as const,
+    source: (input.fromSims ? "SIMS" : "MANUAL") as "SIMS" | "MANUAL",
+    studentId: input.studentId?.trim() || null,
+    name: input.name,
+    gender: input.gender,
+    birthday: input.birthday,
+    phone: input.phone,
+    email: input.email,
+    college: input.college,
+    program: input.program,
+    yearOfStudy: input.yearOfStudy,
+    block: input.block,
+    dorm: input.dorm,
+    bloodType: input.bloodType,
+    region: input.region,
+    nationality: input.nationality ?? "Ethiopian",
+    emergencyContactName: input.emergencyContactName,
+    emergencyContactPhone: input.emergencyContactPhone,
+  };
+
+  // Concurrency-safe MRN allocation: derive a starting number, then retry the
+  // next number on the rare unique collision when two desks register at once.
+  const base = (await db.patient.count()) + 1001;
+  for (let i = 0; i < 25; i++) {
+    try {
+      const patient = await db.patient.create({ data: { ...data, mrn: `MRN-${base + i}` } });
+      revalidatePath("/patients");
+      return patient;
+    } catch (e) {
+      // Only retry when the clash is specifically on the MRN; rethrow otherwise
+      // (e.g. a duplicate studentId, which reception pre-checks).
+      const isMrnClash =
+        e instanceof Prisma.PrismaClientKnownRequestError &&
+        e.code === "P2002" &&
+        String((e.meta as { target?: string[] } | undefined)?.target ?? "").includes("mrn");
+      if (!isMrnClash) throw e;
+    }
+  }
+  throw new Error("Could not allocate a unique MRN — please retry.");
 }
 
 /**

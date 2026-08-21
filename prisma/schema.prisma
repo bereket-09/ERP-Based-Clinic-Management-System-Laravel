@@ -801,6 +801,7 @@ enum DocumentType {
   REFERRAL
   LAB_REPORT
   ADMISSION_SUMMARY
+  VISIT_SUMMARY
 }
 
 model IssuedDocument {

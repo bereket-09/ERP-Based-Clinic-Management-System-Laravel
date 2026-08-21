@@ -247,6 +247,11 @@ export default async function VisitWorkspace({ params }: { params: Promise<{ id:
               <CardTitle>Documents</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
+              <Button asChild variant="outline" className="w-full justify-start">
+                <a href={`/print/visit-summary/${visit.id}`} target="_blank" rel="noopener noreferrer">
+                  <Printer className="size-4" /> Print visit summary
+                </a>
+              </Button>
               {actor.role === "DOCTOR" && (
                 <Button asChild variant="outline" className="w-full justify-start">
                   <Link href={`/documents/issue/${visit.id}`}>

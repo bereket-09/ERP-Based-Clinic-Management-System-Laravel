@@ -8,6 +8,7 @@ import { LogoMark } from "@/components/brand";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { humanize } from "@/lib/utils";
+import { formatVerifyCode } from "@/server/services/document-signing";
 import { PrintButton } from "./print-button";
 
 export const metadata = { title: "Document" };
@@ -127,14 +128,25 @@ export default async function PortalDocumentPage({
           <div className="text-xs leading-relaxed text-muted-foreground">
             <div className="font-medium text-foreground">Authenticity &amp; verification</div>
             <p className="mt-0.5">
-              This is an official document issued by DDU Clinic Center. To confirm it is genuine,
-              quote the verification code below to the clinic. Any recipient can request
-              confirmation against clinic records.
+              This is an official document issued by DDU Clinic Center. Anyone can confirm it is
+              genuine and unaltered — no login required — using the code below.
             </p>
-            <div className="mt-2 inline-flex items-center gap-2 rounded-md border border-border bg-card px-2.5 py-1">
-              <span className="uppercase tracking-wide">Verification code</span>
-              <span className="font-mono text-sm font-semibold text-foreground">{doc.docNo}</span>
-            </div>
+            {doc.verifyCode ? (
+              <div className="mt-2 flex flex-wrap items-center gap-2">
+                <span className="inline-flex items-center gap-2 rounded-md border border-border bg-card px-2.5 py-1">
+                  <span className="uppercase tracking-wide">Code</span>
+                  <span className="font-mono text-sm font-semibold text-foreground">{formatVerifyCode(doc.verifyCode)}</span>
+                </span>
+                <Link href={`/verify/${doc.verifyCode}`} className="font-medium text-primary hover:underline no-print">
+                  Verify online →
+                </Link>
+              </div>
+            ) : (
+              <div className="mt-2 inline-flex items-center gap-2 rounded-md border border-border bg-card px-2.5 py-1">
+                <span className="uppercase tracking-wide">Reference</span>
+                <span className="font-mono text-sm font-semibold text-foreground">{doc.docNo}</span>
+              </div>
+            )}
           </div>
         </div>
 
