@@ -1,26 +1,215 @@
 @import "tailwindcss";
 
+/* Enable class-based dark mode (`<html class="dark">`). */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ─────────────────────────────────────────────────────────────────────────
+   Design tokens — brand green #16a085, refined into a full semantic system.
+   ───────────────────────────────────────────────────────────────────────── */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #f3f6f5;
+  --foreground: #0f1f1b;
+  --card: #ffffff;
+  --card-foreground: #0f1f1b;
+  --popover: #ffffff;
+  --popover-foreground: #0f1f1b;
+
+  --muted: #eaf0ee;
+  --muted-foreground: #5b6b66;
+  --border: #dde5e2;
+  --input: #dde5e2;
+  --ring: #16a085;
+
+  --primary: #16a085;
+  --primary-hover: #12876f;
+  --primary-foreground: #ffffff;
+
+  --secondary: #eaf0ee;
+  --secondary-foreground: #16352d;
+
+  --accent: #e2f4ef;
+  --accent-foreground: #0d6b58;
+
+  --destructive: #e11d48;
+  --destructive-foreground: #ffffff;
+  --success: #16a34a;
+  --success-foreground: #ffffff;
+  --warning: #d97706;
+  --warning-foreground: #ffffff;
+  --info: #0ea5e9;
+  --info-foreground: #ffffff;
+
+  /* brand scale (badges, charts, tints) */
+  --brand-50: #e8f8f3;
+  --brand-100: #c9efe4;
+  --brand-200: #97e0cd;
+  --brand-300: #5fccb1;
+  --brand-400: #2fb598;
+  --brand-500: #16a085;
+  --brand-600: #12876f;
+  --brand-700: #0f6b58;
+  --brand-800: #0d5445;
+  --brand-900: #0b3f35;
+
+  /* deep-green sidebar */
+  --sidebar: #0c2b25;
+  --sidebar-foreground: #cfe6df;
+  --sidebar-muted: #8fb3aa;
+  --sidebar-accent: rgba(255, 255, 255, 0.07);
+  --sidebar-active: #16a085;
+  --sidebar-border: rgba(255, 255, 255, 0.08);
+
+  --radius: 0.7rem;
 }
 
+.dark {
+  --background: #0a1211;
+  --foreground: #e4ede9;
+  --card: #101a18;
+  --card-foreground: #e4ede9;
+  --popover: #101a18;
+  --popover-foreground: #e4ede9;
+
+  --muted: #17211f;
+  --muted-foreground: #93a7a0;
+  --border: #223029;
+  --input: #263630;
+  --ring: #2fb598;
+
+  --primary: #1cbd9c;
+  --primary-hover: #2fb598;
+  --primary-foreground: #05201a;
+
+  --secondary: #17211f;
+  --secondary-foreground: #d6e5df;
+
+  --accent: #14322b;
+  --accent-foreground: #7fe3cb;
+
+  --destructive: #fb5c7d;
+  --destructive-foreground: #2a0810;
+  --success: #34d576;
+  --warning: #f5a524;
+  --info: #38bdf8;
+
+  --sidebar: #071a16;
+  --sidebar-foreground: #bcd8d0;
+  --sidebar-muted: #6f938a;
+  --sidebar-accent: rgba(255, 255, 255, 0.05);
+  --sidebar-active: #16a085;
+  --sidebar-border: rgba(255, 255, 255, 0.06);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   Map tokens → Tailwind utilities (bg-primary, text-muted-foreground, …).
+   ───────────────────────────────────────────────────────────────────────── */
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-info: var(--info);
+  --color-info-foreground: var(--info-foreground);
+
+  --color-brand-50: var(--brand-50);
+  --color-brand-100: var(--brand-100);
+  --color-brand-200: var(--brand-200);
+  --color-brand-300: var(--brand-300);
+  --color-brand-400: var(--brand-400);
+  --color-brand-500: var(--brand-500);
+  --color-brand-600: var(--brand-600);
+  --color-brand-700: var(--brand-700);
+  --color-brand-800: var(--brand-800);
+  --color-brand-900: var(--brand-900);
+
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-muted: var(--sidebar-muted);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-active: var(--sidebar-active);
+  --color-sidebar-border: var(--sidebar-border);
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+/* ─────────────────────────────────────────────────────────────────────────
+   Base styles
+   ───────────────────────────────────────────────────────────────────────── */
+@layer base {
+  * {
+    border-color: var(--border);
+  }
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    background: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+  ::selection {
+    background: color-mix(in oklab, var(--primary) 25%, transparent);
+  }
+  /* nicer scrollbars */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+  /* subtle brand gradient used on hero / auth panels */
+  .bg-brand-gradient {
+    background:
+      radial-gradient(1200px 600px at 15% -10%, rgba(47, 181, 152, 0.35), transparent 55%),
+      radial-gradient(900px 500px at 110% 20%, rgba(16, 107, 88, 0.35), transparent 50%),
+      linear-gradient(160deg, #0c2b25 0%, #0f4a3d 55%, #12876f 100%);
+  }
+  .card-shadow {
+    box-shadow:
+      0 1px 2px rgba(15, 31, 27, 0.04),
+      0 1px 3px rgba(15, 31, 27, 0.06);
+  }
+}
+
+/* Print: hide app chrome, show only the printable document. */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  body {
+    background: #fff;
+  }
 }
