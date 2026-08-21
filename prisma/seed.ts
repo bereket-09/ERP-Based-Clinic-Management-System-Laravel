@@ -9,6 +9,7 @@
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import { addDays, subDays, subYears } from "date-fns";
+import { FEATURES } from "../src/lib/features";
 
 const db = new PrismaClient();
 
@@ -19,6 +20,18 @@ async function main() {
   console.log("🌱  Seeding DDU Clinic demo data…");
 
   // Wipe (FK-safe order) — demo only.
+  await db.payment.deleteMany();
+  await db.invoiceItem.deleteMany();
+  await db.invoice.deleteMany();
+  await db.appointment.deleteMany();
+  await db.allergy.deleteMany();
+  await db.problemListItem.deleteMany();
+  await db.immunization.deleteMany();
+  await db.attendance.deleteMany();
+  await db.shift.deleteMany();
+  await db.leaveBalance.deleteMany();
+  await db.purchaseOrderItem.deleteMany();
+  await db.purchaseOrder.deleteMany();
   await db.stateTransition.deleteMany();
   await db.notification.deleteMany();
   await db.auditLog.deleteMany();
@@ -295,6 +308,83 @@ async function main() {
       { type: "DRUG_ORDER_NEW", title: "New prescription", body: "2 items for Bethlehem Assefa", recipientRole: "PHARMACIST", link: "/pharmacy" },
       { type: "LEAVE_SUBMITTED", title: "Leave request", body: "Sr. Loza Fikru requested annual leave", recipientRole: "HR", link: "/hr/leave" },
     ],
+  });
+
+  // ── Feature flags: sync the registry into the DB ─────────────────────────
+  for (const def of FEATURES) {
+    await db.featureFlag.upsert({
+      where: { key: def.key },
+      create: { key: def.key, name: def.name, description: def.description, category: def.category, enabled: def.defaultEnabled },
+      update: {},
+    });
+  }
+
+  // ── Appointments ─────────────────────────────────────────────────────────
+  let apptSeq = 1;
+  for (const a of [
+    { p: patients[0], when: new Date(), reason: "Follow-up review" },
+    { p: patients[1], when: new Date(), reason: "Lab result review" },
+    { p: patients[5], when: addDays(new Date(), 1), reason: "General consultation" },
+  ]) {
+    await db.appointment.create({
+      data: { apptNo: `APT-2026-${String(apptSeq++).padStart(5, "0")}`, patientId: a.p.id, providerId: doctorId, scheduledFor: a.when, reason: a.reason },
+    });
+  }
+
+  // ── Invoice for the completed visit ──────────────────────────────────────
+  const completed = await db.visit.findFirst({ where: { state: "COMPLETED" } });
+  if (completed) {
+    const inv = await db.invoice.create({
+      data: {
+        invoiceNo: "INV-2026-00001", state: "PAID", patientId: completed.patientId, visitId: completed.id, createdById: receptionId,
+        total: 50, paid: 50,
+        items: { create: [{ description: "Consultation fee", category: "CONSULTATION", quantity: 1, unitPrice: 50, amount: 50 }] },
+      },
+    });
+    await db.payment.create({ data: { invoiceId: inv.id, amount: 50, method: "CASH", receivedById: receptionId } });
+  }
+
+  // ── Clinical compliance for the first student ────────────────────────────
+  await db.allergy.create({ data: { patientId: patients[0].id, substance: "Penicillin", reaction: "Skin rash", severity: "MODERATE" } });
+  await db.problemListItem.create({ data: { patientId: patients[0].id, problem: "Asthma", icdCode: "J45", status: "ACTIVE" } });
+  await db.immunization.create({ data: { patientId: patients[0].id, vaccine: "Hepatitis B", dose: "3rd dose" } });
+
+  // ── Attendance today + leave balances ────────────────────────────────────
+  const midnight = new Date(); midnight.setHours(0, 0, 0, 0);
+  const year = new Date().getFullYear();
+  for (const uid of Object.values(users)) {
+    await db.attendance.create({ data: { userId: uid, date: midnight, status: "PRESENT", clockIn: new Date() } });
+    await db.leaveBalance.createMany({
+      data: [
+        { userId: uid, type: "ANNUAL", year, entitled: 20, used: 0 },
+        { userId: uid, type: "SICK", year, entitled: 10, used: 0 },
+      ],
+      skipDuplicates: true,
+    });
+  }
+
+  // ── Assets, a stock request, and a purchase order ────────────────────────
+  for (const a of [
+    { tag: "AST-001", name: "Dell Latitude Laptop", category: "IT Equipment", unitPrice: 45000 },
+    { tag: "AST-002", name: "Digital BP Monitor", category: "Medical Equipment", unitPrice: 3500 },
+    { tag: "AST-003", name: "Wheelchair", category: "Medical Equipment", unitPrice: 8000 },
+    { tag: "AST-004", name: "Office Desk", category: "Furniture", unitPrice: 4000 },
+  ]) {
+    await db.asset.create({ data: a });
+  }
+  const laptop = await db.asset.findUnique({ where: { tag: "AST-001" } });
+  if (laptop) await db.assetAssignment.create({ data: { assetId: laptop.id, userId: users.DOCTOR, quantity: 1, state: "ASSIGNED" } });
+
+  await db.stockRequest.create({ data: { requesterId: users.NURSE, itemName: "Examination gloves (box)", quantity: 20, reason: "Ward supplies running low", state: "SUBMITTED" } });
+
+  await db.purchaseOrder.create({
+    data: {
+      poNo: "PO-2026-00001", state: "ORDERED", supplierId: sup1.id, total: 12000, note: "Monthly medicine restock",
+      items: { create: [
+        { itemName: "Paracetamol 500mg (box of 1000)", quantity: 100, unitPrice: 60 },
+        { itemName: "Amoxicillin 500mg (box of 500)", quantity: 100, unitPrice: 60 },
+      ] },
+    },
   });
 
   console.log("✅  Seed complete.");

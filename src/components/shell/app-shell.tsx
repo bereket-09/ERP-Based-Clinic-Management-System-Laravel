@@ -20,6 +20,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { signOutAction } from "@/app/actions/auth";
 import { humanize } from "@/lib/utils";
+import { ThemeToggle } from "./theme-toggle";
+import { CommandPalette } from "./command-palette";
 
 export interface ShellNotification {
   id: string;
@@ -70,7 +72,12 @@ export function AppShell({ user, notifications, unreadCount, features, children 
             <Menu className="size-5" />
           </button>
 
+          {features.includes("ux.command_palette") && (
+            <CommandPalette role={user.role} features={features} />
+          )}
+
           <div className="ml-auto flex items-center gap-1.5">
+            {features.includes("ux.dark_mode") && <ThemeToggle />}
             <NotificationBell notifications={notifications} unreadCount={unreadCount} />
             <UserMenu name={user.name} role={user.role} email={user.email} />
           </div>

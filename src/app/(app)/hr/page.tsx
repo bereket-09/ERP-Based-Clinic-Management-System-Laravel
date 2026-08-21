@@ -1,5 +1,14 @@
 import Link from "next/link";
-import { CalendarClock, UserCheck, Users, PlaneTakeoff, ArrowRight } from "lucide-react";
+import {
+  CalendarClock,
+  UserCheck,
+  Users,
+  PlaneTakeoff,
+  ArrowRight,
+  CalendarCheck,
+  CalendarRange,
+  Scale,
+} from "lucide-react";
 import { requireRole } from "@/server/session";
 import { db } from "@/server/db";
 import { roleLabel } from "@/lib/rbac";
@@ -49,6 +58,58 @@ export default async function HrDashboardPage() {
         <StatCard label="Staff on leave" value={onLeave} icon={PlaneTakeoff} tone="info" href="/hr/leave?state=ACTIVE" />
         <StatCard label="Active staff" value={activeStaff} icon={UserCheck} tone="success" href="/staff" />
         <StatCard label="Roles in use" value={roles.length} icon={Users} tone="brand" href="/staff" />
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {[
+          {
+            href: "/hr/attendance",
+            title: "Attendance",
+            description: "Mark daily attendance and clock staff in and out.",
+            icon: CalendarCheck,
+          },
+          {
+            href: "/hr/roster",
+            title: "Shift roster",
+            description: "Plan the weekly shift schedule across the clinic.",
+            icon: CalendarRange,
+          },
+          {
+            href: "/hr/leave-balances",
+            title: "Leave balances",
+            description: "Manage entitlements and track leave usage per staff.",
+            icon: Scale,
+          },
+          {
+            href: "/hr/leave",
+            title: "Leave requests",
+            description: "Review, approve and track staff leave requests.",
+            icon: CalendarClock,
+          },
+          {
+            href: "/staff",
+            title: "Staff directory",
+            description: "Browse staff profiles, roles and departments.",
+            icon: Users,
+          },
+        ].map((item) => (
+          <Link key={item.href} href={item.href} className="block">
+            <Card className="h-full p-5 transition-shadow hover:shadow-md">
+              <div className="flex items-start gap-4">
+                <span className="flex size-11 items-center justify-center rounded-xl bg-accent text-accent-foreground">
+                  <item.icon className="size-5" />
+                </span>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-1 font-medium text-foreground">
+                    {item.title}
+                    <ArrowRight className="size-4 text-muted-foreground" />
+                  </div>
+                  <p className="mt-0.5 text-sm text-muted-foreground">{item.description}</p>
+                </div>
+              </div>
+            </Card>
+          </Link>
+        ))}
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">

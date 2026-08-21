@@ -132,6 +132,9 @@ export async function getPatientDetail(id: string) {
       },
       issuedDocuments: { orderBy: { issuedAt: "desc" } },
       referrals: { orderBy: { createdAt: "desc" } },
+      allergies: { orderBy: { createdAt: "desc" } },
+      problems: { orderBy: [{ status: "asc" }, { createdAt: "desc" }] },
+      immunizations: { orderBy: { givenAt: "desc" } },
     },
   });
 }

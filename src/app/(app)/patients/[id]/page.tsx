@@ -12,6 +12,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { StatusBadge } from "@/components/status-badge";
 import { EmptyState } from "@/components/empty-state";
 import { LabItemsList, DrugItemsList } from "@/components/clinical/order-details";
+import { Compliance } from "./compliance";
 
 function age(d?: Date | null) {
   if (!d) return null;
@@ -51,6 +52,13 @@ export default async function PatientDetailPage({ params }: { params: Promise<{ 
             </Link>
           </Button>
         }
+      />
+
+      <Compliance
+        patientId={patient.id}
+        allergies={patient.allergies.map((a) => ({ id: a.id, substance: a.substance, reaction: a.reaction, severity: a.severity }))}
+        problems={patient.problems.map((p) => ({ id: p.id, problem: p.problem, icdCode: p.icdCode, status: p.status, createdAt: p.createdAt.toISOString() }))}
+        immunizations={patient.immunizations.map((i) => ({ id: i.id, vaccine: i.vaccine, dose: i.dose, givenAt: i.givenAt.toISOString() }))}
       />
 
       <div className="grid gap-6 lg:grid-cols-3">
