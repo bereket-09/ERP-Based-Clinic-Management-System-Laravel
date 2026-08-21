@@ -9,6 +9,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { StatusBadge } from "@/components/status-badge";
 import { EmptyState } from "@/components/empty-state";
+import { Button } from "@/components/ui/button";
+import { BarChart3 } from "lucide-react";
 
 export const metadata = { title: "Consultations" };
 
@@ -63,7 +65,18 @@ export default async function DoctorQueuePage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Consultations" description="Your patient queue — pick up waiting patients and review lab results." icon={Stethoscope} />
+      <PageHeader
+        title="Consultations"
+        description="Your patient queue — pick up waiting patients and review lab results."
+        icon={Stethoscope}
+        actions={
+          <Button asChild variant="outline">
+            <Link href="/doctor/caseload">
+              <BarChart3 className="size-4" /> My caseload
+            </Link>
+          </Button>
+        }
+      />
 
       <Tabs defaultValue="waiting">
         <TabsList>

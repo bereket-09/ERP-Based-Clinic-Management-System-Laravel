@@ -25,6 +25,7 @@ export const STUDENT_HOME = "/portal";
  */
 export const SECTION_ACCESS = {
   dashboard: null,
+  queue: null,
   patients: ["RECEPTIONIST", "NURSE", "DOCTOR", "MANAGER"],
   reception: ["RECEPTIONIST", "MANAGER"],
   triage: ["NURSE", "MANAGER"],

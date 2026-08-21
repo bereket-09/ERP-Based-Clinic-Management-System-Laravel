@@ -15,6 +15,7 @@ import {
   CalendarClock,
   Receipt,
   Settings,
+  Tv,
   type LucideIcon,
 } from "lucide-react";
 import type { Section } from "@/lib/rbac";
@@ -47,6 +48,7 @@ export const NAV: NavGroup[] = [
       { label: "Pharmacy", href: "/pharmacy", icon: Pill, section: "pharmacy", feature: "module.pharmacy" },
       { label: "Wards", href: "/wards", icon: BedDouble, section: "wards", feature: "module.wards" },
       { label: "Referrals", href: "/referrals", icon: Send, section: "referrals", feature: "module.referrals" },
+      { label: "Queue board", href: "/queue", icon: Tv, section: "queue" },
     ],
   },
   {
