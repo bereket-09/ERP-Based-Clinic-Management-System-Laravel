@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { format } from "date-fns";
-import { ArrowLeft, CalendarPlus, FileText, Stethoscope } from "lucide-react";
+import { ArrowLeft, CalendarPlus, FileText, Stethoscope, LineChart } from "lucide-react";
 import { requireStaff } from "@/server/session";
 import { getPatientDetail } from "@/server/services/patient";
 import { humanize, initials } from "@/lib/utils";
@@ -46,11 +46,18 @@ export default async function PatientDetailPage({ params }: { params: Promise<{ 
         title={patient.name}
         description={`${patient.mrn}${patient.studentId ? ` · ${patient.studentId}` : ""}`}
         actions={
-          <Button asChild variant="primary">
-            <Link href={`/reception?patient=${patient.id}`}>
-              <CalendarPlus className="size-4" /> New visit
-            </Link>
-          </Button>
+          <>
+            <Button asChild variant="outline">
+              <Link href={`/patients/${patient.id}/vitals`}>
+                <LineChart className="size-4" /> Vitals & trends
+              </Link>
+            </Button>
+            <Button asChild variant="primary">
+              <Link href={`/reception?patient=${patient.id}`}>
+                <CalendarPlus className="size-4" /> New visit
+              </Link>
+            </Button>
+          </>
         }
       />
 

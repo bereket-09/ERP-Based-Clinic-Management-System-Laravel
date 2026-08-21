@@ -228,14 +228,32 @@ async function main() {
   const receptionId = users.RECEPTIONIST;
 
   // 1) waiting for doctor
-  await db.visit.create({
+  const abelVisit = await db.visit.create({
     data: {
       visitNo: visitNo(), state: "WAITING_FOR_DOCTOR", priority: "ROUTINE",
       patientId: patients[0].id, doctorId, createdById: receptionId,
       chiefComplaint: "Fever and headache for 2 days",
-      vitals: { create: { takenById: users.NURSE, temperatureC: 38.4, pulseBpm: 92, systolic: 118, diastolic: 76, spo2: 98, weightKg: 64 } },
+      vitals: { create: { takenById: users.NURSE, temperatureC: 38.4, pulseBpm: 92, systolic: 118, diastolic: 76, spo2: 98, weightKg: 64, heightCm: 173 } },
     },
   });
+  // historical vitals so the trends page has a series
+  for (let i = 1; i <= 6; i++) {
+    await db.vitals.create({
+      data: {
+        visitId: abelVisit.id,
+        takenById: users.NURSE,
+        createdAt: subDays(new Date(), i * 9),
+        temperatureC: Math.round((36.6 + Math.sin(i) * 0.7) * 10) / 10,
+        pulseBpm: 70 + ((i * 3) % 12),
+        systolic: 116 + (i % 5),
+        diastolic: 74 + (i % 4),
+        respRate: 16 + (i % 3),
+        spo2: 97 + (i % 2),
+        weightKg: Math.round((63 + i * 0.4) * 10) / 10,
+        heightCm: 173,
+      },
+    });
+  }
 
   // 2) in consultation
   await db.visit.create({
