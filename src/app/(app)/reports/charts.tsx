@@ -15,9 +15,9 @@ import {
 } from "recharts";
 
 // Green brand palette — shared across every chart in this module.
-const BRAND = "#16a085";
-const BRAND_MID = "#2fb598";
-const BRAND_SOFT = "#97e0cd";
+const BRAND = "#1a56b0";
+const BRAND_MID = "#4076c9";
+const BRAND_SOFT = "#e0a112";
 const SERIES = [BRAND, BRAND_MID, BRAND_SOFT];
 
 const GRID = "var(--border)";

@@ -288,7 +288,7 @@ export default async function ReportsPage() {
             {drugData.length === 0 ? (
               <EmptyState title="No prescriptions" icon={Pill} />
             ) : (
-              <MiniBarChart data={drugData} color="#2fb598" />
+              <MiniBarChart data={drugData} color="#e0a112" />
             )}
           </CardContent>
         </Card>
