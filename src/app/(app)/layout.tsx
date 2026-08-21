@@ -1,9 +1,12 @@
 import { requireStaff } from "@/server/session";
 import { db } from "@/server/db";
 import { AppShell } from "@/components/shell/app-shell";
+import { enabledFeatureSet } from "@/server/services/settings";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const actor = await requireStaff();
+
+  const features = [...(await enabledFeatureSet(actor.role))];
 
   const notifications = await db.notification.findMany({
     where: {
@@ -29,6 +32,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         createdAt: n.createdAt.toISOString(),
       }))}
       unreadCount={notifications.length}
+      features={features}
     >
       {children}
     </AppShell>

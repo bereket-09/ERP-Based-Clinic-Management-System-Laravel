@@ -33,10 +33,13 @@ export const SECTION_ACCESS = {
   pharmacy: ["PHARMACIST", "MANAGER"],
   wards: ["NURSE", "DOCTOR", "MANAGER"],
   referrals: ["DOCTOR", "RECEPTIONIST", "MANAGER"],
+  appointments: ["RECEPTIONIST", "DOCTOR", "NURSE", "MANAGER"],
+  billing: ["RECEPTIONIST", "MANAGER"],
   hr: ["HR", "MANAGER"],
   store: ["STORE_KEEPER", "MANAGER"],
   reports: ["MANAGER"],
   staff: ["MANAGER", "HR"],
+  settings: ["MANAGER"],
 } satisfies Record<string, Role[] | null>;
 
 export type Section = keyof typeof SECTION_ACCESS;

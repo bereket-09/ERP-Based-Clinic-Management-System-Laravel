@@ -34,10 +34,11 @@ interface Props {
   user: { name: string; email?: string | null; role: Role | null };
   notifications: ShellNotification[];
   unreadCount: number;
+  features: string[];
   children: React.ReactNode;
 }
 
-export function AppShell({ user, notifications, unreadCount, children }: Props) {
+export function AppShell({ user, notifications, unreadCount, features, children }: Props) {
   const [mobileOpen, setMobileOpen] = React.useState(false);
   const pathname = usePathname();
 
@@ -48,13 +49,13 @@ export function AppShell({ user, notifications, unreadCount, children }: Props) 
   return (
     <div className="min-h-dvh bg-background">
       {/* Sidebar (desktop) */}
-      <Sidebar role={user.role} className="hidden lg:flex" />
+      <Sidebar role={user.role} features={features} className="hidden lg:flex" />
 
       {/* Sidebar (mobile drawer) */}
       {mobileOpen && (
         <div className="fixed inset-0 z-50 lg:hidden">
           <div className="absolute inset-0 bg-black/50" onClick={() => setMobileOpen(false)} />
-          <Sidebar role={user.role} className="absolute inset-y-0 left-0 flex" onClose={() => setMobileOpen(false)} />
+          <Sidebar role={user.role} features={features} className="absolute inset-y-0 left-0 flex" onClose={() => setMobileOpen(false)} />
         </div>
       )}
 
@@ -83,14 +84,17 @@ export function AppShell({ user, notifications, unreadCount, children }: Props) 
 
 function Sidebar({
   role,
+  features,
   className,
   onClose,
 }: {
   role: Role | null;
+  features: string[];
   className?: string;
   onClose?: () => void;
 }) {
   const pathname = usePathname();
+  const featureSet = new Set(features);
   return (
     <aside
       className={cn(
@@ -116,7 +120,9 @@ function Sidebar({
 
       <nav className="flex-1 overflow-y-auto px-3 pb-6">
         {NAV.map((group) => {
-          const items = group.items.filter((i) => canAccess(i.section, role));
+          const items = group.items.filter(
+            (i) => canAccess(i.section, role) && (!i.feature || featureSet.has(i.feature)),
+          );
           if (items.length === 0) return null;
           return (
             <div key={group.label} className="mb-5">

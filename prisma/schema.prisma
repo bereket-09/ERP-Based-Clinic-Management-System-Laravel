@@ -832,3 +832,36 @@ model AuditLog {
   @@index([actorId])
   @@index([entityType, entityId])
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Platform configuration: feature toggles + settings (white-label / per-tenant)
+// ─────────────────────────────────────────────────────────────────────────────
+
+enum FeatureCategory {
+  RELEASE // ship-in-progress work dark
+  OPS // operational kill-switches
+  PERMISSION // entitle by role / plan
+  EXPERIMENT // A/B or pilot
+  TENANT // per-institution capability (white-label)
+}
+
+model FeatureFlag {
+  id           String          @id @default(cuid())
+  key          String          @unique
+  name         String
+  description  String?
+  category     FeatureCategory @default(RELEASE)
+  enabled      Boolean         @default(true)
+  rolloutRoles Role[] // for PERMISSION toggles; empty means everyone
+  updatedById  String?
+  updatedAt    DateTime        @updatedAt
+
+  @@index([category])
+}
+
+model Setting {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     Json
+  updatedAt DateTime @updatedAt
+}
