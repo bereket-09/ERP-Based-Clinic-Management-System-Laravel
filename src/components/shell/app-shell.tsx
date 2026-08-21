@@ -211,6 +211,12 @@ function NotificationBell({
             </DropdownMenuItem>
           ))
         )}
+        <DropdownMenuSeparator />
+        <DropdownMenuItem asChild>
+          <Link href="/notifications" className="justify-center text-sm font-medium text-primary">
+            View all →
+          </Link>
+        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );

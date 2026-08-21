@@ -99,7 +99,7 @@ async function main() {
         email: s.email,
         passwordHash: staffHash,
         role: s.role,
-        title: s.title || null,
+        title: null, // names already carry the honorific
         speciality: s.spec,
         departmentId: s.dept,
         phone: "+2519" + Math.floor(10000000 + Math.random() * 89999999),
@@ -350,7 +350,7 @@ async function main() {
   await db.immunization.create({ data: { patientId: patients[0].id, vaccine: "Hepatitis B", dose: "3rd dose" } });
 
   // ── Attendance today + leave balances ────────────────────────────────────
-  const midnight = new Date(); midnight.setHours(0, 0, 0, 0);
+  const midnight = new Date(); midnight.setUTCHours(0, 0, 0, 0);
   const year = new Date().getFullYear();
   for (const uid of Object.values(users)) {
     await db.attendance.create({ data: { userId: uid, date: midnight, status: "PRESENT", clockIn: new Date() } });
