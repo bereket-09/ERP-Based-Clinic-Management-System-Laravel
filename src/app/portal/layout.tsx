@@ -10,8 +10,9 @@ export const metadata = { title: "Student Health Portal" };
 const NAV = [
   { href: "/portal", label: "Overview" },
   { href: "/portal/history", label: "My Visits" },
+  { href: "/portal/health", label: "My Health" },
   { href: "/portal/documents", label: "Documents" },
-  { href: "/portal/requests", label: "Request Sick Leave" },
+  { href: "/portal/appointments", label: "Appointments" },
 ];
 
 export default async function PortalLayout({ children }: { children: React.ReactNode }) {

@@ -13,8 +13,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { StatusBadge } from "@/components/status-badge";
 import { EmptyState } from "@/components/empty-state";
 import { cn, humanize } from "@/lib/utils";
+import { ReorderBar } from "@/components/pharmacy/pharmacy-bits";
 import { ReceiveStockDialog } from "../inventory-dialogs";
-import { expiryClass, expiryLabel, formatDate } from "../expiry";
+import { expiryClass, expiryLabel, formatDate, isExpired, isExpiringSoon } from "../expiry";
 import { AdjustStockDialog, ToggleActiveButton, type BatchOption } from "./detail-client";
 
 export const metadata = { title: "Medicine detail" };
@@ -63,12 +64,19 @@ export default async function MedicationDetailPage({
         }
       />
 
-      <div className="flex flex-wrap items-center gap-2">
-        <Badge variant={badge.variant}>{badge.label}</Badge>
-        {!med.isActive && <Badge variant="danger">Inactive</Badge>}
-        <span className="text-sm text-muted-foreground">
-          Reorder level {med.reorderLevel} {med.unit}
-        </span>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-wrap items-center gap-2">
+          <Badge variant={badge.variant}>{badge.label}</Badge>
+          {!med.isActive && <Badge variant="danger">Inactive</Badge>}
+          {med.batches.some((b) => b.quantity > 0 && isExpired(b.expiryDate)) && (
+            <Badge variant="danger">Expired batches</Badge>
+          )}
+        </div>
+        <ReorderBar
+          onHand={med.onHand}
+          reorderLevel={med.reorderLevel}
+          className="w-full max-w-xs"
+        />
       </div>
 
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
@@ -117,8 +125,16 @@ export default async function MedicationDetailPage({
                   <TableRow key={b.id} className={b.quantity === 0 ? "opacity-60" : undefined}>
                     <TableCell className="font-mono text-xs">{b.batchNo}</TableCell>
                     <TableCell className={cn("tabular-nums", expiryClass(b.expiryDate))}>
-                      {formatDate(b.expiryDate)}
-                      <span className="ml-1 text-xs font-normal opacity-80">({expiryLabel(b.expiryDate)})</span>
+                      <span className="inline-flex items-center gap-1.5">
+                        {formatDate(b.expiryDate)}
+                        {b.quantity > 0 && isExpired(b.expiryDate) ? (
+                          <Badge variant="danger">Expired</Badge>
+                        ) : b.quantity > 0 && isExpiringSoon(b.expiryDate) ? (
+                          <Badge variant="warning">{expiryLabel(b.expiryDate)}</Badge>
+                        ) : (
+                          <span className="text-xs font-normal opacity-80">({expiryLabel(b.expiryDate)})</span>
+                        )}
+                      </span>
                     </TableCell>
                     <TableCell className="text-right font-medium tabular-nums">{b.quantity}</TableCell>
                     <TableCell className="text-right tabular-nums text-muted-foreground">

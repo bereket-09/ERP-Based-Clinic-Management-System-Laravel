@@ -1,13 +1,14 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { format } from "date-fns";
-import { ArrowLeft, Activity, HeartPulse, Stethoscope } from "lucide-react";
+import { ArrowLeft, Activity, HeartPulse, Stethoscope, FileText, FileCheck2, Printer } from "lucide-react";
 import { requireStaff } from "@/server/session";
 import { db } from "@/server/db";
 import { visitAffordances } from "@/server/services/visit";
 import { humanize } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/status-badge";
 import { LabItemsList, DrugItemsList } from "@/components/clinical/order-details";
 import { EmptyState } from "@/components/empty-state";
@@ -56,7 +57,20 @@ export default async function VisitWorkspace({ params }: { params: Promise<{ id:
   ]);
 
   const [labTests, medications, wards, doctors] = catalog;
+  const issuedDocs = await db.issuedDocument.findMany({
+    where: { visitId: visit.id },
+    orderBy: { issuedAt: "desc" },
+  });
   const affordances = visitAffordances(visit.state, actor);
+
+  // Which print route serves each document type.
+  const printPath: Partial<Record<string, string>> = {
+    SICK_LEAVE: `/print/sick-leave`,
+    PRESCRIPTION: `/print/prescription`,
+    LAB_REPORT: `/print/lab`,
+    REFERRAL: `/print/referral`,
+    RECEIPT: `/print/receipt`,
+  };
   const latest = visit.vitals[0];
   const a = age(visit.patient.birthday);
 
@@ -223,6 +237,47 @@ export default async function VisitWorkspace({ params }: { params: Promise<{ id:
                 affordances={affordances}
                 catalog={{ labTests, medications, wards, doctors }}
               />
+            </CardContent>
+          </Card>
+
+          {/* Documents — issue & reprint verifiable certificates */}
+          <Card>
+            <CardHeader className="flex-row items-center gap-2">
+              <FileText className="size-4 text-primary" />
+              <CardTitle>Documents</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {actor.role === "DOCTOR" && (
+                <Button asChild variant="outline" className="w-full justify-start">
+                  <Link href={`/documents/issue/${visit.id}`}>
+                    <FileCheck2 className="size-4" /> Issue sick leave / rest certificate
+                  </Link>
+                </Button>
+              )}
+
+              {issuedDocs.length === 0 ? (
+                <p className="text-xs text-muted-foreground">
+                  No documents issued for this visit yet.
+                </p>
+              ) : (
+                <ul className="space-y-2">
+                  {issuedDocs.map((d) => (
+                    <li key={d.id} className="flex items-center justify-between gap-2 rounded-lg border border-border p-2.5">
+                      <div className="min-w-0">
+                        <div className="truncate text-sm font-medium">{humanize(d.type)}</div>
+                        <div className="font-mono text-[11px] text-muted-foreground">{d.docNo}</div>
+                      </div>
+                      {printPath[d.type] && (
+                        <Button asChild variant="ghost" size="sm">
+                          <a href={`${printPath[d.type]}/${d.id}`} target="_blank" rel="noopener noreferrer">
+                            <Printer className="size-4" /> Print
+                          </a>
+                        </Button>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              )}
             </CardContent>
           </Card>
         </div>

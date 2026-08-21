@@ -586,7 +586,12 @@ model Referral {
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
 
+  // Tamper-evident verification (signed lazily on first print).
+  verifyCode String? @unique
+  signature  String?
+
   @@index([state])
+  @@index([verifyCode])
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -816,9 +821,19 @@ model IssuedDocument {
   recommendation String?
 
   payload  Json? // snapshot of what was printed
+
+  // Tamper-evident verification: a short public code (printed as a QR + text) and
+  // an HMAC-SHA256 signature over the immutable payload. /verify/<code> recomputes
+  // the HMAC and confirms authenticity.
+  verifyCode String?   @unique
+  signature  String? // hex HMAC-SHA256
+  revokedAt  DateTime?
+  revokedById String?
+
   issuedAt DateTime @default(now())
 
   @@index([type])
+  @@index([verifyCode])
 }
 
 enum NotificationType {

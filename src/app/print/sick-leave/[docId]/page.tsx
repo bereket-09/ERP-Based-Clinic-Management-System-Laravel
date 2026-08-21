@@ -3,7 +3,9 @@ import { format } from "date-fns";
 import { requireStaff } from "@/server/session";
 import { getBranding } from "@/server/services/settings";
 import { getDocument } from "@/server/services/documents";
-import { Letterhead, Field, SignatureLine, DocFooter } from "@/components/print/letterhead";
+import { qrDataUrl, verifyUrlFor } from "@/server/services/qr";
+import { formatVerifyCode } from "@/server/services/document-signing";
+import { Letterhead, Field, SignatureLine, DocFooter, VerifySeal } from "@/components/print/letterhead";
 
 function age(d?: Date | null) {
   if (!d) return null;
@@ -26,6 +28,14 @@ export default async function SickLeavePrint({ params }: { params: Promise<{ doc
   const diagnosis = payload.diagnosis ?? doc.visit?.diagnosis ?? null;
   const doctorName = doc.issuedBy
     ? `${doc.issuedBy.title ? doc.issuedBy.title + " " : ""}${doc.issuedBy.name}`
+    : null;
+
+  const seal = doc.verifyCode
+    ? {
+        code: formatVerifyCode(doc.verifyCode),
+        url: await verifyUrlFor(doc.verifyCode),
+        qr: await qrDataUrl(await verifyUrlFor(doc.verifyCode), 160),
+      }
     : null;
 
   return (
@@ -88,6 +98,12 @@ export default async function SickLeavePrint({ params }: { params: Promise<{ doc
           label="Attending physician"
         />
       </div>
+
+      {seal && (
+        <div className="pt-2">
+          <VerifySeal qrDataUrl={seal.qr} code={seal.code} url={seal.url} />
+        </div>
+      )}
 
       <DocFooter docNo={doc.docNo} issuedAt={doc.issuedAt} />
     </article>

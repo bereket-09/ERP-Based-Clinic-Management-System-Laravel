@@ -70,6 +70,37 @@ export function SignatureLine({
   );
 }
 
+/**
+ * Tamper-evident verification seal: a QR pointing at /verify/<code> plus the
+ * human-readable code. Proves the printout is genuine and unaltered.
+ */
+export function VerifySeal({
+  qrDataUrl,
+  code,
+  url,
+}: {
+  qrDataUrl: string;
+  code: string;
+  url: string;
+}) {
+  return (
+    <div className="flex items-center gap-3 rounded-md border border-slate-300 bg-slate-50 p-3">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={qrDataUrl} alt="Verification QR code" className="size-20 shrink-0" />
+      <div className="leading-tight">
+        <div className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+          Scan to verify
+        </div>
+        <div className="text-[13px] font-semibold text-slate-900">Authentic document</div>
+        <div className="mt-1 font-mono text-[12px] font-medium tracking-widest text-slate-800">
+          {code}
+        </div>
+        <div className="mt-0.5 text-[9px] text-slate-500 break-all">{url}</div>
+      </div>
+    </div>
+  );
+}
+
 /** Footer with document reference + issue date. */
 export function DocFooter({ docNo, issuedAt }: { docNo: string; issuedAt: Date }) {
   return (

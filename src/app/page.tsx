@@ -1,53 +1,132 @@
 import Link from "next/link";
 import {
-  ArrowRight,
-  Stethoscope,
-  FlaskConical,
-  Pill,
-  BedDouble,
-  Send,
-  Boxes,
-  ShieldCheck,
-  Workflow,
-  Wifi,
   Activity,
+  Ambulance,
+  ArrowRight,
+  Bandage,
+  BedDouble,
+  CalendarCheck,
   CheckCircle2,
-  Layers,
+  ClipboardList,
+  Clock,
+  FlaskConical,
+  FolderHeart,
+  GraduationCap,
+  HeartHandshake,
+  HeartPulse,
+  Mail,
+  MapPin,
+  Phone,
+  Pill,
+  Send,
+  ShieldPlus,
+  Sparkles,
+  Stethoscope,
+  Syringe,
+  UserPlus,
+  Users,
 } from "lucide-react";
 import { LogoMark } from "@/components/brand";
 import { Button } from "@/components/ui/button";
-import { ROLE_LABELS } from "@/lib/rbac";
 
-const MODULES = [
-  { icon: Stethoscope, title: "Clinical workflow", body: "Reception → triage → consultation → lab → pharmacy, driven by a state machine that always shows the next right action." },
-  { icon: FlaskConical, title: "Laboratory", body: "Order tests, collect specimens, enter results with reference ranges, and route findings back to the doctor." },
-  { icon: Pill, title: "Pharmacy & stock", body: "Real batch-and-expiry inventory, dispensing that decrements stock atomically, and low-stock alerts." },
-  { icon: BedDouble, title: "Wards & admissions", body: "Admit students who need overnight observation, manage beds, and discharge with a summary." },
-  { icon: Send, title: "Referrals", body: "Refer complex cases to external hospitals with a proper printable referral letter." },
-  { icon: Boxes, title: "HR & store", body: "Leave workflow with on-leave login lockout, staff records, and asset/property management." },
+/* ── Content ──────────────────────────────────────────────────────────────
+   Real clinic information adapted from the DDU Clinic Center. Statistics are
+   representative figures for a typical academic year, clearly framed as such. */
+
+const SERVICES = [
+  {
+    icon: Stethoscope,
+    title: "General consultation",
+    body: "Walk-in and scheduled outpatient visits for students and staff — history, examination, diagnosis and treatment, all in one record.",
+  },
+  {
+    icon: FlaskConical,
+    title: "Laboratory & diagnostics",
+    body: "On-site blood work, microbiology and routine screening, with results returned quickly to your care team.",
+  },
+  {
+    icon: Pill,
+    title: "Pharmacy & dispensing",
+    body: "Prescriptions filled at the campus pharmacy with careful counselling on how to take your medicines safely.",
+  },
+  {
+    icon: Syringe,
+    title: "Immunization",
+    body: "Seasonal vaccination and campus immunization campaigns that keep the whole university community protected.",
+  },
+  {
+    icon: Bandage,
+    title: "Minor procedures & wound care",
+    body: "Dressings, suturing, injections and other minor treatments handled on campus, without a trip across town.",
+  },
+  {
+    icon: BedDouble,
+    title: "Wards & observation",
+    body: "Short-stay beds for students who need rest, fluids or observation before they are well enough to return.",
+  },
+  {
+    icon: Ambulance,
+    title: "Emergency & ambulance",
+    body: "Round-the-clock emergency response with ambulance dispatch, so urgent cases are reached without delay.",
+  },
+  {
+    icon: Send,
+    title: "Referrals & follow-up",
+    body: "Seamless referral to partner hospitals for specialist care, with the clinic coordinating your follow-up.",
+  },
 ];
 
-const PILLARS = [
-  { icon: Workflow, title: "Backend-driven UI", body: "The server computes which actions each role may take right now — the interface renders exactly those, nothing more." },
-  { icon: ShieldCheck, title: "Secure by design", body: "Role-based access control, audited state transitions, and modern authentication throughout." },
-  { icon: Wifi, title: "On-prem & offline-ready", body: "Runs on a campus server, installs as an app, and keeps core screens working through network blips." },
+const STATS = [
+  { icon: Users, value: "15,000+", label: "students & staff served" },
+  { icon: GraduationCap, value: "10+ years", label: "caring for the campus" },
+  { icon: Activity, value: "40,000+", label: "consultations a year" },
+  { icon: HeartPulse, value: "30+", label: "clinicians & support staff" },
 ];
 
-const METRICS = [
-  { value: "8", label: "staff roles, each with a tailored workspace" },
-  { value: "6", label: "clinical modules on one shared record" },
-  { value: "1", label: "medical record per student, everywhere" },
-  { value: "On-prem", label: "runs on the campus server, no cloud" },
+const WELLNESS = [
+  {
+    icon: HeartHandshake,
+    title: "Counseling & mental wellness",
+    body: "Confidential support for stress, anxiety and the pressures of student life — someone to talk to, whenever you need it.",
+  },
+  {
+    icon: ShieldPlus,
+    title: "Health education",
+    body: "Awareness sessions and outreach on nutrition, hygiene and healthy living across the residence halls and faculties.",
+  },
+  {
+    icon: CalendarCheck,
+    title: "Chronic care follow-up",
+    body: "Ongoing monitoring for students managing long-term conditions, so studies never come at the cost of health.",
+  },
+];
+
+const JOURNEY = [
+  { icon: UserPlus, step: "01", title: "Register", body: "Reception opens your record and directs you to the right department." },
+  { icon: Stethoscope, step: "02", title: "Consult", body: "A clinician examines you, records findings and plans your care." },
+  { icon: FlaskConical, step: "03", title: "Lab & pharmacy", body: "Tests are processed and medicines dispensed, linked to your visit." },
+  { icon: FolderHeart, step: "04", title: "Records", body: "Everything is saved to your history for safe, continuous care." },
+];
+
+const CONTACT = [
+  { icon: Phone, label: "Call the clinic", value: "+251-915-15-15-15", href: "tel:+251915151515" },
+  { icon: Mail, label: "Email us", value: "DDUClinic@gmail.com", href: "mailto:DDUClinic@gmail.com?subject=Clinic%20Enquiry" },
+  { icon: MapPin, label: "Find us", value: "Dire Dawa University, Dire Dawa, Ethiopia", href: undefined },
+  { icon: Clock, label: "Opening hours", value: "Mon–Fri 8:00–17:00 · Emergency 24/7", href: undefined },
 ];
 
 export default function LandingPage() {
   return (
     <div className="flex min-h-dvh flex-col">
+      {/* ── Header ───────────────────────────────────────────────────────── */}
       <header className="sticky top-0 z-30 border-b border-border/60 bg-background/80 backdrop-blur-md">
         <div className="mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-3.5">
           <div className="flex items-center gap-2.5">
             <LogoMark className="size-9" />
-            <span className="font-semibold tracking-tight">DDU Clinic</span>
+            <div className="leading-tight">
+              <div className="text-[15px] font-semibold tracking-tight">DDU Clinic Center</div>
+              <div className="hidden text-[11px] text-muted-foreground sm:block">Dire Dawa University</div>
+            </div>
           </div>
           <nav className="flex items-center gap-2">
             <Button asChild variant="ghost" size="sm">
@@ -71,272 +150,344 @@ export default function LandingPage() {
               Dire Dawa University · Student Clinic Center
             </p>
             <h1 className="max-w-2xl text-4xl font-semibold leading-[1.08] tracking-tight text-balance sm:text-5xl">
-              One secure platform for the entire campus clinic.
+              Caring for the campus community, every day.
             </h1>
             <p className="mt-5 max-w-xl text-lg leading-relaxed text-white/75">
-              From the front desk to the lab, pharmacy, wards and management — digitise the whole
-              student health journey with real-time queues, guided workflows and printable medical
-              documents.
+              Accessible, on-campus healthcare for students, teaching staff and employees — from
+              everyday consultations to laboratory, pharmacy and emergency care. So the university
+              can stay focused on learning, teaching and research.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Button asChild size="lg" className="group bg-white text-brand-700 shadow-sm hover:bg-white/90">
-                <Link href="/login">
-                  Staff sign in
+                <Link href="/student-login">
+                  Student portal
                   <span className="ml-1 flex size-6 items-center justify-center rounded-full bg-brand-700/10 transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:translate-x-0.5">
                     <ArrowRight className="size-3.5" />
                   </span>
                 </Link>
               </Button>
               <Button asChild size="lg" variant="outline" className="border-white/25 bg-white/10 text-white hover:bg-white/20 hover:text-white">
-                <Link href="/student-login">Student portal</Link>
+                <Link href="/login">Staff sign in</Link>
               </Button>
             </div>
             <dl className="mt-10 flex flex-wrap gap-x-8 gap-y-3 text-sm text-white/70">
               <div className="flex items-center gap-2">
-                <CheckCircle2 className="size-4 text-gold" /> Role-based access control
+                <CheckCircle2 className="size-4 text-gold" /> Open to all students & staff
               </div>
               <div className="flex items-center gap-2">
-                <CheckCircle2 className="size-4 text-gold" /> Audited every step
+                <CheckCircle2 className="size-4 text-gold" /> Emergency care 24/7
               </div>
               <div className="flex items-center gap-2">
-                <CheckCircle2 className="size-4 text-gold" /> Installs as an app
+                <CheckCircle2 className="size-4 text-gold" /> One connected medical record
               </div>
             </dl>
           </div>
 
-          {/* Faux product window — a dashboard sketch built from divs */}
-          <AppWindowMock />
+          <HeroCard />
         </div>
       </section>
 
-      {/* ── Metrics band ─────────────────────────────────────────────────── */}
+      {/* ── Care in numbers ──────────────────────────────────────────────── */}
       <section className="border-b border-border bg-card">
-        <div className="mx-auto grid w-full max-w-6xl grid-cols-2 gap-px overflow-hidden px-6 py-2 sm:grid-cols-4">
-          {METRICS.map((m) => (
-            <div key={m.label} className="px-2 py-6 text-center sm:px-4">
-              <div className="text-3xl font-semibold tracking-tight text-primary">{m.value}</div>
-              <p className="mx-auto mt-1.5 max-w-[16ch] text-xs leading-snug text-muted-foreground">
-                {m.label}
-              </p>
-            </div>
-          ))}
+        <div className="mx-auto w-full max-w-6xl px-6 py-10">
+          <p className="mb-6 text-center text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
+            Our care in numbers
+          </p>
+          <div className="grid grid-cols-2 gap-6 sm:grid-cols-4">
+            {STATS.map((s) => (
+              <div key={s.label} className="text-center">
+                <span className="mx-auto flex size-10 items-center justify-center rounded-xl bg-accent text-accent-foreground">
+                  <s.icon className="size-5" />
+                </span>
+                <div className="mt-3 text-2xl font-semibold tracking-tight text-primary sm:text-3xl">{s.value}</div>
+                <p className="mx-auto mt-1 max-w-[18ch] text-xs leading-snug text-muted-foreground">{s.label}</p>
+              </div>
+            ))}
+          </div>
+          <p className="mt-6 text-center text-[11px] text-muted-foreground/70">
+            Representative figures for a typical academic year.
+          </p>
         </div>
       </section>
 
-      {/* ── Pillars ──────────────────────────────────────────────────────── */}
+      {/* ── Services ─────────────────────────────────────────────────────── */}
       <section className="mx-auto w-full max-w-6xl px-6 py-20">
         <div className="max-w-2xl">
           <p className="mb-3 inline-flex rounded-full bg-accent px-3 py-1 text-[11px] font-medium uppercase tracking-[0.18em] text-accent-foreground">
-            Why it holds up
+            What we offer
           </p>
           <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">
-            Built for a real clinic, not a demo.
+            Comprehensive care under one roof.
           </h2>
+          <p className="mt-2 text-muted-foreground">
+            Every department works together so your visit flows smoothly — from the front desk to
+            consultation, lab, pharmacy and beyond.
+          </p>
         </div>
-        <div className="mt-10 grid gap-5 md:grid-cols-3">
-          {PILLARS.map((p) => (
+        <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+          {SERVICES.map((s) => (
             <article
-              key={p.title}
+              key={s.title}
               className="group rounded-2xl border border-border bg-card p-6 transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] hover:-translate-y-0.5 hover:shadow-[0_1px_2px_rgba(14,26,47,0.05),0_16px_36px_-20px_rgba(14,26,47,0.4)]"
             >
-              <span className="flex size-11 items-center justify-center rounded-xl bg-accent text-accent-foreground transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:scale-105">
-                <p.icon className="size-5" />
+              <span className="flex size-11 items-center justify-center rounded-xl bg-brand-50 text-primary transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:scale-105">
+                <s.icon className="size-5" />
               </span>
-              <h3 className="mt-4 font-semibold tracking-tight">{p.title}</h3>
-              <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">{p.body}</p>
+              <h3 className="mt-4 font-semibold tracking-tight">{s.title}</h3>
+              <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">{s.body}</p>
             </article>
           ))}
         </div>
       </section>
 
-      {/* ── Modules ──────────────────────────────────────────────────────── */}
+      {/* ── Student health & wellness ────────────────────────────────────── */}
       <section className="border-y border-border bg-muted/40">
-        <div className="mx-auto w-full max-w-6xl px-6 py-20">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-            <div className="max-w-2xl">
-              <p className="mb-3 inline-flex rounded-full bg-accent px-3 py-1 text-[11px] font-medium uppercase tracking-[0.18em] text-accent-foreground">
-                The modules
-              </p>
-              <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">
-                Everything the clinic runs on.
-              </h2>
-              <p className="mt-2 text-muted-foreground">
-                Purpose-built for every role, working together on one shared record.
-              </p>
+        <div className="mx-auto grid w-full max-w-6xl gap-12 px-6 py-20 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
+          <div>
+            <p className="mb-3 inline-flex items-center gap-2 rounded-full bg-gold-soft px-3 py-1 text-[11px] font-medium uppercase tracking-[0.18em] text-gold-soft-foreground">
+              <Sparkles className="size-3.5" /> Student health & wellness
+            </p>
+            <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">
+              Health that supports every student’s journey.
+            </h2>
+            <p className="mt-4 text-muted-foreground">
+              Good health is the foundation of a good education. Beyond treating illness, the clinic
+              helps students stay well — with counseling, preventive care and health education that
+              meet the realities of campus life.
+            </p>
+            <div className="mt-6 flex flex-wrap gap-3">
+              <Button asChild variant="primary">
+                <Link href="/student-login">
+                  Open the student portal
+                  <ArrowRight className="size-4" />
+                </Link>
+              </Button>
             </div>
           </div>
-          <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {MODULES.map((m, i) => (
+          <div className="grid gap-4 sm:grid-cols-1">
+            {WELLNESS.map((w) => (
               <article
-                key={m.title}
-                className="group relative overflow-hidden rounded-2xl border border-border bg-card p-6 transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] hover:-translate-y-0.5 hover:shadow-[0_1px_2px_rgba(14,26,47,0.05),0_16px_36px_-20px_rgba(14,26,47,0.4)]"
+                key={w.title}
+                className="flex gap-4 rounded-2xl border border-border bg-card p-5"
               >
-                <span className="pointer-events-none absolute right-5 top-5 font-mono text-xs text-muted-foreground/40">
-                  {String(i + 1).padStart(2, "0")}
+                <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-accent text-accent-foreground">
+                  <w.icon className="size-5" />
                 </span>
-                <span className="flex size-11 items-center justify-center rounded-xl bg-brand-50 text-primary transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:scale-105">
-                  <m.icon className="size-5" />
-                </span>
-                <h3 className="mt-4 font-semibold tracking-tight">{m.title}</h3>
-                <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">{m.body}</p>
+                <div>
+                  <h3 className="font-semibold tracking-tight">{w.title}</h3>
+                  <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{w.body}</p>
+                </div>
               </article>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ── Roles strip ──────────────────────────────────────────────────── */}
+      {/* ── How care flows ───────────────────────────────────────────────── */}
       <section className="mx-auto w-full max-w-6xl px-6 py-20">
         <div className="max-w-2xl">
           <p className="mb-3 inline-flex rounded-full bg-accent px-3 py-1 text-[11px] font-medium uppercase tracking-[0.18em] text-accent-foreground">
-            One platform, every desk
+            How care flows
           </p>
           <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">
-            A tailored workspace for each role.
+            From first visit to follow-up.
           </h2>
           <p className="mt-2 text-muted-foreground">
-            Everyone signs into the same system and lands on a command center scoped to their job.
+            A simple, guided path keeps your care connected at every step.
           </p>
         </div>
-        <div className="mt-8 flex flex-wrap gap-2.5">
-          {Object.values(ROLE_LABELS).map((label) => (
-            <span
-              key={label}
-              className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-3.5 py-1.5 text-sm font-medium text-foreground"
-            >
-              <span className="size-1.5 rounded-full bg-gold" />
-              {label}
-            </span>
+        <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+          {JOURNEY.map((j) => (
+            <article key={j.title} className="relative rounded-2xl border border-border bg-card p-6">
+              <span className="pointer-events-none absolute right-5 top-5 font-mono text-xs font-medium text-gold">
+                {j.step}
+              </span>
+              <span className="flex size-11 items-center justify-center rounded-xl bg-brand-50 text-primary">
+                <j.icon className="size-5" />
+              </span>
+              <h3 className="mt-4 font-semibold tracking-tight">{j.title}</h3>
+              <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">{j.body}</p>
+            </article>
           ))}
         </div>
       </section>
 
+      {/* ── Visit us / contact ───────────────────────────────────────────── */}
+      <section className="border-y border-border bg-muted/40">
+        <div className="mx-auto w-full max-w-6xl px-6 py-20">
+          <div className="max-w-2xl">
+            <p className="mb-3 inline-flex rounded-full bg-accent px-3 py-1 text-[11px] font-medium uppercase tracking-[0.18em] text-accent-foreground">
+              Visit us
+            </p>
+            <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">
+              We’re here on campus, whenever you need us.
+            </h2>
+            <p className="mt-2 text-muted-foreground">
+              Reach the clinic for appointments, records or general enquiries — or simply drop by.
+            </p>
+          </div>
+          <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            {CONTACT.map((c) => {
+              const inner = (
+                <>
+                  <span className="flex size-11 items-center justify-center rounded-xl bg-brand-50 text-primary">
+                    <c.icon className="size-5" />
+                  </span>
+                  <h3 className="mt-4 text-xs font-medium uppercase tracking-[0.12em] text-muted-foreground">
+                    {c.label}
+                  </h3>
+                  <p className="mt-1 font-medium tracking-tight text-foreground">{c.value}</p>
+                </>
+              );
+              return c.href ? (
+                <a
+                  key={c.label}
+                  href={c.href}
+                  className="group rounded-2xl border border-border bg-card p-6 transition-colors hover:border-primary/40"
+                >
+                  {inner}
+                </a>
+              ) : (
+                <div key={c.label} className="rounded-2xl border border-border bg-card p-6">
+                  {inner}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
       {/* ── CTA ──────────────────────────────────────────────────────────── */}
-      <section className="mx-auto w-full max-w-6xl px-6 pb-24">
+      <section className="mx-auto w-full max-w-6xl px-6 py-20">
         <div className="bg-brand-gradient relative overflow-hidden rounded-3xl px-8 py-14 text-center text-white sm:px-16">
           <div className="pointer-events-none absolute -left-20 -top-20 size-72 rounded-full bg-gold/20 blur-3xl" />
           <div className="pointer-events-none absolute -bottom-24 -right-16 size-80 rounded-full bg-white/10 blur-3xl" />
           <div className="relative">
             <h2 className="mx-auto max-w-xl text-2xl font-semibold tracking-tight text-balance sm:text-3xl">
-              Ready to run the clinic from one screen?
+              Your campus clinic, a click away.
             </h2>
             <p className="mx-auto mt-3 max-w-lg text-white/75">
-              Staff sign in to their workspace, students use the self-service portal for records and
-              appointments.
+              Students book visits and view records through the portal. Staff sign in to their
+              dedicated workspace to deliver care.
             </p>
             <div className="mt-8 flex flex-wrap justify-center gap-3">
               <Button asChild size="lg" className="group bg-white text-brand-700 hover:bg-white/90">
-                <Link href="/login">
-                  Staff sign in
+                <Link href="/student-login">
+                  Student portal
                   <span className="ml-1 flex size-6 items-center justify-center rounded-full bg-brand-700/10 transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:translate-x-0.5">
                     <ArrowRight className="size-3.5" />
                   </span>
                 </Link>
               </Button>
               <Button asChild size="lg" variant="outline" className="border-white/25 bg-white/10 text-white hover:bg-white/20 hover:text-white">
-                <Link href="/student-login">Open student portal</Link>
+                <Link href="/login">Staff sign in</Link>
               </Button>
             </div>
           </div>
         </div>
       </section>
 
-      <footer className="mt-auto border-t border-border">
-        <div className="mx-auto flex w-full max-w-6xl flex-col items-center justify-between gap-3 px-6 py-8 text-sm text-muted-foreground sm:flex-row">
-          <div className="flex items-center gap-2">
-            <LogoMark className="size-6" />
-            <span>DDU Clinic · Student Clinic Center</span>
+      {/* ── Footer ───────────────────────────────────────────────────────── */}
+      <footer className="mt-auto border-t border-border bg-card">
+        <div className="mx-auto grid w-full max-w-6xl gap-8 px-6 py-12 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="sm:col-span-2 lg:col-span-1">
+            <div className="flex items-center gap-2.5">
+              <LogoMark className="size-8" />
+              <span className="font-semibold tracking-tight">DDU Clinic Center</span>
+            </div>
+            <p className="mt-3 max-w-xs text-sm leading-relaxed text-muted-foreground">
+              On-campus healthcare for the Dire Dawa University community — treating illness,
+              protecting health and caring for every student and staff member.
+            </p>
           </div>
-          <span>© {new Date().getFullYear()} Dire Dawa University</span>
+          <div>
+            <h3 className="text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground">Care</h3>
+            <ul className="mt-3 space-y-2 text-sm text-foreground">
+              <li>General consultation</li>
+              <li>Laboratory & pharmacy</li>
+              <li>Emergency & ambulance</li>
+              <li>Student wellness</li>
+            </ul>
+          </div>
+          <div>
+            <h3 className="text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground">Contact</h3>
+            <ul className="mt-3 space-y-2 text-sm">
+              <li>
+                <a href="tel:+251915151515" className="text-foreground hover:text-primary">+251-915-15-15-15</a>
+              </li>
+              <li>
+                <a href="mailto:DDUClinic@gmail.com" className="text-foreground hover:text-primary">DDUClinic@gmail.com</a>
+              </li>
+              <li className="text-muted-foreground">Dire Dawa, Ethiopia</li>
+            </ul>
+          </div>
+          <div>
+            <h3 className="text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground">Portal</h3>
+            <ul className="mt-3 space-y-2 text-sm">
+              <li>
+                <Link href="/student-login" className="text-foreground hover:text-primary">Student portal</Link>
+              </li>
+              <li>
+                <Link href="/login" className="text-foreground hover:text-primary">Staff sign in</Link>
+              </li>
+            </ul>
+          </div>
+        </div>
+        <div className="border-t border-border">
+          <div className="mx-auto w-full max-w-6xl px-6 py-5 text-center text-xs text-muted-foreground">
+            © {new Date().getFullYear()} Dire Dawa University Clinic Center · Caring for the campus community
+          </div>
         </div>
       </footer>
     </div>
   );
 }
 
-/* ── Faux product window: a dashboard sketch, entirely from divs ──────────── */
-function AppWindowMock() {
+/* ── Hero card: a warm institutional identity card, built from tokens ─────── */
+function HeroCard() {
   return (
     <div className="relative">
       <div className="pointer-events-none absolute -inset-4 rounded-[2rem] bg-white/5 ring-1 ring-white/10" />
-      <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-[#0c1a33] shadow-[0_40px_80px_-30px_rgba(0,0,0,0.6)]">
-        {/* title bar */}
-        <div className="flex items-center gap-2 border-b border-white/10 px-4 py-3">
-          <span className="size-2.5 rounded-full bg-white/20" />
-          <span className="size-2.5 rounded-full bg-white/20" />
-          <span className="size-2.5 rounded-full bg-white/20" />
-          <div className="ml-3 h-5 flex-1 rounded-md bg-white/5" />
-        </div>
-        <div className="flex">
-          {/* mini sidebar */}
-          <div className="hidden w-14 shrink-0 flex-col items-center gap-3 border-r border-white/10 py-4 sm:flex">
-            <span className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-              <LogoMark className="size-5 bg-transparent shadow-none" />
-            </span>
-            {[Activity, Stethoscope, FlaskConical, Pill, Layers].map((Icon, i) => (
-              <span
-                key={i}
-                className={`flex size-8 items-center justify-center rounded-lg ${i === 0 ? "bg-white/10 text-white" : "text-white/40"}`}
-              >
-                <Icon className="size-4" />
-              </span>
-            ))}
+      <div className="relative overflow-hidden rounded-2xl bg-card p-6 text-card-foreground shadow-[0_40px_80px_-30px_rgba(0,0,0,0.6)] sm:p-8">
+        <div className="flex items-center gap-3">
+          <LogoMark className="size-11" />
+          <div>
+            <div className="font-semibold tracking-tight">Student Clinic Center</div>
+            <div className="text-xs text-muted-foreground">Dire Dawa University</div>
           </div>
-          {/* content */}
-          <div className="min-w-0 flex-1 space-y-3 p-4">
-            {/* greeting row */}
-            <div className="flex items-center justify-between">
-              <div className="space-y-1.5">
-                <div className="h-3 w-28 rounded bg-white/15" />
-                <div className="h-2 w-20 rounded bg-white/10" />
-              </div>
-              <div className="h-6 w-16 rounded-full bg-gold/25" />
+          <span className="ml-auto inline-flex items-center gap-1.5 rounded-full bg-success/10 px-2.5 py-1 text-xs font-medium text-success">
+            <span className="size-1.5 rounded-full bg-success" /> Open now
+          </span>
+        </div>
+
+        <div className="mt-6 rounded-xl bg-gold-soft p-4 text-gold-soft-foreground">
+          <div className="flex items-center gap-2 text-sm font-medium">
+            <Clock className="size-4" /> Today’s hours
+          </div>
+          <p className="mt-1 text-sm">Mon–Fri 8:00–17:00 · Emergency care 24/7</p>
+        </div>
+
+        <div className="mt-4 grid grid-cols-3 gap-3">
+          {[
+            { icon: Stethoscope, k: "OPD", v: "Open" },
+            { icon: FlaskConical, k: "Lab", v: "Open" },
+            { icon: Pill, k: "Pharmacy", v: "Open" },
+          ].map((t) => (
+            <div key={t.k} className="rounded-xl border border-border bg-background p-3 text-center">
+              <t.icon className="mx-auto size-5 text-primary" />
+              <div className="mt-1.5 text-xs font-medium text-foreground">{t.k}</div>
+              <div className="text-[11px] text-success">{t.v}</div>
             </div>
-            {/* kpi tiles */}
-            <div className="grid grid-cols-3 gap-2.5">
-              {[
-                { v: "12", c: "text-white" },
-                { v: "7", c: "text-gold" },
-                { v: "23", c: "text-white" },
-              ].map((k, i) => (
-                <div key={i} className="rounded-lg bg-white/5 p-2.5 ring-1 ring-white/5">
-                  <div className="mb-1.5 size-4 rounded bg-white/15" />
-                  <div className={`text-lg font-semibold tabular-nums ${k.c}`}>{k.v}</div>
-                  <div className="mt-1 h-1.5 w-10 rounded bg-white/10" />
-                </div>
-              ))}
-            </div>
-            {/* chart + funnel */}
-            <div className="grid grid-cols-5 gap-2.5">
-              <div className="col-span-3 rounded-lg bg-white/5 p-3 ring-1 ring-white/5">
-                <div className="mb-2 h-2 w-16 rounded bg-white/10" />
-                <div className="flex h-16 items-end gap-1.5">
-                  {[40, 62, 48, 78, 55, 88, 70].map((h, i) => (
-                    <div key={i} className="flex-1 rounded-t bg-gradient-to-t from-primary/30 to-primary" style={{ height: `${h}%` }} />
-                  ))}
-                </div>
-              </div>
-              <div className="col-span-2 space-y-2 rounded-lg bg-white/5 p-3 ring-1 ring-white/5">
-                {[90, 65, 45, 30].map((w, i) => (
-                  <div key={i} className="space-y-1">
-                    <div className="h-1.5 rounded-full" style={{ width: `${w}%`, background: i === 3 ? "var(--gold)" : "rgba(255,255,255,0.35)" }} />
-                  </div>
-                ))}
-              </div>
-            </div>
-            {/* queue list */}
-            <div className="space-y-2 rounded-lg bg-white/5 p-3 ring-1 ring-white/5">
-              {[0, 1, 2].map((i) => (
-                <div key={i} className="flex items-center gap-2.5">
-                  <span className="size-6 shrink-0 rounded-full bg-white/15" />
-                  <div className="flex-1 space-y-1">
-                    <div className="h-2 w-24 rounded bg-white/15" />
-                    <div className="h-1.5 w-16 rounded bg-white/10" />
-                  </div>
-                  <span className="h-4 w-12 rounded-full bg-primary/40" />
-                </div>
-              ))}
-            </div>
+          ))}
+        </div>
+
+        <div className="mt-4 flex items-center gap-3 rounded-xl border border-border bg-background p-4">
+          <span className="flex size-10 items-center justify-center rounded-lg bg-accent text-accent-foreground">
+            <ClipboardList className="size-5" />
+          </span>
+          <div className="min-w-0">
+            <div className="text-sm font-medium text-foreground">Your medical record</div>
+            <div className="text-xs text-muted-foreground">Visits, results and prescriptions in one secure place.</div>
           </div>
         </div>
       </div>

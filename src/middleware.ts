@@ -11,7 +11,9 @@ export default auth((req) => {
   const kind = req.auth?.user?.kind;
   const path = nextUrl.pathname;
 
-  const isPublic = PUBLIC_PATHS.has(path);
+  // Public document verification (anyone holding a printed doc can check it).
+  const isVerify = path === "/verify" || path.startsWith("/verify/");
+  const isPublic = PUBLIC_PATHS.has(path) || isVerify;
   const isPortal = path === "/portal" || path.startsWith("/portal/");
 
   // Unauthenticated → send to the right login, preserving intended destination.

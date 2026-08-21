@@ -1,14 +1,16 @@
 import Link from "next/link";
-import { Truck, Search, ArrowLeft, Boxes, Mail, Phone } from "lucide-react";
+import { Truck, Search, ArrowLeft, Boxes, Mail, Phone, Building2, Layers } from "lucide-react";
 import { requireRole } from "@/server/session";
 import { listSuppliers } from "@/server/services/inventory";
 import { PageHeader } from "@/components/page-header";
+import { StatCard } from "@/components/stat-card";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { EmptyState } from "@/components/empty-state";
+import { initials } from "@/lib/utils";
 import { AddSupplierButton, EditSupplierButton } from "./suppliers-client";
 
 export const metadata = { title: "Suppliers" };
@@ -21,6 +23,8 @@ export default async function SuppliersPage({
   await requireRole("PHARMACIST");
   const { q } = await searchParams;
   const suppliers = await listSuppliers(q);
+  const linkedBatches = suppliers.reduce((s, v) => s + v._count.batches, 0);
+  const withContact = suppliers.filter((s) => s.phone || s.email).length;
 
   return (
     <div className="space-y-6">
@@ -39,6 +43,19 @@ export default async function SuppliersPage({
           </>
         }
       />
+
+      {!q && suppliers.length > 0 && (
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <StatCard label="Suppliers" value={suppliers.length} icon={Building2} tone="brand" />
+          <StatCard label="Linked batches" value={linkedBatches} icon={Layers} tone="info" />
+          <StatCard
+            label="With contact details"
+            value={`${withContact}/${suppliers.length}`}
+            icon={Phone}
+            tone="success"
+          />
+        </div>
+      )}
 
       <form className="flex gap-2">
         <div className="relative flex-1">
@@ -73,7 +90,14 @@ export default async function SuppliersPage({
               <TableBody>
                 {suppliers.map((s) => (
                   <TableRow key={s.id}>
-                    <TableCell className="font-medium">{s.name}</TableCell>
+                    <TableCell>
+                      <span className="flex items-center gap-2.5">
+                        <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-accent text-[11px] font-semibold text-accent-foreground">
+                          {initials(s.name)}
+                        </span>
+                        <span className="font-medium">{s.name}</span>
+                      </span>
+                    </TableCell>
                     <TableCell className="text-muted-foreground">
                       {s.phone ? (
                         <span className="inline-flex items-center gap-1">

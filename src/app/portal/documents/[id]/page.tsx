@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { format } from "date-fns";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, ShieldCheck } from "lucide-react";
 import { requireStudent } from "@/server/session";
 import { db } from "@/server/db";
 import { LogoMark } from "@/components/brand";
@@ -120,6 +120,23 @@ export default async function PortalDocumentPage({
             )}
           </div>
         )}
+
+        {/* Verification */}
+        <div className="mt-8 flex items-start gap-3 rounded-xl border border-border bg-muted/40 p-4">
+          <ShieldCheck className="mt-0.5 size-5 shrink-0 text-primary" />
+          <div className="text-xs leading-relaxed text-muted-foreground">
+            <div className="font-medium text-foreground">Authenticity &amp; verification</div>
+            <p className="mt-0.5">
+              This is an official document issued by DDU Clinic Center. To confirm it is genuine,
+              quote the verification code below to the clinic. Any recipient can request
+              confirmation against clinic records.
+            </p>
+            <div className="mt-2 inline-flex items-center gap-2 rounded-md border border-border bg-card px-2.5 py-1">
+              <span className="uppercase tracking-wide">Verification code</span>
+              <span className="font-mono text-sm font-semibold text-foreground">{doc.docNo}</span>
+            </div>
+          </div>
+        </div>
 
         {/* Signature */}
         <footer className="mt-10 flex items-end justify-between">

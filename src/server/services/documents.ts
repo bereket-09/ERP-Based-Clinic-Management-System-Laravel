@@ -5,6 +5,7 @@ import { db } from "@/server/db";
 import type { Actor } from "@/server/session";
 import { makeCode } from "./ids";
 import { audit } from "./events";
+import { signIssuedDocument } from "./document-signing";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Documents & printouts — issue and retrieve IssuedDocument records.
@@ -74,6 +75,8 @@ export async function issueSickLeave(
     },
   });
 
+  const { verifyCode, signature } = await signIssuedDocument(doc);
+
   await audit(actor.id, "document.issue", "IssuedDocument", doc.id, {
     type: "SICK_LEAVE",
     docNo,
@@ -82,7 +85,7 @@ export async function issueSickLeave(
 
   revalidatePath(`/documents/${doc.id}`);
   revalidatePath(`/visits/${visit.id}`);
-  return doc;
+  return { ...doc, verifyCode, signature };
 }
 
 export interface IssueDocumentInput {
@@ -126,13 +129,15 @@ export async function issueDocument(
     },
   });
 
+  const { verifyCode, signature } = await signIssuedDocument(doc);
+
   await audit(actor.id, "document.issue", "IssuedDocument", doc.id, {
     type,
     docNo,
   });
 
   revalidatePath(`/documents/${doc.id}`);
-  return doc;
+  return { ...doc, verifyCode, signature };
 }
 
 /** Load an issued document with its relations. */

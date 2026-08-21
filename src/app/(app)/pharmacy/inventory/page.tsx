@@ -8,6 +8,8 @@ import {
   CalendarClock,
   Wallet,
   ChevronRight,
+  Truck,
+  ArrowLeft,
 } from "lucide-react";
 import { requireRole } from "@/server/session";
 import {
@@ -78,7 +80,14 @@ function MedTable({ rows }: { rows: MedicationWithStock[] }) {
               </TableCell>
               <TableCell className="text-right tabular-nums text-muted-foreground">{m.reorderLevel}</TableCell>
               <TableCell>
-                <Badge variant={badge.variant}>{badge.label}</Badge>
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <Badge variant={badge.variant}>{badge.label}</Badge>
+                  {isExpiringSoon(m.soonestExpiry) && m.onHand > 0 && (
+                    <Badge variant="warning" className="gap-1">
+                      <CalendarClock className="size-3" /> Expiring
+                    </Badge>
+                  )}
+                </div>
               </TableCell>
               <TableCell className={cn("tabular-nums", expiryClass(m.soonestExpiry))}>
                 {m.soonestExpiry ? formatDate(m.soonestExpiry) : "—"}
@@ -103,10 +112,11 @@ function MedTable({ rows }: { rows: MedicationWithStock[] }) {
 export default async function InventoryPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string }>;
+  searchParams: Promise<{ q?: string; tab?: string }>;
 }) {
   await requireRole("PHARMACIST");
-  const { q } = await searchParams;
+  const { q, tab } = await searchParams;
+  const activeTab = ["all", "low", "out", "expiring"].includes(tab ?? "") ? (tab as string) : "all";
 
   const [meds, valuation, suppliers] = await Promise.all([
     listMedicationsWithStock(q),
@@ -130,6 +140,16 @@ export default async function InventoryPage({
         icon={Boxes}
         actions={
           <>
+            <Button variant="ghost" asChild>
+              <Link href="/pharmacy">
+                <ArrowLeft className="size-4" /> Station
+              </Link>
+            </Button>
+            <Button variant="default" asChild>
+              <Link href="/pharmacy/suppliers">
+                <Truck className="size-4" /> Suppliers
+              </Link>
+            </Button>
             <ReceiveStockDialog meds={medOptions} suppliers={suppliers} />
             <AddMedicineDialog />
           </>
@@ -163,7 +183,7 @@ export default async function InventoryPage({
         <Button type="submit">Search</Button>
       </form>
 
-      <Tabs defaultValue="all">
+      <Tabs defaultValue={activeTab}>
         <TabsList>
           <TabsTrigger value="all">All ({meds.length})</TabsTrigger>
           <TabsTrigger value="low">Low ({low.length})</TabsTrigger>

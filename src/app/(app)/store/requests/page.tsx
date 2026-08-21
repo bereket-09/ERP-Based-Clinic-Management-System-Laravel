@@ -1,11 +1,12 @@
 import Link from "next/link";
 import { format } from "date-fns";
-import { ClipboardList, ArrowLeft } from "lucide-react";
+import { ClipboardList, ArrowLeft, Hourglass, CircleCheck, PackageCheck, CircleX } from "lucide-react";
 import type { StockRequestState } from "@prisma/client";
 import { requireRole } from "@/server/session";
 import { db } from "@/server/db";
 import { stockRequestAffordances } from "@/server/services/store";
 import { PageHeader } from "@/components/page-header";
+import { MetricTile } from "@/components/dashboard/metric-tile";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -57,6 +58,23 @@ export default async function StockRequestsPage() {
           </>
         }
       />
+
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+        <MetricTile
+          label="Awaiting decision"
+          value={counts.SUBMITTED ?? 0}
+          icon={Hourglass}
+          tone={(counts.SUBMITTED ?? 0) > 0 ? "warning" : "success"}
+        />
+        <MetricTile
+          label="Approved to fulfil"
+          value={counts.APPROVED ?? 0}
+          icon={CircleCheck}
+          tone={(counts.APPROVED ?? 0) > 0 ? "info" : "success"}
+        />
+        <MetricTile label="Fulfilled" value={counts.FULFILLED ?? 0} icon={PackageCheck} tone="success" />
+        <MetricTile label="Rejected" value={counts.REJECTED ?? 0} icon={CircleX} tone="brand" />
+      </div>
 
       <Tabs defaultValue="all">
         <TabsList className="flex-wrap">

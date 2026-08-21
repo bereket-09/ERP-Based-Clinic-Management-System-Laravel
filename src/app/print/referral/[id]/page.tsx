@@ -4,7 +4,9 @@ import { requireStaff } from "@/server/session";
 import { db } from "@/server/db";
 import { getBranding } from "@/server/services/settings";
 import { humanize } from "@/lib/utils";
-import { Letterhead, Field, SignatureLine, DocFooter } from "@/components/print/letterhead";
+import { ensureReferralSignature, formatVerifyCode } from "@/server/services/document-signing";
+import { qrDataUrl, verifyUrlFor } from "@/server/services/qr";
+import { Letterhead, Field, SignatureLine, DocFooter, VerifySeal } from "@/components/print/letterhead";
 
 function age(d?: Date | null) {
   if (!d) return null;
@@ -32,6 +34,10 @@ export default async function ReferralPrint({ params }: { params: Promise<{ id: 
     ? `${referral.referredBy.title ? referral.referredBy.title + " " : ""}${referral.referredBy.name}`
     : null;
   const issuedAt = referral.issuedAt ?? referral.createdAt;
+
+  const { verifyCode } = await ensureReferralSignature(referral);
+  const verifyUrl = await verifyUrlFor(verifyCode);
+  const seal = { code: formatVerifyCode(verifyCode), url: verifyUrl, qr: await qrDataUrl(verifyUrl, 160) };
 
   return (
     <article className="space-y-6">
@@ -112,6 +118,15 @@ export default async function ReferralPrint({ params }: { params: Promise<{ id: 
           role={referral.referredBy?.speciality ?? "Referring Physician"}
           label="Referring doctor"
         />
+      </div>
+
+      <div className="flex items-center justify-between gap-4 pt-2">
+        <VerifySeal qrDataUrl={seal.qr} code={seal.code} url={seal.url} />
+        <div className="text-center">
+          <div className="flex size-20 items-center justify-center rounded-full border-2 border-dashed border-slate-300 text-[10px] uppercase tracking-wide text-slate-400">
+            Official Stamp
+          </div>
+        </div>
       </div>
 
       <DocFooter docNo={referral.referralNo} issuedAt={issuedAt} />

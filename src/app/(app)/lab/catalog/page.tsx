@@ -1,9 +1,9 @@
 import Link from "next/link";
-import { FlaskConical, Search, ArrowLeft, TestTubes, CircleCheck, Wallet } from "lucide-react";
+import { FlaskConical, Search, ArrowLeft, TestTubes, CircleCheck, Wallet, Layers, Beaker } from "lucide-react";
 import { requireRole } from "@/server/session";
 import { db } from "@/server/db";
 import { PageHeader } from "@/components/page-header";
-import { StatCard } from "@/components/stat-card";
+import { MetricTile } from "@/components/dashboard/metric-tile";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -53,18 +53,19 @@ export default async function LabCatalogPage({
 
   const active = tests.filter((t) => t.isActive).length;
   const avgPrice = tests.length ? Math.round(tests.reduce((s, t) => s + t.price, 0) / tests.length) : 0;
+  const categories = new Set(tests.map((t) => t.category).filter(Boolean)).size;
 
   return (
     <div className="space-y-6">
       <PageHeader
         title="Lab test catalog"
-        description="Define the tests the laboratory offers, their specimens, reference ranges and prices."
+        description="The laboratory test menu — specimens, reference ranges and pricing that doctors order from."
         icon={FlaskConical}
         actions={
           <>
             <Button variant="ghost" asChild>
               <Link href="/lab">
-                <ArrowLeft className="size-4" /> Lab
+                <ArrowLeft className="size-4" /> Worklist
               </Link>
             </Button>
             <AddLabTestButton />
@@ -72,10 +73,11 @@ export default async function LabCatalogPage({
         }
       />
 
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-3">
-        <StatCard label="Tests defined" value={tests.length} icon={TestTubes} tone="brand" />
-        <StatCard label="Active tests" value={active} icon={CircleCheck} tone="success" />
-        <StatCard label="Avg price (ETB)" value={avgPrice.toLocaleString()} icon={Wallet} tone="info" />
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+        <MetricTile label="Tests defined" value={tests.length} icon={TestTubes} tone="brand" />
+        <MetricTile label="Active tests" value={active} hint={`${tests.length - active} inactive`} icon={CircleCheck} tone="success" />
+        <MetricTile label="Categories" value={categories} icon={Layers} tone="info" />
+        <MetricTile label="Avg price (ETB)" value={avgPrice.toLocaleString()} icon={Wallet} tone="warning" />
       </div>
 
       <form className="flex gap-2">
@@ -99,10 +101,11 @@ export default async function LabCatalogPage({
           ) : (
             <Table>
               <TableHeader>
-                <TableRow>
+                <TableRow className="hover:bg-transparent">
                   <TableHead>Test</TableHead>
-                  <TableHead>Category</TableHead>
+                  <TableHead className="hidden md:table-cell">Category</TableHead>
                   <TableHead>Specimen</TableHead>
+                  <TableHead className="hidden sm:table-cell">Unit</TableHead>
                   <TableHead>Reference range</TableHead>
                   <TableHead className="text-right">Price (ETB)</TableHead>
                   <TableHead className="text-center">Active</TableHead>
@@ -112,10 +115,20 @@ export default async function LabCatalogPage({
               <TableBody>
                 {tests.map((t) => (
                   <TableRow key={t.id} className={t.isActive ? undefined : "opacity-60"}>
-                    <TableCell className="font-medium">{t.name}</TableCell>
-                    <TableCell className="text-muted-foreground">{t.category ?? "—"}</TableCell>
-                    <TableCell className="text-muted-foreground">{t.specimen ?? "—"}</TableCell>
-                    <TableCell className="text-muted-foreground">{refRange(t)}</TableCell>
+                    <TableCell className="font-medium text-foreground">{t.name}</TableCell>
+                    <TableCell className="hidden text-muted-foreground md:table-cell">{t.category ?? "—"}</TableCell>
+                    <TableCell>
+                      {t.specimen ? (
+                        <span className="inline-flex items-center gap-1 rounded-md bg-muted px-1.5 py-0.5 text-xs font-medium text-muted-foreground">
+                          <Beaker className="size-3" />
+                          {t.specimen}
+                        </span>
+                      ) : (
+                        <span className="text-muted-foreground">—</span>
+                      )}
+                    </TableCell>
+                    <TableCell className="hidden text-muted-foreground sm:table-cell">{t.unit ?? "—"}</TableCell>
+                    <TableCell className="font-mono text-sm text-muted-foreground">{refRange(t)}</TableCell>
                     <TableCell className="text-right tabular-nums">{t.price.toLocaleString()}</TableCell>
                     <TableCell className="text-center">
                       <div className="flex justify-center">

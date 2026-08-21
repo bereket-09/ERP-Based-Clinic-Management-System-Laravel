@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
-import { ChevronDown, FlaskConical, Pill } from "lucide-react";
+import Link from "next/link";
+import { ArrowRight, ChevronDown, FlaskConical, Pill } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { StatusBadge } from "@/components/status-badge";
@@ -131,6 +132,15 @@ export function VisitCard({ visit }: { visit: VisitView }) {
         ) : (
           <p className="text-xs text-muted-foreground">No lab tests or medications recorded.</p>
         )}
+
+        <div className="pt-1">
+          <Link
+            href={`/portal/history/${visit.id}`}
+            className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline"
+          >
+            View full visit <ArrowRight className="size-3.5" />
+          </Link>
+        </div>
       </CardContent>
     </Card>
   );
