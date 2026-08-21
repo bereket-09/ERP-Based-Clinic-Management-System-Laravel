@@ -85,7 +85,7 @@ export default async function VisitWorkspace({ params }: { params: Promise<{ id:
           </div>
           <div className="text-right text-sm">
             <div className="font-mono text-xs text-muted-foreground">{visit.visitNo}</div>
-            <div className="text-muted-foreground">Dr. {visit.doctor?.name ?? "Unassigned"}</div>
+            <div className="text-muted-foreground">{visit.doctor?.name ?? "Unassigned"}</div>
             <div className="text-xs text-muted-foreground">Opened {format(visit.openedAt, "PP p")}</div>
           </div>
         </CardContent>
