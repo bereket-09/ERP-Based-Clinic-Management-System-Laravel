@@ -114,8 +114,14 @@ export const DEFAULT_BRANDING: Branding = {
 };
 
 export const getBranding = cache(async (): Promise<Branding> => {
-  const row = await db.setting.findUnique({ where: { key: "branding" } });
-  return { ...DEFAULT_BRANDING, ...((row?.value as Partial<Branding>) ?? {}) };
+  // Branding is on the root layout, so it must never hard-fail: if the DB is
+  // briefly unavailable (build-time prerender, a blip), fall back to defaults.
+  try {
+    const row = await db.setting.findUnique({ where: { key: "branding" } });
+    return { ...DEFAULT_BRANDING, ...((row?.value as Partial<Branding>) ?? {}) };
+  } catch {
+    return { ...DEFAULT_BRANDING };
+  }
 });
 
 export async function setBranding(patch: Partial<Branding>) {
