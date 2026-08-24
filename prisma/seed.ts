@@ -8,6 +8,7 @@
  */
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
+import { createHmac, randomBytes } from "node:crypto";
 import { addDays, subDays, subYears } from "date-fns";
 import { FEATURES } from "../src/lib/features";
 
@@ -404,6 +405,270 @@ async function main() {
       ] },
     },
   });
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  //  BULK DEMO DATA — volume so every screen is populated at realistic scale
+  // ═══════════════════════════════════════════════════════════════════════════
+  console.log("   …loading bulk demo data (patients, visits, orders, docs, audit)…");
+
+  const rand = (n: number) => Math.floor(Math.random() * n);
+  function pick<T>(a: readonly T[]): T { return a[rand(a.length)]; }
+  const chance = (p: number) => Math.random() < p;
+
+  const FIRST_M = ["Abel", "Nahom", "Yohannes", "Dawit", "Bereket", "Kaleb", "Samuel", "Robel", "Naod", "Amanuel", "Henok", "Eyob", "Fitsum", "Biruk", "Yared", "Tewodros", "Nathnael", "Getu", "Habtamu", "Solomon", "Ermias", "Abdi", "Tofik", "Girma", "Mahder"];
+  const FIRST_F = ["Meron", "Bethlehem", "Selam", "Hanna", "Rahel", "Eden", "Mahlet", "Kalkidan", "Feven", "Tigist", "Sara", "Hiwot", "Bruktawit", "Meaza", "Aster", "Genet", "Lidiya", "Saron", "Yordanos", "Kidist", "Nardos", "Helen", "Amina", "Firehiwot", "Betelhem"];
+  const LAST = ["Tesfaye", "Haile", "Girmay", "Assefa", "Kebede", "Tadesse", "Bekele", "Alemu", "Mekonnen", "Fikru", "Gebre", "Wolde", "Desta", "Abera", "Negash", "Tsegaye", "Lemma", "Getachew", "Hailu", "Molla", "Bulti", "Demissie", "Teshome", "Worku", "Ayele"];
+  const BLOOD = ["O+", "A+", "B+", "AB+", "O-", "A-", "B-", "AB-"];
+
+  // A) ~240 more students (bulk insert, then read back for their ids)
+  const N_STUDENTS = 240;
+  const patientData = Array.from({ length: N_STUDENTS }, (_, i) => {
+    const gender = chance(0.5) ? ("MALE" as const) : ("FEMALE" as const);
+    const name = `${gender === "MALE" ? pick(FIRST_M) : pick(FIRST_F)} ${pick(LAST)}`;
+    const col = rand(colleges.length);
+    return {
+      mrn: `MRN-${2000 + i}`,
+      studentId: `DDU/${1400 + i}/${13 + rand(3)}`,
+      type: "STUDENT" as const,
+      source: chance(0.3) ? ("SIMS" as const) : ("MANUAL" as const),
+      name,
+      gender,
+      birthday: subYears(new Date(), 18 + rand(6)),
+      phone: "+2519" + Math.floor(10000000 + Math.random() * 89999999),
+      bloodType: pick(BLOOD),
+      departmentId: colleges[col].id,
+      college: colleges[col].name,
+      yearOfStudy: String(1 + rand(5)),
+      block: `B${5 + rand(30)}`,
+      dorm: `${100 + rand(400)}`,
+      region: "Dire Dawa",
+      nationality: "Ethiopian",
+      portalEnabled: i < 5,
+      portalPasswordHash: i < 5 ? studentHash : null,
+    };
+  });
+  await db.patient.createMany({ data: patientData });
+  const bulkPatients = await db.patient.findMany({ where: { mrn: { startsWith: "MRN-2" } } });
+  const allPatients = [...patients, ...bulkPatients];
+  const males = allPatients.filter((p) => p.gender === "MALE");
+  const females = allPatients.filter((p) => p.gender === "FEMALE");
+
+  // Signed-document helper (mirrors src/server/services/document-signing.ts).
+  const DOC_SECRET = process.env.DOCUMENT_SIGNING_SECRET ?? process.env.AUTH_SECRET ?? "ddu-clinic-dev-doc-secret";
+  const B32 = "0123456789ABCDEFGHJKMNPQRSTVWXYZ";
+  const newCode = () => { const b = randomBytes(10); let o = ""; for (let i = 0; i < 10; i++) o += B32[b[i] % B32.length]; return o; };
+  type DocRow = { docNo: string; type: string; patientId: string | null; visitId: string | null; fromDate: Date | null; toDate: Date | null; days: number | null; issuedById: string | null; issuedAt: Date; id: string };
+  const signDoc = async (doc: DocRow) => {
+    const canonical = [doc.docNo, doc.type, doc.patientId ?? "", doc.visitId ?? "", doc.fromDate?.toISOString() ?? "", doc.toDate?.toISOString() ?? "", doc.days ?? "", doc.issuedById ?? "", doc.issuedAt.toISOString()].join("|");
+    const signature = createHmac("sha256", DOC_SECRET).update(canonical).digest("hex");
+    const verifyCode = newCode();
+    await db.issuedDocument.update({ where: { id: doc.id }, data: { verifyCode, signature } });
+    return verifyCode;
+  };
+
+  const DIAGS = [
+    { d: "Acute pharyngitis", disease: "Pharyngitis", icd: "J02.9" },
+    { d: "Upper respiratory tract infection", disease: "URTI", icd: "J06.9" },
+    { d: "Acute gastroenteritis", disease: "Gastroenteritis", icd: "A09" },
+    { d: "Tension headache", disease: "Tension-type headache", icd: "G44.2" },
+    { d: "Urinary tract infection", disease: "UTI", icd: "N39.0" },
+    { d: "Allergic rhinitis", disease: "Allergic rhinitis", icd: "J30.9" },
+    { d: "Typhoid fever", disease: "Enteric fever", icd: "A01.0" },
+    { d: "Uncomplicated malaria", disease: "Malaria", icd: "B54" },
+    { d: "Peptic ulcer disease", disease: "PUD", icd: "K27" },
+    { d: "Myalgia", disease: "Musculoskeletal pain", icd: "M79.1" },
+  ];
+  const COMPLAINTS = ["Fever", "Headache", "Sore throat", "Abdominal pain", "Cough", "Diarrhea", "Body ache", "Dizziness", "Nausea", "Fatigue", "Ear pain", "Back pain"];
+
+  const activeMeds = (await db.medication.findMany()).filter((m) => m.name !== "Artemether/Lumefantrine");
+  let docSeq = 1, labSeq = 2, drugSeq = 2, invSeq = 2;
+  const sampleCodes: string[] = [];
+
+  // B) ~80 historical completed visits with orders, results, dispensing, invoices, documents
+  for (let i = 0; i < 80; i++) {
+    const p = pick(allPatients);
+    const opened = subDays(new Date(), 1 + rand(60));
+    const dg = pick(DIAGS);
+    const visit = await db.visit.create({
+      data: {
+        visitNo: visitNo(), state: "COMPLETED", priority: chance(0.15) ? "URGENT" : "ROUTINE",
+        patientId: p.id, doctorId, createdById: receptionId,
+        chiefComplaint: pick(COMPLAINTS), symptoms: "See consultation notes",
+        diagnosis: dg.d, disease: dg.disease, icdCode: dg.icd,
+        openedAt: opened, closedAt: addDays(opened, chance(0.2) ? 1 : 0),
+      },
+    });
+    await db.vitals.create({
+      data: {
+        visitId: visit.id, takenById: users.NURSE, createdAt: opened,
+        temperatureC: Math.round((36.4 + Math.random() * 2.2) * 10) / 10,
+        pulseBpm: 68 + rand(30), systolic: 108 + rand(30), diastolic: 66 + rand(20),
+        spo2: 95 + rand(5), respRate: 14 + rand(6),
+        weightKg: 50 + rand(40), heightCm: 155 + rand(35),
+      },
+    });
+    if (chance(0.55)) {
+      const tests = [pick(labTests), pick(labTests)].filter((t, idx, a) => a.findIndex((x) => x.id === t.id) === idx);
+      await db.labOrder.create({
+        data: {
+          orderNo: `L-2026-${String(labSeq++).padStart(5, "0")}`, state: "COMPLETED", visitId: visit.id, orderedById: doctorId, createdAt: opened,
+          items: { create: tests.map((t) => ({ testId: t.id, state: "VERIFIED" as const, resultValue: String(1 + rand(200)), resultFlag: pick(["NORMAL", "NORMAL", "NORMAL", "HIGH", "LOW"] as const), resultedById: users.LAB_TECH, resultedAt: opened })) },
+        },
+      });
+    }
+    if (chance(0.65)) {
+      const chosen = [pick(activeMeds), pick(activeMeds)].filter((m, idx, a) => a.findIndex((x) => x.id === m.id) === idx);
+      await db.drugOrder.create({
+        data: {
+          orderNo: `D-2026-${String(drugSeq++).padStart(5, "0")}`, state: "DISPENSED", visitId: visit.id, prescribedById: doctorId, createdAt: opened,
+          items: { create: chosen.map((m) => ({ medicationId: m.id, dose: "1 " + (m.form === "Syrup" ? "spoon" : "tab"), frequency: pick(["OD", "BID", "TID"]), duration: pick(["3 days", "5 days", "7 days"]), quantity: 5 + rand(20), state: "DISPENSED" as const, dispensedById: users.PHARMACIST, dispensedAt: opened })) },
+        },
+      });
+    }
+    const items: Array<{ description: string; category: "CONSULTATION" | "LAB" | "PHARMACY"; quantity: number; unitPrice: number; amount: number }> = [
+      { description: "Consultation fee", category: "CONSULTATION", quantity: 1, unitPrice: 50, amount: 50 },
+    ];
+    if (chance(0.5)) items.push({ description: "Laboratory tests", category: "LAB", quantity: 1, unitPrice: 120, amount: 120 });
+    if (chance(0.6)) items.push({ description: "Medications", category: "PHARMACY", quantity: 1, unitPrice: 80, amount: 80 });
+    const total = items.reduce((s, it) => s + it.amount, 0);
+    const state = chance(0.78) ? "PAID" : chance(0.5) ? "PARTIALLY_PAID" : "ISSUED";
+    const paid = state === "PAID" ? total : state === "PARTIALLY_PAID" ? Math.round(total / 2) : 0;
+    const inv = await db.invoice.create({
+      data: { invoiceNo: `INV-2026-${String(invSeq++).padStart(5, "0")}`, state, patientId: p.id, visitId: visit.id, createdById: receptionId, total, paid, createdAt: opened, items: { create: items } },
+    });
+    if (paid > 0) await db.payment.create({ data: { invoiceId: inv.id, amount: paid, method: pick(["CASH", "CASH", "MOBILE", "CARD"] as const), receivedById: receptionId, createdAt: opened } });
+
+    if (chance(0.35)) {
+      const days = 1 + rand(5);
+      const doc = await db.issuedDocument.create({ data: { docNo: `DOC-2026-${String(docSeq++).padStart(5, "0")}`, type: "SICK_LEAVE", visitId: visit.id, patientId: p.id, issuedById: doctorId, fromDate: opened, toDate: addDays(opened, days - 1), days, recommendation: "Rest and hydration", payload: { patient: { name: p.name, mrn: p.mrn }, issuedByName: "Dr. Sara Bekele" }, issuedAt: opened } });
+      const code = await signDoc(doc);
+      if (sampleCodes.length < 6) sampleCodes.push(`${p.name} (sick leave): ${code}`);
+    }
+    if (chance(0.4)) {
+      const doc = await db.issuedDocument.create({ data: { docNo: `DOC-2026-${String(docSeq++).padStart(5, "0")}`, type: "VISIT_SUMMARY", visitId: visit.id, patientId: p.id, issuedById: doctorId, payload: { patient: { name: p.name, mrn: p.mrn }, issuedByName: "Dr. Sara Bekele" }, issuedAt: opened } });
+      await signDoc(doc);
+    }
+  }
+
+  // C) Deeper live queues (extra patients waiting in each active state)
+  for (let i = 0; i < 6; i++) {
+    const p = pick(allPatients);
+    await db.visit.create({ data: { visitNo: visitNo(), state: "WAITING_FOR_DOCTOR", priority: chance(0.3) ? "URGENT" : "ROUTINE", patientId: p.id, doctorId, createdById: receptionId, chiefComplaint: pick(COMPLAINTS), vitals: { create: { takenById: users.NURSE, temperatureC: 36.8 + Math.random() * 1.8, pulseBpm: 72 + rand(24), systolic: 110 + rand(24), diastolic: 70 + rand(14), spo2: 96 + rand(4), weightKg: 55 + rand(30) } } } });
+  }
+  for (let i = 0; i < 3; i++) {
+    const p = pick(allPatients);
+    const v = await db.visit.create({ data: { visitNo: visitNo(), state: "LAB_RESULTS_READY", priority: "ROUTINE", patientId: p.id, doctorId, createdById: receptionId, chiefComplaint: pick(COMPLAINTS), diagnosis: "Awaiting review" } });
+    await db.labOrder.create({ data: { orderNo: `L-2026-${String(labSeq++).padStart(5, "0")}`, state: "RESULTS_READY", visitId: v.id, orderedById: doctorId, items: { create: [{ testId: labTests[0].id, state: "RESULTED", resultValue: String(4 + rand(8)), resultFlag: "NORMAL", resultedById: users.LAB_TECH, resultedAt: new Date() }] } } });
+  }
+
+  // D) Ward admissions — active (on beds) + discharged (for the discharge summary)
+  const allBeds = await db.bed.findMany({ include: { ward: true } });
+  const mBeds = allBeds.filter((b) => b.ward.gender === "MALE");
+  const fBeds = allBeds.filter((b) => b.ward.gender === "FEMALE");
+  let admSeq = 1;
+  for (let i = 0; i < 3; i++) {
+    const male = i % 2 === 0;
+    const bed = (male ? mBeds : fBeds)[i];
+    const p = pick(male ? males : females);
+    const at = subDays(new Date(), 1 + i);
+    const v = await db.visit.create({ data: { visitNo: visitNo(), state: "ADMITTED", priority: "URGENT", patientId: p.id, doctorId, createdById: receptionId, chiefComplaint: "Severe dehydration", diagnosis: "Acute gastroenteritis with dehydration", openedAt: at } });
+    await db.admission.create({ data: { admNo: `ADM-2026-${String(admSeq++).padStart(5, "0")}`, state: i === 0 ? "ON_WARD" : "ADMITTED", visitId: v.id, patientId: p.id, wardId: bed.wardId, bedId: bed.id, admittedById: doctorId, reason: "Requires overnight observation and IV fluids", admittedAt: at } });
+    await db.bed.update({ where: { id: bed.id }, data: { status: "OCCUPIED" } });
+  }
+  for (let i = 0; i < 4; i++) {
+    const male = chance(0.5);
+    const bed = (male ? mBeds : fBeds)[3 + (i % 2)];
+    const p = pick(male ? males : females);
+    const at = subDays(new Date(), 5 + rand(20));
+    const dc = addDays(at, 1 + rand(4));
+    const v = await db.visit.create({ data: { visitNo: visitNo(), state: "COMPLETED", priority: "URGENT", patientId: p.id, doctorId, createdById: receptionId, chiefComplaint: "Fever, vomiting", diagnosis: "Enteric fever", disease: "Typhoid", icdCode: "A01.0", openedAt: at, closedAt: dc } });
+    await db.admission.create({ data: { admNo: `ADM-2026-${String(admSeq++).padStart(5, "0")}`, state: "DISCHARGED", visitId: v.id, patientId: p.id, wardId: bed.wardId, bedId: bed.id, admittedById: doctorId, reason: "Observation and IV antibiotics for enteric fever", dischargeNotes: "Afebrile for 48 hours. Completed course of IV ceftriaxone and switched to oral. Tolerating diet well. Advised rest, oral hydration, and outpatient follow-up in one week. Discharged in stable, improved condition.", admittedAt: at, dischargedAt: dc } });
+  }
+
+  // E) External referrals (various states/urgency)
+  const FACILITIES = ["Dilchora Referral Hospital", "Hiwot Fana Specialized Hospital", "Bisidimo General Hospital"];
+  let refSeq = 1;
+  for (let i = 0; i < 6; i++) {
+    const p = pick(allPatients);
+    const when = subDays(new Date(), rand(30));
+    await db.referral.create({ data: { referralNo: `REF-2026-${String(refSeq++).padStart(5, "0")}`, state: pick(["ISSUED", "ISSUED", "ACKNOWLEDGED", "COMPLETED"] as const), urgency: pick(["ROUTINE", "URGENT", "EMERGENCY"] as const), patientId: p.id, referredById: doctorId, toFacility: pick(FACILITIES), toDepartment: pick(["Internal Medicine", "Surgery", "Radiology", "Orthopedics"]), reason: pick(["Further evaluation of persistent abdominal pain", "CT imaging not available on site", "Specialist orthopedic assessment", "Management of complicated malaria"]), clinicalSummary: "Patient assessed at DDU Student Clinic; vitals and initial labs attached. Referred for higher-level evaluation and management.", issuedAt: when, createdAt: when } });
+  }
+
+  // F) More appointments across dates
+  for (let i = 0; i < 22; i++) {
+    const p = pick(allPatients);
+    const past = chance(0.4);
+    await db.appointment.create({ data: { apptNo: `APT-2026-${String(apptSeq++).padStart(5, "0")}`, patientId: p.id, providerId: doctorId, createdById: receptionId, scheduledFor: past ? subDays(new Date(), 1 + rand(20)) : addDays(new Date(), rand(21)), reason: pick(["Follow-up review", "Lab result review", "General consultation", "Chronic care follow-up", "Dressing change"]), state: past ? pick(["COMPLETED", "NO_SHOW"] as const) : pick(["SCHEDULED", "CONFIRMED"] as const) } });
+  }
+
+  // G) Leave requests across states + used balances
+  const staffIds = Object.values(users);
+  for (let i = 0; i < 12; i++) {
+    const st = pick(["SUBMITTED", "APPROVED", "APPROVED", "REJECTED", "RETURNED", "ACTIVE"] as const);
+    const start = subDays(new Date(), 18 - i);
+    const days = 2 + rand(6);
+    await db.leaveRequest.create({ data: { state: st, type: pick(["ANNUAL", "SICK", "STUDY", "UNPAID"] as const), employeeId: pick(staffIds), approverId: st === "SUBMITTED" ? null : users.HR, startDate: start, endDate: addDays(start, days - 1), reason: pick(["Family event", "Medical appointment", "Personal matters", "Academic exam", "Bereavement in family"]), createdAt: subDays(new Date(), 24 - i) } });
+  }
+  await db.leaveBalance.updateMany({ where: { type: "ANNUAL", userId: users.NURSE }, data: { used: 6 } });
+  await db.leaveBalance.updateMany({ where: { type: "SICK", userId: users.DOCTOR }, data: { used: 3 } });
+
+  // H) Extra medication batches — expired + expiring-soon (populate stock alerts)
+  const metro = await db.medication.findFirst({ where: { name: "Metronidazole" } });
+  const amox = await db.medication.findFirst({ where: { name: "Amoxicillin" } });
+  if (metro) {
+    const b = await db.medicationBatch.create({ data: { medicationId: metro.id, supplierId: sup1.id, batchNo: "B2025EXP", expiryDate: subDays(new Date(), 18), quantity: 90, costPrice: 3, sellPrice: 6 } });
+    await db.stockMovement.create({ data: { batchId: b.id, type: "RECEIVE", quantity: 90, reason: "Older stock (now expired)", byUserId: users.STORE_KEEPER } });
+  }
+  if (amox) await db.medicationBatch.create({ data: { medicationId: amox.id, supplierId: sup2.id, batchNo: "B2026SOON", expiryDate: addDays(new Date(), 45), quantity: 200, costPrice: 4, sellPrice: 8 } });
+
+  // I) More store activity
+  await db.stockRequest.create({ data: { requesterId: users.PHARMACIST, itemName: "Disposable syringes 5ml (box)", quantity: 10, reason: "Injections stock running low", state: "APPROVED" } });
+  await db.stockRequest.create({ data: { requesterId: users.LAB_TECH, itemName: "Vacutainer tubes (pack)", quantity: 15, reason: "Lab consumables", state: "FULFILLED" } });
+  await db.purchaseOrder.create({ data: { poNo: "PO-2026-00002", state: "RECEIVED", supplierId: sup2.id, total: 8000, note: "Antibiotics restock", items: { create: [{ itemName: "Ceftriaxone 1g (vials)", quantity: 100, unitPrice: 80 }] } } });
+  for (const a of [
+    { tag: "AST-005", name: "Autoclave Sterilizer", category: "Medical Equipment", unitPrice: 60000 },
+    { tag: "AST-006", name: "Refrigerator (vaccine)", category: "Medical Equipment", unitPrice: 22000 },
+    { tag: "AST-007", name: "Office Chairs (set)", category: "Furniture", unitPrice: 6000, quantity: 6 },
+  ]) await db.asset.create({ data: a });
+
+  // J) Audit log — populate with realistic activity across staff and time
+  const AUDIT: readonly [string, string][] = [
+    ["auth.login", "User"], ["auth.logout", "User"], ["patient.register", "Patient"],
+    ["visit.transition", "Visit"], ["document.issue", "IssuedDocument"], ["lab.result.submit", "LabOrder"],
+    ["drug.dispense", "DrugOrder"], ["invoice.pay", "Invoice"], ["feature.toggle", "FeatureFlag"],
+    ["leave.approve", "LeaveRequest"], ["referral.issue", "Referral"], ["asset.assign", "Asset"],
+    ["stock.receive", "MedicationBatch"], ["branding.update", "Setting"],
+  ];
+  await db.auditLog.createMany({
+    data: Array.from({ length: 140 }, (_, i) => {
+      const [action, entityType] = pick(AUDIT);
+      return { actorId: pick(staffIds), action, entityType, entityId: `seed-${i}`, ip: `10.0.${rand(255)}.${rand(255)}`, meta: { source: "demo-seed" }, createdAt: subDays(new Date(), rand(30)) };
+    }),
+  });
+
+  // K) State transitions — feed the activity timelines
+  await db.stateTransition.createMany({
+    data: Array.from({ length: 70 }, (_, i) => ({
+      entityType: pick(["Visit", "LabOrder", "DrugOrder", "LeaveRequest", "PurchaseOrder", "Admission"]),
+      entityId: `seed-${i}`, event: pick(["send_to_doctor", "order_labs", "submit_results", "dispense", "approve", "receive", "discharge"]),
+      fromState: pick(["REGISTERED", "ORDERED", "IN_PROGRESS", "SUBMITTED", "ADMITTED"]),
+      toState: pick(["WAITING_FOR_DOCTOR", "RESULTS_READY", "DISPENSED", "APPROVED", "DISCHARGED"]),
+      actorId: pick(staffIds), createdAt: subDays(new Date(), rand(20)),
+    })),
+  });
+
+  // L) More notifications (mix of read/unread)
+  await db.notification.createMany({
+    data: Array.from({ length: 16 }, (_, i) => ({
+      type: pick(["LAB_ORDER_NEW", "LAB_RESULTS_READY", "DRUG_ORDER_NEW", "VISIT_COMPLETED", "STOCK_LOW", "LEAVE_DECISION", "GENERIC"] as const),
+      title: pick(["New lab order", "Results ready", "New prescription", "Visit completed", "Low stock alert", "Leave decision"]),
+      body: `Demo notification #${i + 1}`, recipientId: pick(staffIds), link: "/dashboard",
+      readAt: chance(0.5) ? subDays(new Date(), rand(5)) : null, createdAt: subDays(new Date(), rand(7)),
+    })),
+  });
+
+  console.log(`   Bulk data: ${allPatients.length} patients, ~110 visits, labs+meds, ${admSeq - 1} admissions, ${refSeq - 1} referrals, ${docSeq - 1} signed documents, 140 audit entries.`);
+  if (sampleCodes.length) console.log(`   Verifiable document codes (try /verify/<code>):\n     - ${sampleCodes.join("\n     - ")}`);
 
   console.log("✅  Seed complete.");
   console.log(`   Staff login (password: "${STAFF_PW}"): manager@clinic.test, doctor@clinic.test, lab@clinic.test, pharmacy@clinic.test, reception@clinic.test, nurse@clinic.test, hr@clinic.test, store@clinic.test`);
