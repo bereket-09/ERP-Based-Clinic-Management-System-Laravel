@@ -6,6 +6,7 @@ import { Bell, LogOut, Menu, User as UserIcon, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { notificationSnapshot } from "@/app/(app)/notifications/actions";
+import { SabaWidget } from "@/components/saba/saba-widget";
 import type { Role } from "@prisma/client";
 import { cn, initials } from "@/lib/utils";
 import { NAV } from "@/lib/nav";
@@ -88,6 +89,17 @@ export function AppShell({ user, notifications, unreadCount, features, children 
 
         <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8">{children}</main>
       </div>
+
+      {features.includes("ai.assistant") && (
+        <SabaWidget
+          scope="staff"
+          suggestions={[
+            "What needs my attention today?",
+            "Anything low or expiring in stock?",
+            "Who is on leave right now?",
+          ]}
+        />
+      )}
     </div>
   );
 }

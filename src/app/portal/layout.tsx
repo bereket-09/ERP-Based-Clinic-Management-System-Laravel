@@ -1,9 +1,11 @@
 import { LogOut } from "lucide-react";
 import { requireStudent } from "@/server/session";
+import { isFeatureEnabled } from "@/server/services/settings";
 import { signOutAction } from "@/app/actions/auth";
 import { LogoMark } from "@/components/brand";
 import { Button } from "@/components/ui/button";
 import { NavLink } from "./nav-link";
+import { SabaWidget } from "@/components/saba/saba-widget";
 
 export const metadata = { title: "Student Health Portal" };
 
@@ -13,11 +15,11 @@ const NAV = [
   { href: "/portal/health", label: "My Health" },
   { href: "/portal/documents", label: "Documents" },
   { href: "/portal/appointments", label: "Appointments" },
-  { href: "/portal/saba", label: "Ask Saba" },
 ];
 
 export default async function PortalLayout({ children }: { children: React.ReactNode }) {
   const actor = await requireStudent();
+  const sabaOn = await isFeatureEnabled("ai.assistant");
 
   return (
     <div className="min-h-screen bg-background">
@@ -54,6 +56,17 @@ export default async function PortalLayout({ children }: { children: React.React
       </header>
 
       <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6">{children}</main>
+
+      {sabaOn && (
+        <SabaWidget
+          scope="student"
+          suggestions={[
+            "I have a headache and feel tired.",
+            "How can I sleep better during exams?",
+            "Tips to stay healthy on campus?",
+          ]}
+        />
+      )}
     </div>
   );
 }

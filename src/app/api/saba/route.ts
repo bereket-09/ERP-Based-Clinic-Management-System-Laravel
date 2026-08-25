@@ -1,10 +1,12 @@
 import { getActor } from "@/server/session";
+import { db } from "@/server/db";
 import { isFeatureEnabled } from "@/server/services/settings";
 import {
   getSabaConfig,
   streamSaba,
-  doctorSystemPrompt,
+  staffSystemPrompt,
   studentSystemPrompt,
+  buildStaffContext,
   buildDoctorContext,
   buildStudentContext,
   type ChatMessage,
@@ -14,8 +16,9 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 interface Body {
-  scope: "doctor" | "student";
+  scope: "staff" | "doctor" | "student";
   patientId?: string;
+  visitId?: string;
   messages: ChatMessage[];
 }
 
@@ -45,11 +48,17 @@ export async function POST(req: Request) {
     if (actor.kind !== "student") return new Response("Forbidden", { status: 403 });
     system = studentSystemPrompt(await buildStudentContext(actor.id));
   } else {
-    if (actor.kind !== "staff" || !["DOCTOR", "NURSE", "MANAGER"].includes(actor.role ?? "")) {
-      return new Response("Forbidden", { status: 403 });
+    if (actor.kind !== "staff") return new Response("Forbidden", { status: 403 });
+    // Deep clinical patient context is only for clinical roles, and only for a
+    // REAL visit the user opened on screen — never a client-supplied patientId.
+    const CLINICAL = ["DOCTOR", "NURSE", "MANAGER"];
+    let patientCtx = "";
+    if (body.visitId && CLINICAL.includes(actor.role ?? "")) {
+      const v = await db.visit.findUnique({ where: { id: body.visitId }, select: { patientId: true } });
+      if (v) patientCtx = await buildDoctorContext(v.patientId);
     }
-    const ctx = body.patientId ? await buildDoctorContext(body.patientId) : "";
-    system = doctorSystemPrompt(ctx);
+    const roleCtx = await buildStaffContext({ id: actor.id, role: actor.role });
+    system = staffSystemPrompt(actor.role, roleCtx, patientCtx);
   }
 
   const messages: ChatMessage[] = [{ role: "system", content: system }, ...history];
