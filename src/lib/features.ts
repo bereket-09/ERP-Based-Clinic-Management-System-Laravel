@@ -58,6 +58,7 @@ export const FEATURES: FeatureDef[] = [
   { key: "ux.notifications", name: "Notifications centre", description: "In-app notifications.", category: "OPS", defaultEnabled: true, group: "Platform" },
   { key: "platform.audit_log", name: "Audit log", description: "Full activity audit trail.", category: "OPS", defaultEnabled: true, group: "Platform" },
   { key: "platform.two_factor", name: "Two-factor auth", description: "Optional 2FA for staff.", category: "PERMISSION", defaultEnabled: false, group: "Platform" },
+  { key: "ai.assistant", name: "Saba AI assistant", description: "Saba — an AI clinical copilot for doctors (history-aware suggestions, tests to consider) and a caring health guide for students. Requires an AI provider key (Groq / OpenAI / Ollama).", category: "RELEASE", defaultEnabled: false, group: "Platform" },
   { key: "platform.white_label", name: "White-label branding", description: "Custom colours, name and logo.", category: "TENANT", defaultEnabled: true, group: "Platform" },
 ];
 

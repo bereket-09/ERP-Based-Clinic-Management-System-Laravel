@@ -5,6 +5,8 @@ import { ArrowLeft, Activity, HeartPulse, Stethoscope, FileText, FileCheck2, Pri
 import { requireStaff } from "@/server/session";
 import { db } from "@/server/db";
 import { visitAffordances } from "@/server/services/visit";
+import { isFeatureEnabled } from "@/server/services/settings";
+import { SabaChat } from "@/components/saba/saba-chat";
 import { humanize } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -62,6 +64,9 @@ export default async function VisitWorkspace({ params }: { params: Promise<{ id:
     orderBy: { issuedAt: "desc" },
   });
   const affordances = visitAffordances(visit.state, actor);
+  const sabaOn =
+    (await isFeatureEnabled("ai.assistant")) &&
+    ["DOCTOR", "NURSE", "MANAGER"].includes(actor.role ?? "");
 
   // Which print route serves each document type.
   const printPath: Partial<Record<string, string>> = {
@@ -285,6 +290,21 @@ export default async function VisitWorkspace({ params }: { params: Promise<{ id:
               )}
             </CardContent>
           </Card>
+
+          {/* Saba — AI clinical copilot (feature-flagged) */}
+          {sabaOn && (
+            <SabaChat
+              scope="doctor"
+              patientId={visit.patientId}
+              className="h-[460px]"
+              suggestions={[
+                "What differentials should I consider?",
+                "Which tests would you order next?",
+                "Any red flags in this patient's history?",
+                "Suggest a management plan.",
+              ]}
+            />
+          )}
         </div>
       </div>
     </div>

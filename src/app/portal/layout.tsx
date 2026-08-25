@@ -13,6 +13,7 @@ const NAV = [
   { href: "/portal/health", label: "My Health" },
   { href: "/portal/documents", label: "Documents" },
   { href: "/portal/appointments", label: "Appointments" },
+  { href: "/portal/saba", label: "Ask Saba" },
 ];
 
 export default async function PortalLayout({ children }: { children: React.ReactNode }) {
