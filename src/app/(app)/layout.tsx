@@ -8,17 +8,17 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   const features = [...(await enabledFeatureSet(actor.role))];
 
-  const notifications = await db.notification.findMany({
-    where: {
-      readAt: null,
-      OR: [
-        { recipientId: actor.id },
-        ...(actor.role ? [{ recipientRole: actor.role }] : []),
-      ],
-    },
-    orderBy: { createdAt: "desc" },
-    take: 8,
-  });
+  const notifWhere = {
+    readAt: null,
+    OR: [
+      { recipientId: actor.id },
+      ...(actor.role ? [{ recipientRole: actor.role }] : []),
+    ],
+  };
+  const [notifications, unreadTotal] = await Promise.all([
+    db.notification.findMany({ where: notifWhere, orderBy: { createdAt: "desc" }, take: 8 }),
+    db.notification.count({ where: notifWhere }),
+  ]);
 
   return (
     <AppShell
@@ -31,7 +31,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         type: n.type,
         createdAt: n.createdAt.toISOString(),
       }))}
-      unreadCount={notifications.length}
+      unreadCount={unreadTotal}
       features={features}
     >
       {children}

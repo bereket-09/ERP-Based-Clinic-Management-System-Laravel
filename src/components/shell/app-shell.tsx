@@ -3,6 +3,9 @@ import * as React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Bell, LogOut, Menu, User as UserIcon, X } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
+import { notificationSnapshot } from "@/app/(app)/notifications/actions";
 import type { Role } from "@prisma/client";
 import { cn, initials } from "@/lib/utils";
 import { NAV } from "@/lib/nav";
@@ -175,12 +178,50 @@ function Sidebar({
 }
 
 function NotificationBell({
-  notifications,
-  unreadCount,
+  notifications: initial,
+  unreadCount: initialCount,
 }: {
   notifications: ShellNotification[];
   unreadCount: number;
 }) {
+  const [notifications, setNotifications] = useState(initial);
+  const [unreadCount, setUnreadCount] = useState(initialCount);
+  const seen = useRef(new Set(initial.map((n) => n.id)));
+  const primed = useRef(false);
+
+  // Poll for new notifications so the bell updates live (no full reload),
+  // and toast anything that arrives while you're working. Also refresh on focus.
+  useEffect(() => {
+    let active = true;
+    const poll = async () => {
+      try {
+        const snap = await notificationSnapshot();
+        if (!active) return;
+        setNotifications(snap.items);
+        setUnreadCount(snap.unreadCount);
+        if (primed.current) {
+          for (const n of snap.items) {
+            if (!seen.current.has(n.id)) {
+              toast(n.title, { description: n.body ?? undefined });
+            }
+          }
+        }
+        snap.items.forEach((n) => seen.current.add(n.id));
+        primed.current = true;
+      } catch {
+        /* transient — try again next tick */
+      }
+    };
+    const iv = setInterval(poll, 25_000);
+    const onFocus = () => poll();
+    window.addEventListener("focus", onFocus);
+    return () => {
+      active = false;
+      clearInterval(iv);
+      window.removeEventListener("focus", onFocus);
+    };
+  }, []);
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
