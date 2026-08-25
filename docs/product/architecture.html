@@ -71,7 +71,22 @@
 
   .page-break{ break-before:page; }
   .avoid-break{ break-inside:avoid; }
-  .diagram-wrap, .card, table, figure, .doc-preview{ break-inside:avoid; }
+  /* Keep these atomic blocks whole — but NOT tables (long tables must be free
+     to flow across pages, otherwise an oversized one is clipped). */
+  .diagram-wrap, .card, figure, .doc-preview, .callout, .band, .statcard{
+    break-inside:avoid;
+  }
+  /* Long tables paginate: rows stay intact, the header repeats on each page. */
+  table{ break-inside:auto; }
+  thead{ display:table-header-group; }
+  tr{ break-inside:avoid; }
+  /* Don't strand a heading at the foot of a page, away from its content. */
+  h2, h3, h4, .sec-head, .dtitle{ break-after:avoid; }
+  /* Scale rendered Mermaid diagrams so a tall one fits the printable height
+     instead of overflowing the page and getting cut. */
+  .diagram-wrap svg, .mermaid svg{
+    max-width:100% !important; height:auto !important; max-height:196mm;
+  }
 
   img{ max-width:100%; }
 
@@ -194,7 +209,7 @@
   .feature-mini .tag{ font-size:9px; }
 
   /* ---------- TABLES ---------- */
-  table{ width:100%; border-collapse:collapse; font-size:11.5px; margin:14px 0; border:1px solid var(--hair); border-radius:10px; overflow:hidden; }
+  table{ width:100%; border-collapse:collapse; font-size:11.5px; margin:14px 0; border:1px solid var(--hair); border-radius:10px; }
   thead th{ background:var(--navy); color:#eaf1fb; font-family:"Plus Jakarta Sans"; font-weight:600; text-align:left; padding:9px 12px; font-size:10.5px; letter-spacing:0.04em; text-transform:uppercase; }
   tbody td{ padding:8px 12px; border-top:1px solid var(--hair); vertical-align:top; }
   tbody tr:nth-child(even){ background:var(--tint); }
@@ -241,8 +256,10 @@
   .toc-list .tfill{ flex:1 1 auto; border-bottom:1px dotted #cdd8ea; transform:translateY(-3px); }
 
   /* ---------- DOC RECREATIONS ---------- */
-  .doc-preview{ border:1px solid #d7dfea; border-radius:6px; background:#fff; padding:26px 30px; box-shadow:0 8px 26px rgba(12,31,61,0.12); font-family:"Public Sans",serif; color:#20303f; margin:6px 0; position:relative; }
-  .doc-sheet-tag{ position:absolute; top:-11px; left:22px; background:var(--navy); color:#eaf1fb; font-family:"Plus Jakarta Sans"; font-weight:600; font-size:9px; letter-spacing:0.12em; text-transform:uppercase; padding:3px 10px; border-radius:5px; }
+  .doc-preview{ border:1px solid #d7dfea; border-radius:6px; background:#fff; padding:34px 30px 26px; box-shadow:0 8px 26px rgba(12,31,61,0.12); font-family:"Public Sans",serif; color:#20303f; margin:6px 0; position:relative; }
+  /* Seated just inside the top edge (not straddling it) so a forced page break
+     can't leave a phantom sliver of this tag on the previous page. */
+  .doc-sheet-tag{ position:absolute; top:9px; left:22px; background:var(--navy); color:#eaf1fb; font-family:"Plus Jakarta Sans"; font-weight:600; font-size:9px; letter-spacing:0.12em; text-transform:uppercase; padding:3px 10px; border-radius:5px; }
   .dp-head{ display:flex; align-items:flex-start; justify-content:space-between; gap:14px; border-bottom:2px solid #1f2d40; padding-bottom:12px; }
   .dp-head .lh{ display:flex; align-items:flex-start; gap:12px; }
   .dp-head .lh img{ width:52px; height:52px; object-fit:contain; }
@@ -1218,7 +1235,7 @@ flowchart TD
   <p>The <code>DocumentType</code> enum covers <code>SICK_LEAVE, PRESCRIPTION, REFERRAL, LAB_REPORT, ADMISSION_SUMMARY, VISIT_SUMMARY</code>, each with a print route. Every issued document is an immutable <code>IssuedDocument</code> row with a <code>docNo</code> (e.g. <code>DOC-2026-00042</code>) and a <strong><code>payload</code> JSON snapshot</strong> of exactly what was printed, so re-prints reproduce the original even if the underlying record later changes. The shared <code>Letterhead</code> reads from <code>getBranding()</code>, so white-label branding flows into every printout.</p>
 
   <!-- FAITHFUL SICK-LEAVE RECREATION -->
-  <div class="doc-preview">
+  <div class="doc-preview page-break">
     <div class="doc-sheet-tag">Recreation · print/sick-leave/[docId]</div>
     <div class="dp-head">
       <div class="lh">
