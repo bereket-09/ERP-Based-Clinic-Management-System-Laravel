@@ -458,9 +458,11 @@ export default function LandingPage() {
       <style>{`
         .reveal { opacity: 1; }
         @media (prefers-reduced-motion: no-preference) {
-          .reveal { opacity: 0; transform: translateY(28px); filter: blur(6px);
+          /* Only armed (below-the-fold at load) elements start hidden and animate
+             in; above-the-fold content is never armed, so it paints immediately. */
+          .reveal-armed { opacity: 0; transform: translateY(28px); filter: blur(6px);
             transition: opacity .9s cubic-bezier(.32,.72,0,1), transform .9s cubic-bezier(.32,.72,0,1), filter .9s cubic-bezier(.32,.72,0,1); }
-          .reveal.is-visible { opacity: 1; transform: none; filter: none; }
+          .reveal-armed.is-visible { opacity: 1; transform: none; filter: none; }
           @keyframes ddu-float { 0%,100% { transform: translateY(0) } 50% { transform: translateY(-14px) } }
           .ddu-float { animation: ddu-float 7s ease-in-out infinite; }
           .ddu-float-slow { animation: ddu-float 9s ease-in-out infinite; }
