@@ -117,7 +117,9 @@
     -webkit-mask-image:radial-gradient(900px 620px at 84% 6%, #000 0%, transparent 70%);
     opacity:0.6;
   }
-  .cover-inner{ position:relative; z-index:2; padding:56px 54px; display:flex; flex-direction:column; height:100%; }
+  /* Bottom padding clears the 64px .cover-band so the metadata row is never
+     overlapped by the decorative gradient bar. */
+  .cover-inner{ position:relative; z-index:2; padding:56px 54px 104px; display:flex; flex-direction:column; height:100%; }
   .cover-top{ display:flex; align-items:center; gap:18px; }
   .cover-logo{ width:74px; height:74px; object-fit:contain; background:#fff; border-radius:16px; padding:9px; box-shadow:0 10px 30px rgba(0,0,0,0.28); }
   .cover-org{ font-family:"Plus Jakarta Sans"; font-weight:700; font-size:16px; letter-spacing:0.02em; }
