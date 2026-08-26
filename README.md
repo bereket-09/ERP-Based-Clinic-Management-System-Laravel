@@ -1,166 +1,140 @@
 <div align="center">
 
-<img src="public/assets/img/logo.png" alt="DDU Clinic" width="84" />
+# 🏥 DDU Clinic — Medical ERP Platform
 
-# DDU Clinic — ERP Clinic Management System
+### A complete, compliance-minded clinic management system for the entire campus health service — reception to lab, pharmacy, wards, HR, store and management — in one typed codebase.
 
-### One secure portal for the entire campus clinic — front desk to lab, pharmacy and management.
+Built for the **Dire Dawa University Student Clinic Center**, and white-label ready for any institution.
 
-A role-based ERP that digitises the full patient journey at the **Dire Dawa University Student Clinic Center**: registration → consultation → lab → pharmacy → records — with real-time queues, in-app notifications, and printable medical documents.
-
-[![Laravel](https://img.shields.io/badge/Laravel-9.x-FF2D20?logo=laravel&logoColor=white)](https://laravel.com)
-[![PHP](https://img.shields.io/badge/PHP-8.x-777BB4?logo=php&logoColor=white)](https://php.net)
-[![Livewire](https://img.shields.io/badge/Livewire-2.x-FB70A9?logo=livewire&logoColor=white)](https://laravel-livewire.com)
-[![Bootstrap](https://img.shields.io/badge/UI-Bootstrap%20%2B%20Custom-16a085)](#)
-[![License: MIT](https://img.shields.io/badge/License-MIT-22c55e.svg)](#license)
+![Next.js](https://img.shields.io/badge/Next.js-16-000?logo=nextdotjs)
+![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)
+![Prisma](https://img.shields.io/badge/Prisma-6-2D3748?logo=prisma&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-4169E1?logo=postgresql&logoColor=white)
+![XState](https://img.shields.io/badge/XState-5-2C3E50)
+![License](https://img.shields.io/badge/License-MIT-e0a112)
 
 </div>
 
 ---
 
-## ✨ Highlights
+## What makes it different
 
-- 🩺 **End-to-end patient journey** — register, queue, diagnose, order labs & medication, dispense, and archive records in one flow.
-- ⚡ **No-refresh interactions** — lists and forms are built with **Livewire 2** (live search, sort, pagination, inline validation, toast feedback).
-- 🔔 **Built-in notifications** — role-aware count badges, a header bell, and a sign-in summary so nothing falls through the cracks.
-- 🧪 **Smart lab routing** — completed lab results flow **back to the ordering doctor** ("Lab Results Ready") for further assessment, then on to reception.
-- 💊 **Editable orders + status lifecycle** — add / edit / remove lab tests and medicines after ordering; per-item status (Not started · In progress · Done · Skipped). Pharmacy stays editable after the doctor finishes (they're off-site).
-- 📄 **Printable documents** — clean A4 **sick-leave certificate** and **prescription** straight from the consult screen.
-- 🗂️ **Clinical history** — past visits with diagnoses, plus one-click popups of exactly which tests/medicines were ordered.
-- 🎨 **Refined green design system** — a modern, consistent UI anchored on the clinic's brand green `#16a085`.
+This isn't a CRUD admin panel. Three architectural ideas run through the whole product:
+
+1. **A finite-state-machine engine drives every workflow.** Visits, lab orders, prescriptions, referrals, admissions, leave requests, appointments and invoices are each a formal state machine (`src/server/fsm`). The engine is the single authority on *which transition is legal and who may trigger it* — no more status strings scattered across controllers. Machines are declarative **and** mirrored into real XState statecharts (testable, visualizable).
+
+2. **The backend decides what the UI shows (HATEOAS-style affordances).** Every screen asks the server "what can this user do to this record right now?" and renders exactly those actions — nothing more. Change a role or a state, and the buttons/forms change automatically, validated again on the server.
+
+3. **Feature toggles everywhere (Fowler-style).** Release / ops / permission / experiment / **tenant** toggles gate every module and capability, so the same codebase ships as a tailored product per institution. Managed live from **Settings → Feature toggles**.
+
+Plus: **white-label branding** (colours + name, admin-editable, injected as CSS variables), **role-based access control**, an **audit trail** of every state transition, a **command palette (⌘K)**, **dark mode**, and an installable **PWA** that degrades gracefully on flaky campus networks.
 
 ---
 
-## 📸 Screenshots
+## Modules
 
-| Landing | Sign in |
+| Area | Highlights |
 |---|---|
-| ![Landing page](docs/screenshots/landing.png) | ![Split-view login](docs/screenshots/login.png) |
-
-| Manager dashboard | Doctor dashboard |
-|---|---|
-| ![Manager dashboard with charts](docs/screenshots/admin-dashboard.png) | ![Doctor dashboard with nav badges](docs/screenshots/doctor-dashboard.png) |
-
-> More views (consult workspace, patient registration & records, lab/pharmacy) can be added — see the [capture guide](docs/screenshots/README.md).
-
----
-
-## 👥 Roles & what they do
-
-| Role | Lands on | Can do |
-|---|---|---|
-| **Receptionist** | Reception dashboard | Search/register patients, create visits, queue patients to doctors |
-| **Doctor** | Doctor dashboard | Diagnose, order labs & medication, review lab results, print sick-leave & prescriptions, view clinical history |
-| **Lab Technician** | Lab dashboard | See ordered tests, enter results, manage test types, set item status |
-| **Pharmacist** | Pharmacy dashboard | Manage medicine stock, dispense drug orders, update dispensing status |
-| **Manager / Admin** | Admin dashboard | Oversee everything — staff, departments, pharmacy & property, leave requests, clinic-wide stats |
-
-### Demo accounts
-
-> Seed demo data first (see Quick start), then sign in with:
-
-| Role | Email | Password |
-|---|---|---|
-| Manager / Admin | `admin@clinic.test` | `password` |
-| Doctor | `doctor@clinic.test` | `password` |
-| Receptionist | `reception@clinic.test` | `password` |
-| Lab Technician | `lab@clinic.test` | `password` |
-| Pharmacist | `pharmacy@clinic.test` | `password` |
+| **Reception** | SIMS student lookup (pluggable), registration, visit intake & queuing |
+| **Triage** | Nurse vitals capture, triage queue |
+| **Consultations** | FSM-driven doctor workspace: history, vitals, diagnosis, order labs/meds, refer, admit, complete |
+| **Laboratory** | Order worklist, specimen → processing → results, ref-range flags, results routed back to the doctor, test catalog |
+| **Pharmacy** | Dispensing with FEFO batch decrement, real batch/expiry inventory, stock movements, valuation, reorder & expiry alerts, suppliers |
+| **Wards & admissions** | Bed board with occupancy, admit/settle/discharge/transfer |
+| **Referrals** | External-hospital referrals with a printable letter |
+| **Appointments** | Day agenda, booking, check-in that spawns a queued visit |
+| **Billing & cashier** | Auto-invoice from a visit (consultation + lab + pharmacy), payments, printable receipt, revenue dashboard |
+| **HR** | Staff directory, leave workflow with **on-leave login lockout**, attendance, shift roster, leave balances |
+| **Store & procurement** | Asset register & assignments, stock requests, purchase orders & goods receipt |
+| **Clinical compliance** | Allergy list (with alerts), problem list (ICD-10), immunizations |
+| **Documents** | Sick-leave certificate, prescription, referral, lab report & receipt — print-ready with white-label letterhead |
+| **Student portal** | Self-service: visit history, documents, sick-leave requests |
+| **Reports** | Management analytics — visit trends, throughput, stock value, staffing |
+| **Settings** | Feature toggles, appearance/branding, organisation, audit log, security |
 
 ---
 
-## 🧩 Modules
+## Tech stack
 
-### Patient management
-Patient cards, visit queues (Queued · Pending · Lab Result Completed · Completed), the doctor consult workspace (symptoms / diagnosis / disease), and a full clinical history with drill-down into past lab/medication orders.
-
-### Laboratory
-Order tests, enter & submit results to the doctor, manage test types, and track each item through its status lifecycle.
-
-### Pharmacy
-Medicine inventory with in-stock / out-of-stock / expiring views, drug-order dispensing, and stock-aware quantities. Pharmacy can update dispensing status even after the visit is closed.
-
-### Human resources
-Employee registration & profiles (with education and work-experience records), and a leave workflow with an on-leave notice and early-return request/approval.
-
-### Store / property
-Asset registration, assignment to staff, records, and stock requests.
+- **Next.js 16** (App Router, Server Components, Server Actions) + **TypeScript**
+- **Prisma 6** + **PostgreSQL**
+- **XState 5** for the FSM engine
+- **Auth.js v5** (credentials: staff email/password, students by ID; JWT sessions; on-leave lockout)
+- **Tailwind CSS v4** + a **Radix UI** component kit (self-authored)
+- **Serwist** PWA · **Recharts** · **Zod** · **sonner**
 
 ---
 
-## 🛠️ Tech stack
-
-| Layer | Tech |
-|---|---|
-| Framework | Laravel 9 (PHP 8) |
-| Reactivity | Livewire 2 |
-| Auth | Laravel Jetstream + Fortify (Sanctum) |
-| UI | Bootstrap admin theme + a custom design layer (`public/assets/css/enhance.css`), Tailwind on auth pages |
-| Charts & UX | Chart.js, SweetAlert2, DataTables |
-| Database | SQLite (dev) / MySQL (prod) |
-| Build | Laravel Mix |
-
----
-
-## 🚀 Quick start
+## Quick start
 
 ```bash
-# 1. Install dependencies
-composer install
+# 1. Install
 npm install
 
-# 2. Environment
-cp .env.example .env
-php artisan key:generate
-# default DB is SQLite — create the file (or set MySQL creds in .env)
-touch database/database.sqlite
+# 2. Start Postgres (Docker) + create the .env (see .env.example)
+npm run db:up            # postgres on localhost:5544
+cp .env.example .env     # then set AUTH_SECRET (npx auth secret)
 
-# 3. Database + demo data
-php artisan migrate
-php artisan db:seed          # creates the demo accounts + sample clinic data
+# 3. Schema + demo data
+npm run db:push
+npm run db:seed
 
-# 4. Build assets & run
-npm run dev                  # or: npm run prod
-php artisan serve
+# 4. Run
+npm run dev              # http://localhost:3100
 ```
 
-Then open **http://127.0.0.1:8000** and sign in with a demo account above.
+### Demo accounts — password `password`
 
-> ⚠️ **`db:seed` is destructive for demo purposes** — `DemoDataSeeder` clears the domain tables (patients, visits, orders, etc.) and reseeds them. **Do not run it against production data.**
+| Role | Email |
+|---|---|
+| Manager / Admin | `manager@clinic.test` |
+| Doctor | `doctor@clinic.test` |
+| Receptionist | `reception@clinic.test` |
+| Nurse | `nurse@clinic.test` |
+| Lab technician | `lab@clinic.test` |
+| Pharmacist | `pharmacy@clinic.test` |
+| HR officer | `hr@clinic.test` |
+| Store keeper | `store@clinic.test` |
+
+**Student portal:** ID `DDU/1001/14`, password `student`.
 
 ---
 
-## 🗺️ Project structure
+## Project structure
 
 ```
-app/Http/Controllers      # Patient, Lab, Medicine, Admin, Home controllers
-app/Http/Livewire         # Livewire components (lists, forms, search)
-app/Providers             # AppServiceProvider — role-aware nav counts (badges/notifications)
-resources/views
- ├─ layouts/portal.blade.php   # master layout (sidebar, navbar, toasts)
- ├─ livewire/                  # Livewire component views
- ├─ admin|doctor|lab|pharmacy|reception/   # per-role dashboards, sidebars, actions
- └─ partials/                  # navbar, leave-notice, shared bits
-public/assets/css/enhance.css  # the green design system
-database/migrations|seeders    # schema + DemoDataSeeder
-docs/                          # modernization guide + screenshots
+src/
+ ├─ app/
+ │   ├─ (app)/           # authenticated staff app (dashboard + every module)
+ │   ├─ portal/          # student self-service portal
+ │   ├─ print/           # print-optimised documents (no chrome)
+ │   ├─ login, student-login, page.tsx (landing)
+ │   └─ api/auth/…       # Auth.js route
+ ├─ server/
+ │   ├─ fsm/             # the FSM engine + one machine per lifecycle
+ │   ├─ services/        # domain services (visit, lab, pharmacy, hr, billing, …)
+ │   ├─ integrations/    # pluggable SIMS adapter (mock + http)
+ │   └─ db.ts, session.ts
+ ├─ components/          # ui kit, shell (sidebar/topbar/command palette), widgets
+ └─ lib/                 # rbac, features registry, nav, utils
+prisma/                  # schema + demo seed
 ```
 
 ---
 
-## 🧭 Roadmap ideas
+## Scripts
 
-- Appointment scheduling & calendar
-- Inline lab result values inside clinical history
-- Real-time notifications (broadcasting)
-- Reporting & analytics exports (PDF/Excel)
+`npm run dev` · `build` · `start` · `typecheck` · `test` (Vitest) · `db:up` · `db:push` · `db:seed` · `db:reset` · `db:studio`
 
 ---
 
-## 👤 Author
+## Security & compliance notes
 
-**[Bereket Zelalem](https://github.com/bereket-09)** — final-year project for the Dire Dawa University Student Clinic Center.
+- Role-based access enforced on the server for every route and transition.
+- Every state change is written to an audit trail (`StateTransition` + `AuditLog`).
+- On-leave / suspended staff cannot sign in.
+- Secrets live only in `.env` (git-ignored). **Rotate any credential that ever entered git history.**
 
-## 📄 License
+## License
 
-Released under the [MIT License](#license). Free to adapt for your own clinic.
+MIT — free to adapt for your own institution.

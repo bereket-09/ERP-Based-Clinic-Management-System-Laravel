@@ -1,0 +1,1699 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>DDU Clinic — Platform Architecture &amp; Product Documentation</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Public+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+<script>
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'base',
+    themeVariables: {
+      primaryColor: '#eaf1fb',
+      primaryBorderColor: '#1a56b0',
+      primaryTextColor: '#0e1a2f',
+      lineColor: '#1a56b0',
+      secondaryColor: '#f4f7fc',
+      tertiaryColor: '#fbf4e4',
+      fontFamily: 'Plus Jakarta Sans, sans-serif',
+      fontSize: '13px'
+    },
+    flowchart: { curve: 'basis', useMaxWidth: true, htmlLabels: true, nodeSpacing: 34, rankSpacing: 44 }
+  });
+</script>
+<style>
+  :root{
+    --blue:#1a56b0;
+    --blue-2:#2f6fd0;
+    --navy:#0c1f3d;
+    --navy-2:#0a1a35;
+    --gold:#e0a112;
+    --ink:#0e1a2f;
+    --muted:#566379;
+    --hair:#e6ecf6;
+    --hair-2:#eef3fb;
+    --paper:#ffffff;
+    --tint:#f6f9fe;
+    --tint-2:#eef4fc;
+    --success:#1f9d5b;
+    --danger:#c23b46;
+  }
+
+  *{ box-sizing:border-box; }
+
+  html{ -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+
+  body{
+    margin:0;
+    font-family:"Public Sans","Plus Jakarta Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+    font-size:13px;
+    line-height:1.62;
+    color:var(--ink);
+    background:var(--paper);
+    -webkit-font-smoothing:antialiased;
+    text-rendering:optimizeLegibility;
+  }
+
+  h1,h2,h3,h4,h5{ font-family:"Plus Jakarta Sans",sans-serif; color:var(--ink); margin:0; line-height:1.18; letter-spacing:-0.012em; }
+
+  p{ margin:0 0 10px; }
+  a{ color:var(--blue); text-decoration:none; }
+
+  code,.mono{ font-family:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace; font-size:0.88em; }
+  code{ background:var(--tint-2); padding:1px 5px; border-radius:4px; color:#26406b; border:1px solid var(--hair); }
+
+  /* ---------- PAGE / PRINT ---------- */
+  @page{ size:A4; margin:18mm 16mm; }
+
+  .page-break{ break-before:page; }
+  .avoid-break{ break-inside:avoid; }
+  /* Keep these atomic blocks whole — but NOT tables (long tables must be free
+     to flow across pages, otherwise an oversized one is clipped). */
+  .diagram-wrap, .card, figure, .doc-preview, .callout, .band, .statcard{
+    break-inside:avoid;
+  }
+  /* Long tables paginate: rows stay intact, the header repeats on each page. */
+  table{ break-inside:auto; }
+  thead{ display:table-header-group; }
+  tr{ break-inside:avoid; }
+  /* Don't strand a heading at the foot of a page, away from its content. */
+  h2, h3, h4, .sec-head, .dtitle{ break-after:avoid; }
+  /* Scale rendered Mermaid diagrams so a tall one fits the printable height
+     instead of overflowing the page and getting cut. */
+  .diagram-wrap svg, .mermaid svg{
+    max-width:100% !important; height:auto !important; max-height:196mm;
+  }
+
+  img{ max-width:100%; }
+
+  /* ---------- COVER ---------- */
+  .cover{
+    position:relative;
+    height:calc(297mm - 36mm);
+    min-height:900px;
+    display:flex;
+    flex-direction:column;
+    background:
+      radial-gradient(1200px 520px at 78% -8%, rgba(47,111,208,0.30), transparent 60%),
+      linear-gradient(158deg, #0a1a35 0%, #0c1f3d 46%, #123056 100%);
+    color:#fff;
+    border-radius:2px;
+    overflow:hidden;
+    padding:0;
+    break-after:page;
+  }
+  .cover::after{
+    content:"";
+    position:absolute; inset:0;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px);
+    background-size:46px 46px;
+    mask-image:radial-gradient(900px 620px at 84% 6%, #000 0%, transparent 70%);
+    -webkit-mask-image:radial-gradient(900px 620px at 84% 6%, #000 0%, transparent 70%);
+    opacity:0.6;
+  }
+  /* Bottom padding clears the 64px .cover-band so the metadata row is never
+     overlapped by the decorative gradient bar. */
+  .cover-inner{ position:relative; z-index:2; padding:56px 54px 104px; display:flex; flex-direction:column; height:100%; }
+  .cover-top{ display:flex; align-items:center; gap:18px; }
+  .cover-logo{ width:74px; height:74px; object-fit:contain; background:#fff; border-radius:16px; padding:9px; box-shadow:0 10px 30px rgba(0,0,0,0.28); }
+  .cover-org{ font-family:"Plus Jakarta Sans"; font-weight:700; font-size:16px; letter-spacing:0.02em; }
+  .cover-org small{ display:block; font-weight:500; font-size:11.5px; color:#a9c2e8; letter-spacing:0.16em; text-transform:uppercase; margin-top:3px; }
+
+  .cover-eyebrow{ margin-top:auto; display:inline-flex; align-items:center; gap:10px; font-family:"Plus Jakarta Sans"; font-weight:700; font-size:11px; letter-spacing:0.24em; text-transform:uppercase; color:var(--gold); }
+  .cover-eyebrow::before{ content:""; width:34px; height:2px; background:var(--gold); border-radius:2px; }
+
+  .cover-title{ font-size:52px; font-weight:800; line-height:1.02; letter-spacing:-0.025em; margin:20px 0 0; max-width:15ch; color:#ffffff; }
+  .cover-title .accent{ color:#7fb0f4; }
+  .cover-sub{ margin-top:22px; font-size:15.5px; line-height:1.6; color:#cad9f0; max-width:52ch; font-weight:400; }
+
+  .cover-rule{ height:1px; background:linear-gradient(90deg, rgba(255,255,255,0.42), rgba(255,255,255,0)); margin:34px 0 26px; }
+
+  .cover-meta{ display:grid; grid-template-columns:repeat(4,auto); gap:22px; }
+  .cover-meta .k{ font-size:10px; letter-spacing:0.2em; text-transform:uppercase; color:#8fabd6; font-family:"Plus Jakarta Sans"; font-weight:700; }
+  .cover-meta .v{ font-size:13px; color:#eaf1fb; margin-top:5px; font-weight:600; font-family:"Plus Jakarta Sans"; white-space:nowrap; }
+
+  .cover-band{ position:absolute; left:0; right:0; bottom:0; height:64px; z-index:2;
+    background:linear-gradient(90deg, var(--gold) 0%, #f0c04a 42%, var(--blue) 100%);
+    opacity:0.96; }
+  .cover-badge{ position:absolute; z-index:3; right:52px; top:52px; display:flex; flex-direction:column; align-items:flex-end; gap:6px; }
+  .cover-badge .ver{ font-family:"Plus Jakarta Sans"; font-weight:800; font-size:15px; letter-spacing:0.02em; color:#fff; background:rgba(255,255,255,0.10); border:1px solid rgba(255,255,255,0.22); padding:7px 15px; border-radius:999px; }
+
+  /* ---------- SHELL / SECTIONS ---------- */
+  .doc{ max-width:186mm; margin:0 auto; }
+
+  .section{ padding-top:6px; }
+  .section.page-break{ padding-top:0; }
+
+  .eyebrow{ display:inline-flex; align-items:center; gap:9px; font-family:"Plus Jakarta Sans"; font-weight:700; font-size:10.5px; letter-spacing:0.2em; text-transform:uppercase; color:var(--gold); margin-bottom:10px; }
+  .eyebrow::before{ content:""; width:22px; height:2px; background:var(--gold); border-radius:2px; }
+
+  h2.sec-title{ font-size:27px; font-weight:800; letter-spacing:-0.02em; margin:0 0 6px; }
+  h2.sec-title .num{ color:var(--blue); font-weight:800; margin-right:10px; }
+  .sec-lead{ font-size:13.5px; color:var(--muted); max-width:66ch; margin:0 0 18px; }
+  .sec-head{ border-bottom:2px solid var(--navy); padding-bottom:14px; margin-bottom:22px; }
+
+  h3{ font-size:16.5px; font-weight:700; margin:26px 0 8px; letter-spacing:-0.01em; }
+  h3 .h3num{ color:var(--blue); font-weight:700; font-size:14px; margin-right:8px; }
+  h4{ font-size:13.5px; font-weight:700; margin:18px 0 6px; color:#1a2c48; }
+
+  .lead-drop::first-letter{ }
+
+  ul,ol{ margin:6px 0 12px; padding-left:20px; }
+  li{ margin:3px 0; }
+
+  strong{ color:#132542; font-weight:700; }
+
+  /* ---------- CARDS / CALLOUTS ---------- */
+  .card{
+    border:1px solid var(--hair);
+    border-radius:12px;
+    background:#fff;
+    padding:18px 20px;
+    box-shadow:0 1px 0 var(--hair);
+    margin:14px 0;
+  }
+  .card.bezel{
+    padding:5px;
+    background:linear-gradient(180deg,#fbfdff,#f2f7fe);
+    border:1px solid #dbe6f6;
+  }
+  .card.bezel > .bezel-in{
+    border:1px solid #e3ecf9;
+    border-radius:9px;
+    background:#fff;
+    padding:16px 18px;
+  }
+  .card h4{ margin-top:0; }
+
+  .callout{ position:relative; border:1px solid #dbe6f6; border-left:4px solid var(--blue); background:linear-gradient(180deg,#f8fbff,#f2f7fe); border-radius:10px; padding:14px 18px; margin:16px 0; }
+  .callout.gold{ border-left-color:var(--gold); background:linear-gradient(180deg,#fffdf6,#fdf7e8); border-color:#f0e2bd; }
+  .callout.navy{ border-left-color:var(--navy); background:linear-gradient(180deg,#f5f8fd,#eef3fb); }
+  .callout .lbl{ font-family:"Plus Jakarta Sans"; font-weight:700; font-size:10px; letter-spacing:0.16em; text-transform:uppercase; color:var(--blue); display:block; margin-bottom:4px; }
+  .callout.gold .lbl{ color:#a97e10; }
+  .callout p:last-child{ margin-bottom:0; }
+
+  .grid-2{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  .grid-3{ display:grid; grid-template-columns:repeat(3,1fr); gap:12px; }
+
+  .statcard{ border:1px solid var(--hair); border-radius:11px; padding:14px 16px; background:linear-gradient(180deg,#fff,#f9fbfe); }
+  .statcard .big{ font-family:"Plus Jakarta Sans"; font-weight:800; font-size:26px; color:var(--blue); letter-spacing:-0.02em; line-height:1; }
+  .statcard .lbl{ font-size:11px; color:var(--muted); margin-top:6px; font-weight:500; }
+
+  .feature-mini{ border:1px solid var(--hair); border-radius:10px; padding:13px 15px; background:#fff; }
+  .feature-mini h4{ margin:0 0 4px; font-size:12.5px; }
+  .feature-mini p{ margin:0; font-size:11.5px; color:var(--muted); line-height:1.5; }
+  .feature-mini .tag{ font-size:9px; }
+
+  /* ---------- TABLES ---------- */
+  table{ width:100%; border-collapse:collapse; font-size:11.5px; margin:14px 0; border:1px solid var(--hair); border-radius:10px; }
+  thead th{ background:var(--navy); color:#eaf1fb; font-family:"Plus Jakarta Sans"; font-weight:600; text-align:left; padding:9px 12px; font-size:10.5px; letter-spacing:0.04em; text-transform:uppercase; }
+  tbody td{ padding:8px 12px; border-top:1px solid var(--hair); vertical-align:top; }
+  tbody tr:nth-child(even){ background:var(--tint); }
+  tbody tr:nth-child(odd){ background:#fff; }
+  td code, td .mono{ font-size:10.5px; }
+  table.tight td{ padding:6px 10px; }
+  caption{ caption-side:bottom; text-align:left; font-size:10px; color:var(--muted); padding-top:6px; font-style:italic; }
+
+  /* ---------- BADGES / PILLS ---------- */
+  .pill{ display:inline-flex; align-items:center; gap:5px; font-family:"Plus Jakarta Sans"; font-weight:600; font-size:10px; letter-spacing:0.02em; padding:2.5px 9px; border-radius:999px; border:1px solid transparent; white-space:nowrap; }
+  .pill.blue{ background:#e7f0fc; color:#1a4b96; border-color:#caddf6; }
+  .pill.navy{ background:#e5eaf3; color:#1c3358; border-color:#c9d4e6; }
+  .pill.gold{ background:#fbf2d9; color:#8a6408; border-color:#f0e1b3; }
+  .pill.green{ background:#e2f4ea; color:#177a48; border-color:#c2e6d2; }
+  .pill.red{ background:#fbe6e8; color:#a82f3a; border-color:#f2ccd1; }
+  .pill.gray{ background:#eef1f5; color:#4a5568; border-color:#dde3ec; }
+  .pill.state{ font-family:"IBM Plex Mono"; font-weight:500; font-size:9.5px; letter-spacing:0.03em; }
+
+  .role-row{ display:flex; flex-wrap:wrap; gap:6px; margin:10px 0; }
+  .tag{ display:inline-block; font-family:"IBM Plex Mono"; font-size:9.5px; padding:2px 7px; border-radius:5px; background:var(--tint-2); border:1px solid var(--hair); color:#31537f; }
+  .tag.on{ background:#e6f5ec; border-color:#c7e7d3; color:#1a7a49; }
+  .tag.off{ background:#f6e9ea; border-color:#eccfd2; color:#a63b44; }
+
+  /* ---------- DIAGRAMS ---------- */
+  .diagram-wrap{ margin:18px 0; border:1px solid var(--hair); border-radius:12px; background:linear-gradient(180deg,#fdfefe,#f7fafe); padding:16px 16px 8px; }
+  .diagram-wrap .dtitle{ font-family:"Plus Jakarta Sans"; font-weight:700; font-size:12px; color:#1a2c48; margin:0 0 2px; display:flex; align-items:center; gap:8px; }
+  .diagram-wrap .dtitle .fig{ font-size:9.5px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:#fff; background:var(--blue); padding:2px 7px; border-radius:5px; }
+  .diagram-wrap .dcap{ font-size:11px; color:var(--muted); margin:0 0 6px; }
+  .mermaid{ text-align:center; font-size:13px; }
+  pre.mermaid{ background:transparent; border:0; margin:6px 0 0; }
+
+  /* ---------- SCREENSHOTS ---------- */
+  figure{ margin:16px 0; }
+  figure img{ width:100%; border:1px solid var(--hair); border-radius:12px; box-shadow:0 6px 20px rgba(12,31,61,0.10); display:block; }
+  figcaption{ font-size:10.5px; color:var(--muted); margin-top:8px; font-style:italic; text-align:center; }
+
+  /* ---------- TOC ---------- */
+  .toc{ margin-top:10px; }
+  .toc-list{ list-style:none; margin:0; padding:0; }
+  .toc-list > li{ display:flex; align-items:baseline; gap:12px; padding:8px 0; border-bottom:1px dotted var(--hair); }
+  .toc-list .tnum{ font-family:"Plus Jakarta Sans"; font-weight:800; color:var(--blue); width:26px; flex:0 0 26px; font-size:13px; }
+  .toc-list .ttitle{ font-family:"Plus Jakarta Sans"; font-weight:600; font-size:13.5px; color:var(--ink); }
+  .toc-list .tdesc{ color:var(--muted); font-size:11px; font-weight:400; margin-left:6px; }
+  .toc-list .tfill{ flex:1 1 auto; border-bottom:1px dotted #cdd8ea; transform:translateY(-3px); }
+
+  /* ---------- DOC RECREATIONS ---------- */
+  .doc-preview{ border:1px solid #d7dfea; border-radius:6px; background:#fff; padding:34px 30px 26px; box-shadow:0 8px 26px rgba(12,31,61,0.12); font-family:"Public Sans",serif; color:#20303f; margin:6px 0; position:relative; }
+  /* Seated just inside the top edge (not straddling it) so a forced page break
+     can't leave a phantom sliver of this tag on the previous page. */
+  .doc-sheet-tag{ position:absolute; top:9px; left:22px; background:var(--navy); color:#eaf1fb; font-family:"Plus Jakarta Sans"; font-weight:600; font-size:9px; letter-spacing:0.12em; text-transform:uppercase; padding:3px 10px; border-radius:5px; }
+  .dp-head{ display:flex; align-items:flex-start; justify-content:space-between; gap:14px; border-bottom:2px solid #1f2d40; padding-bottom:12px; }
+  .dp-head .lh{ display:flex; align-items:flex-start; gap:12px; }
+  .dp-head .lh img{ width:52px; height:52px; object-fit:contain; }
+  .dp-org{ font-family:"Plus Jakarta Sans","Georgia",serif; font-weight:700; font-size:17px; color:#16202f; letter-spacing:-0.01em; }
+  .dp-app{ font-size:11.5px; color:#4a5766; font-weight:600; margin-top:1px; }
+  .dp-contact{ font-size:10px; color:#7a8697; margin-top:2px; }
+  .dp-kind{ text-align:right; font-size:9.5px; text-transform:uppercase; letter-spacing:0.14em; color:#7a8697; font-weight:600; padding-top:4px; }
+  .dp-h1{ text-align:center; font-family:"Georgia",serif; font-weight:700; font-size:19px; text-transform:uppercase; letter-spacing:0.03em; color:#16202f; margin:16px 0 2px; }
+  .dp-h1sub{ text-align:center; font-size:10px; text-transform:uppercase; letter-spacing:0.22em; color:#8a95a4; margin-bottom:16px; }
+  .dp-fields{ display:grid; grid-template-columns:repeat(4,1fr); gap:10px; border:1px solid #e2e8f1; background:#f7f9fc; border-radius:6px; padding:12px 14px; }
+  .dp-fields .fl{ font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:#8592a3; }
+  .dp-fields .fv{ font-size:12.5px; color:#16202f; font-weight:600; margin-top:2px; }
+  .dp-body{ font-size:12.5px; line-height:1.85; color:#293646; margin:16px 2px; }
+  .dp-body .em{ font-weight:700; color:#16202f; }
+  .dp-foot{ display:flex; align-items:flex-end; justify-content:space-between; margin-top:26px; }
+  .stamp{ width:88px; height:88px; border-radius:50%; border:2px dashed #b8c2d0; display:flex; align-items:center; justify-content:center; text-align:center; font-size:8.5px; text-transform:uppercase; letter-spacing:0.08em; color:#a2adbb; transform:rotate(-8deg); }
+  .sig{ min-width:210px; text-align:left; }
+  .sig .sline{ border-top:1px solid #8b97a6; margin-top:34px; padding-top:4px; }
+  .sig .sname{ font-size:12.5px; font-weight:700; color:#16202f; }
+  .sig .srole{ font-size:10.5px; color:#5a6675; }
+  .sig .slabel{ font-size:8.5px; text-transform:uppercase; letter-spacing:0.1em; color:#9aa5b3; margin-top:2px; }
+  .seal{ display:flex; align-items:center; gap:12px; border:1px solid #d3dbe6; background:#f7f9fc; border-radius:8px; padding:12px 14px; margin-top:20px; }
+  .seal .qr{ width:76px; height:76px; flex:0 0 76px; }
+  .seal .stitle{ font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:0.1em; color:#8592a3; }
+  .seal .sauth{ font-size:12.5px; font-weight:700; color:#16202f; }
+  .seal .scode{ font-family:"IBM Plex Mono"; font-size:13px; font-weight:600; letter-spacing:0.16em; color:#1a2c48; margin-top:3px; }
+  .seal .surl{ font-size:8px; color:#8592a3; margin-top:2px; word-break:break-all; }
+  .dp-docfoot{ display:flex; justify-content:space-between; border-top:1px solid #e6ebf2; margin-top:18px; padding-top:8px; font-size:9px; color:#8592a3; }
+  .dp-docfoot .mono{ color:#4a5766; }
+
+  .mini-doc{ border:1px solid #dbe3ee; border-radius:8px; background:#fff; padding:14px 16px; box-shadow:0 3px 12px rgba(12,31,61,0.07); }
+  .mini-doc .md-top{ display:flex; align-items:center; gap:8px; border-bottom:1px solid #eaeff6; padding-bottom:8px; margin-bottom:9px; }
+  .mini-doc .md-top img{ width:26px; height:26px; object-fit:contain; }
+  .mini-doc .md-kind{ font-family:"Plus Jakarta Sans"; font-weight:700; font-size:11px; color:#16202f; }
+  .mini-doc .md-org{ font-size:8.5px; color:#8592a3; text-transform:uppercase; letter-spacing:0.08em; }
+  .mini-doc .md-line{ display:flex; justify-content:space-between; font-size:10px; padding:2.5px 0; border-bottom:1px dotted #eef2f7; }
+  .mini-doc .md-line .l{ color:#8592a3; }
+  .mini-doc .md-line .v{ color:#293646; font-weight:600; text-align:right; }
+  .mini-doc .md-seal{ display:flex; align-items:center; gap:7px; margin-top:9px; padding-top:8px; border-top:1px solid #eaeff6; }
+  .mini-doc .md-seal .q{ width:34px; height:34px; }
+  .mini-doc .md-seal .c{ font-family:"IBM Plex Mono"; font-size:9.5px; letter-spacing:0.1em; color:#1a2c48; font-weight:600; }
+  .mini-doc .md-seal .t{ font-size:8px; color:#8592a3; text-transform:uppercase; letter-spacing:0.08em; }
+
+  /* ---------- SECTION DIVIDER BANNER ---------- */
+  .band{ background:linear-gradient(140deg,#0a1a35,#0c1f3d 55%,#14335c); color:#eaf1fb; border-radius:14px; padding:22px 26px; margin:4px 0 20px; display:flex; align-items:center; gap:20px; position:relative; overflow:hidden; }
+  .band::after{ content:""; position:absolute; right:-30px; top:-30px; width:180px; height:180px; border-radius:50%; background:radial-gradient(circle, rgba(224,161,18,0.22), transparent 65%); }
+  .band img{ width:44px; height:44px; object-fit:contain; position:relative; z-index:1; }
+  .band .btext{ position:relative; z-index:1; }
+  .band .beye{ font-family:"Plus Jakarta Sans"; font-weight:700; font-size:10px; letter-spacing:0.2em; text-transform:uppercase; color:var(--gold); }
+  .band .btitle{ font-family:"Plus Jakarta Sans"; font-weight:700; font-size:19px; margin-top:3px; letter-spacing:-0.01em; }
+  .band .bsub{ font-size:11.5px; color:#b9cbe6; margin-top:3px; }
+
+  /* ---------- FOOTER FEEL ---------- */
+  .runfoot{ display:flex; justify-content:space-between; align-items:center; border-top:1px solid var(--hair); margin-top:26px; padding-top:8px; font-size:9px; color:#9aa7ba; letter-spacing:0.04em; font-family:"Plus Jakarta Sans"; }
+  .runfoot .r{ display:flex; align-items:center; gap:7px; }
+  .dot{ width:5px; height:5px; border-radius:50%; background:var(--gold); display:inline-block; }
+
+  .kv{ display:grid; grid-template-columns:150px 1fr; gap:2px 14px; font-size:12px; margin:8px 0; }
+  .kv .k{ color:var(--muted); font-weight:600; }
+  .kv .v{ color:var(--ink); }
+
+  .legend{ display:flex; flex-wrap:wrap; gap:12px; font-size:10.5px; color:var(--muted); margin:6px 0 2px; }
+  .legend span{ display:inline-flex; align-items:center; gap:5px; }
+  .sw{ width:11px; height:11px; border-radius:3px; display:inline-block; border:1px solid rgba(0,0,0,0.08); }
+
+  hr.soft{ border:0; border-top:1px solid var(--hair); margin:22px 0; }
+</style>
+</head>
+<body>
+
+<!-- ============================================================= -->
+<!-- 1 · COVER                                                     -->
+<!-- ============================================================= -->
+<div class="cover">
+  <div class="cover-badge">
+    <span class="ver">Version 2.0</span>
+  </div>
+  <div class="cover-inner">
+    <div class="cover-top">
+      <img class="cover-logo" src="assets/ddu-logo-color.png" alt="Dire Dawa University logo" />
+      <div class="cover-org">Dire Dawa University
+        <small>Student Clinic Center</small>
+      </div>
+    </div>
+
+    <div class="cover-eyebrow">Architecture &amp; Product Documentation</div>
+    <h1 class="cover-title">DDU Clinic <span class="accent">— Platform Architecture</span> &amp; Product Documentation</h1>
+    <p class="cover-sub">A cloud-native, serverless, modular service-layered clinic management platform for the Dire Dawa University Student Clinic Center — governed by a declarative finite-state-machine engine, backend-driven affordances, and tamper-evident document verification.</p>
+
+    <div class="cover-rule"></div>
+
+    <div class="cover-meta">
+      <div>
+        <div class="k">Document</div>
+        <div class="v">Flagship Reference</div>
+      </div>
+      <div>
+        <div class="k">Version</div>
+        <div class="v">2.0.0</div>
+      </div>
+      <div>
+        <div class="k">Date</div>
+        <div class="v">25 August 2026</div>
+      </div>
+      <div>
+        <div class="k">Author</div>
+        <div class="v">Bereket Zelalem</div>
+      </div>
+    </div>
+  </div>
+  <div class="cover-band"></div>
+</div>
+
+<div class="doc">
+
+<!-- ============================================================= -->
+<!-- 2 · TABLE OF CONTENTS                                         -->
+<!-- ============================================================= -->
+<section class="section">
+  <div class="sec-head">
+    <div class="eyebrow">Contents</div>
+    <h2 class="sec-title">Table of Contents</h2>
+    <p class="sec-lead">A guided path through the platform — from the executive picture down to the data model, security posture, AI guardrails, and the roadmap.</p>
+  </div>
+
+  <div class="toc">
+    <ol class="toc-list">
+      <li><span class="tnum">01</span><span class="ttitle">Executive Summary<span class="tdesc">what it is, why it matters</span></span><span class="tfill"></span></li>
+      <li><span class="tnum">02</span><span class="ttitle">Product Overview<span class="tdesc">the problem, the solution, the 8 roles</span></span><span class="tfill"></span></li>
+      <li><span class="tnum">03</span><span class="ttitle">System Architecture<span class="tdesc">layers, runtime split, external systems</span></span><span class="tfill"></span></li>
+      <li><span class="tnum">04</span><span class="ttitle">The Three Architectural Pillars<span class="tdesc">FSM engine · affordances · feature flags</span></span><span class="tfill"></span></li>
+      <li><span class="tnum">05</span><span class="ttitle">Modules &amp; Feature Inventory<span class="tdesc">~35 flags, module by module</span></span><span class="tfill"></span></li>
+      <li><span class="tnum">06</span><span class="ttitle">Clinical Workflow<span class="tdesc">the visit spine, state by state</span></span><span class="tfill"></span></li>
+      <li><span class="tnum">07</span><span class="ttitle">Operational Workflows<span class="tdesc">HR leave · procurement · pharmacy FEFO</span></span><span class="tfill"></span></li>
+      <li><span class="tnum">08</span><span class="ttitle">Security &amp; Compliance<span class="tdesc">RBAC, MFA, audit, HMAC documents</span></span><span class="tfill"></span></li>
+      <li><span class="tnum">09</span><span class="ttitle">Saba — the AI Assistant<span class="tdesc">how it works &amp; its guardrails</span></span><span class="tfill"></span></li>
+      <li><span class="tnum">10</span><span class="ttitle">Documents the System Generates<span class="tdesc">certificates, summaries, verification</span></span><span class="tfill"></span></li>
+      <li><span class="tnum">11</span><span class="ttitle">Data Model<span class="tdesc">key entities &amp; relationships</span></span><span class="tfill"></span></li>
+      <li><span class="tnum">12</span><span class="ttitle">Deployment &amp; Operations<span class="tdesc">serverless, Neon, env, scaling</span></span><span class="tfill"></span></li>
+      <li><span class="tnum">13</span><span class="ttitle">Roadmap &amp; Future Ecosystem<span class="tdesc">connectors, HMIS, telemedicine</span></span><span class="tfill"></span></li>
+      <li><span class="tnum">14</span><span class="ttitle">Appendix<span class="tdesc">tech stack, demo accounts, glossary</span></span><span class="tfill"></span></li>
+    </ol>
+  </div>
+
+  <div class="runfoot">
+    <span class="r"><span class="dot"></span> DDU Clinic — Platform Architecture &amp; Product Documentation</span>
+    <span>v2.0 · Contents</span>
+  </div>
+</section>
+
+<!-- ============================================================= -->
+<!-- SECTION 1 · EXECUTIVE SUMMARY                                 -->
+<!-- ============================================================= -->
+<section class="section page-break">
+  <div class="sec-head">
+    <div class="eyebrow">Section 01</div>
+    <h2 class="sec-title"><span class="num">01</span>Executive Summary</h2>
+    <p class="sec-lead">The DDU Clinic platform is a from-scratch, cloud-native rebuild of the university's clinic management system — engineered so that process, security, and audit are one and the same act.</p>
+  </div>
+
+  <p>The <strong>DDU Clinic platform</strong> (package <code>ddu-clinic</code>, version <code>2.0.0</code>) is the ERP-style clinic management system for the <strong>Dire Dawa University Student Clinic Center</strong>. It is a from-scratch <strong>Next.js 16 / React 19 / TypeScript</strong> rebuild that runs <strong>cloud-native and serverless</strong> on Vercel against a <strong>Neon serverless PostgreSQL</strong> database, accessed in production through a pooled connection.</p>
+
+  <p>Architecturally, the system is best described — honestly — as a <strong>modular, service-layered monolith that is decomposable</strong>: a single Next.js application whose modularity comes from a disciplined domain-service layer (<code>src/server/services/*</code>), one file per bounded context, each owning its own writes and its own state machine. It is <em>not</em> a set of running microservices, but the boundaries are already drawn so any context could be peeled off later with limited blast radius.</p>
+
+  <div class="grid-3" style="margin:18px 0;">
+    <div class="statcard"><div class="big">8</div><div class="lbl">Staff roles governed by RBAC, from Manager to Store Keeper</div></div>
+    <div class="statcard"><div class="big">9</div><div class="lbl">Declarative state machines drive every clinical &amp; operational entity</div></div>
+    <div class="statcard"><div class="big">~35</div><div class="lbl">Feature flags in a Fowler-style registry, runtime-toggleable</div></div>
+    <div class="statcard"><div class="big">13</div><div class="lbl">White-label capability modules, from reception to billing</div></div>
+    <div class="statcard"><div class="big">6</div><div class="lbl">Signed document types with public HMAC verification</div></div>
+    <div class="statcard"><div class="big">1</div><div class="lbl">Source of truth for who-may-do-what: the FSM table</div></div>
+  </div>
+
+  <h3><span class="h3num">1.1</span>What sets it apart</h3>
+  <p>Three ideas make the platform distinctive and are woven through every module:</p>
+  <ul>
+    <li><strong>A declarative FSM engine</strong> is the single authority for which state transitions are legal and which role may fire each one. Services never change a <code>state</code> column without first passing through the engine's validation gate.</li>
+    <li><strong>Backend-driven affordances (HATEOAS-style):</strong> the server computes the exact set of actions a given user may take on a given entity right now, and the client renders precisely those buttons — nothing more, nothing less. The UI can never drift from what the server will accept.</li>
+    <li><strong>Tamper-evident documents:</strong> every issued certificate carries a short public verify code and an HMAC-SHA256 signature over its immutable facts. A public <code>/verify</code> page recomputes the signature — a genuine document always verifies; a forged one never will.</li>
+  </ul>
+
+  <div class="callout gold">
+    <span class="lbl">Honesty note</span>
+    <p>This document deliberately avoids overclaiming. The platform is a <strong>cloud-native, serverless, modular service-layered</strong> application — not literal microservices. The PWA is <strong>installable</strong> via a web manifest but is <strong>not</strong> yet an offline-caching service worker (Serwist is a dependency, not yet wired). Every claim in this document is traceable to source on branch <code>feature/platform-v2</code>.</p>
+  </div>
+
+  <div class="runfoot">
+    <span class="r"><span class="dot"></span> DDU Clinic — Platform Architecture &amp; Product Documentation</span>
+    <span>v2.0 · §01 Executive Summary</span>
+  </div>
+</section>
+
+<!-- ============================================================= -->
+<!-- SECTION 2 · PRODUCT OVERVIEW                                  -->
+<!-- ============================================================= -->
+<section class="section page-break">
+  <div class="sec-head">
+    <div class="eyebrow">Section 02</div>
+    <h2 class="sec-title"><span class="num">02</span>Product Overview</h2>
+    <p class="sec-lead">A campus clinic serving thousands of students and staff runs on registration desks, triage rooms, consultation, a lab, a pharmacy, wards, referrals, HR and a store — the platform ties all of it into one governed spine.</p>
+  </div>
+
+  <h3><span class="h3num">2.1</span>The problem</h3>
+  <p>A university clinic at the scale of a <strong>5,000–10,000-student campus</strong> is a small hospital in disguise. On any given day it registers walk-ins, triages vitals, runs consultations, orders and results lab tests, dispenses medicines from expiring batches, admits and discharges inpatients, refers complex cases to external hospitals, bills for services, manages staff leave and attendance, and keeps a store of assets and supplies. Done on paper or across disconnected spreadsheets, this fragments the patient record, loses the audit trail, and makes it impossible to know — at any moment — <em>who is responsible for what right now.</em></p>
+
+  <p>The specific failure modes the platform is designed to eliminate: a nurse and a receptionist disagreeing about whether a patient has been sent to the doctor; a lab result that never makes it back to the ordering physician; a medicine dispensed from a batch that expires next month while an older batch sits on the shelf; a sick-leave certificate that a student photoshops; a staff member on approved leave who can still log in and act.</p>
+
+  <h3><span class="h3num">2.2</span>The solution</h3>
+  <p>The platform gives every clinical and operational process a <strong>single, role-aware state machine</strong>. Each hand-off — reception to triage, triage to doctor, doctor to lab, lab back to doctor, doctor to pharmacy — is a guarded transition that is validated on the server, wrapped in a database transaction, written to an audit trail, and fanned out as a notification to the next team, all in one atomic act. The workflow, the audit record, and the hand-off notification are the same operation.</p>
+
+  <div class="callout">
+    <span class="lbl">Design principle</span>
+    <p>Because the buttons a user sees and the transitions the server accepts are both projected from one declarative table, the interface can never offer an action the backend would refuse — and gating or adding an action is a one-line change to a machine definition.</p>
+  </div>
+
+  <h3><span class="h3num">2.3</span>Who uses it — the eight roles</h3>
+  <p>Access is governed by role-based access control across eight staff roles, plus a self-service student portal. <span class="pill navy">MANAGER</span> is always privileged and passes every role guard.</p>
+
+  <table>
+    <thead>
+      <tr><th style="width:150px;">Role</th><th>Primary responsibility</th><th style="width:200px;">Home surfaces</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><span class="pill navy">MANAGER</span></td><td>Oversight, configuration, reports, feature flags, billing voids; always passes role guards.</td><td>Reports, Settings, Billing</td></tr>
+      <tr><td><span class="pill blue">RECEPTIONIST</span></td><td>Front-desk registration and visit intake; billing and payments; referral acknowledgement.</td><td>Reception, Billing</td></tr>
+      <tr><td><span class="pill blue">NURSE</span></td><td>Triage and vitals capture; ward settling and discharge; admissions.</td><td>Triage, Wards</td></tr>
+      <tr><td><span class="pill blue">DOCTOR</span></td><td>Consultations: order labs, prescribe, refer, admit, complete; Saba clinical copilot.</td><td>Consultations, Patients</td></tr>
+      <tr><td><span class="pill blue">LAB_TECH</span></td><td>Lab worklist: collect, process, submit results back to the ordering doctor.</td><td>Laboratory</td></tr>
+      <tr><td><span class="pill blue">PHARMACIST</span></td><td>Dispensing queue and FEFO stock; batch/expiry inventory; suppliers.</td><td>Pharmacy, Inventory</td></tr>
+      <tr><td><span class="pill blue">HR</span></td><td>Leave requests and approvals (drives the on-leave lockout), attendance, rosters.</td><td>Human Resources</td></tr>
+      <tr><td><span class="pill blue">STORE_KEEPER</span></td><td>Non-medical inventory and assets; stock requests; purchase orders and goods receipt.</td><td>Store &amp; Assets</td></tr>
+      <tr><td><span class="pill gold">STUDENT</span></td><td>Self-service portal: own appointments, documents, visit history, and the Saba health guide.</td><td>Student Portal</td></tr>
+    </tbody>
+    <caption>Roles from <code>Role</code> enum (<code>schema.prisma:22</code>); labels in <code>src/lib/rbac.ts</code>. Students authenticate separately and are confined to <code>/portal</code>.</caption>
+  </table>
+
+  <div class="runfoot">
+    <span class="r"><span class="dot"></span> DDU Clinic — Platform Architecture &amp; Product Documentation</span>
+    <span>v2.0 · §02 Product Overview</span>
+  </div>
+</section>
+
+<!-- ============================================================= -->
+<!-- SECTION 3 · SYSTEM ARCHITECTURE                               -->
+<!-- ============================================================= -->
+<section class="section page-break">
+  <div class="sec-head">
+    <div class="eyebrow">Section 03</div>
+    <h2 class="sec-title"><span class="num">03</span>System Architecture</h2>
+    <p class="sec-lead">A layered, cloud-native architecture: React Server Components and an installable PWA at the edge, server actions and route handlers, domain services fronting the FSM engine, Prisma, and Neon Postgres — with a handful of external systems on clean adapters.</p>
+  </div>
+
+  <p>The platform follows a strict <strong>request-inward</strong> flow. The client renders Server Components and Server-Action forms; those call <strong>into</strong> the domain service layer; services are the only code that writes, and every write that changes an entity's state passes first through the <strong>FSM engine</strong>. Persistence is via Prisma to Neon Postgres. External systems — Auth.js, an OpenAI-compatible AI provider for Saba, and the university SIMS — are reached through narrow adapters, never inline.</p>
+
+  <div class="diagram-wrap">
+    <div class="dtitle"><span class="fig">Fig. 1</span> Layered system architecture</div>
+    <p class="dcap">Client (RSC + installable PWA) → server actions / route handlers → domain services (FSM engine) → Prisma → Neon Postgres, with external systems on adapters.</p>
+<pre class="mermaid">
+flowchart TD
+  subgraph CLIENT["Client — Edge"]
+    RSC["React Server Components<br/>App Router pages"]
+    CC["Client Components<br/>affordance-driven UI"]
+    PWA["Installable PWA<br/>web manifest, themed"]
+    MW["Middleware<br/>edge-safe Auth.js JWT gate"]
+  end
+
+  subgraph SERVER["Server — Node runtime (Vercel serverless)"]
+    SA["Server Actions<br/>&quot;use server&quot;"]
+    RH["Route Handlers<br/>/api/saba · /api/auth"]
+    subgraph SVC["Domain Service Layer — src/server/services/*"]
+      VIS["visit · lab · pharmacy<br/>ward · referral · billing"]
+      OPS["hr · store · inventory<br/>appointment · documents"]
+    end
+    FSM["FSM Engine<br/>resolveTransition · affordances"]
+    AI["Saba AI orchestrator<br/>src/server/ai/*"]
+  end
+
+  subgraph DATA["Data"]
+    PR["Prisma Client<br/>src/server/db.ts"]
+    NEON[("Neon Postgres<br/>pooled connection")]
+  end
+
+  subgraph EXT["External systems (adapters)"]
+    AUTH["Auth.js / NextAuth v5<br/>credentials + MFA"]
+    LLM["AI provider<br/>Groq / OpenAI / Ollama"]
+    SIMS["University SIMS<br/>student lookup"]
+  end
+
+  RSC --> SA
+  CC --> SA
+  CC --> RH
+  MW -. protects .-> RSC
+  SA --> SVC
+  RH --> SVC
+  RH --> AI
+  SVC --> FSM
+  SVC --> PR
+  AI --> LLM
+  SVC --> SIMS
+  PR --> NEON
+  SA -. session .-> AUTH
+  MW -. session .-> AUTH
+
+  classDef ext fill:#fbf4e4,stroke:#e0a112,color:#5c4708;
+  classDef data fill:#e5eaf3,stroke:#0c1f3d,color:#0c1f3d;
+  class AUTH,LLM,SIMS ext;
+  class PR,NEON data;
+</pre>
+  </div>
+
+  <h3><span class="h3num">3.1</span>The edge / Node runtime split</h3>
+  <p>Authentication is deliberately split for the edge. <code>src/auth.config.ts</code> is an <strong>edge-safe</strong> configuration with no Prisma or Node APIs and empty <code>providers</code>; it is used by <code>src/middleware.ts</code> to do cheap JWT-based route protection at the edge without dragging Prisma into the edge bundle. The full <code>src/auth.ts</code> — credential providers, bcrypt, Prisma — runs on the <strong>Node runtime</strong>. Routes that need Node opt in explicitly: the Saba route sets <code>export const runtime = "nodejs"</code> and <code>dynamic = "force-dynamic"</code>.</p>
+
+  <h3><span class="h3num">3.2</span>The service layer is the seam</h3>
+  <p>Every module is backed by a service in <code>src/server/services/*</code> — <code>visit</code>, <code>lab</code>, <code>pharmacy</code>, <code>ward</code>, <code>referral</code>, <code>billing</code>, <code>hr</code>, <code>inventory</code>, <code>store</code>, <code>appointment</code>, <code>clinical</code>, <code>patient</code>, <code>documents</code>, <code>document-signing</code>, <code>notifications</code>, <code>events</code>, <code>mfa</code>, <code>webauthn</code>, <code>settings</code> — plus <code>src/server/fsm/*</code> (state authority), <code>src/server/ai/*</code> (Saba), and <code>src/server/integrations/*</code> (SIMS). UI and API routes call into these services; the services own all writes and all FSM gating. Because each is a clean module with an explicit interface and its own state machine, a bounded context could later become its own deployable unit.</p>
+
+  <div class="callout navy">
+    <span class="lbl">Why this matters</span>
+    <p>The disciplined service boundary is what makes the "modular monolith that is decomposable" claim real rather than aspirational — the lines along which the system could split are already the lines along which it is built.</p>
+  </div>
+
+  <div class="runfoot">
+    <span class="r"><span class="dot"></span> DDU Clinic — Platform Architecture &amp; Product Documentation</span>
+    <span>v2.0 · §03 System Architecture</span>
+  </div>
+</section>
+
+<!-- ============================================================= -->
+<!-- SECTION 4 · THREE ARCHITECTURAL PILLARS                       -->
+<!-- ============================================================= -->
+<section class="section page-break">
+  <div class="sec-head">
+    <div class="eyebrow">Section 04</div>
+    <h2 class="sec-title"><span class="num">04</span>The Three Architectural Pillars</h2>
+    <p class="sec-lead">One declarative table decides which transitions are legal and who may fire them; the same table renders the UI; and a feature-flag registry decides which modules are even present. Together they make drift between UI and enforcement structurally impossible.</p>
+  </div>
+
+  <!-- Pillar 1: FSM -->
+  <h3><span class="h3num">4.1</span>Pillar I — The FSM engine</h3>
+  <p>The finite-state-machine engine lives in <code>src/server/fsm/engine.ts</code>, with machine definitions in <code>src/server/fsm/machines/*.ts</code> and an XState mirror in <code>src/server/fsm/xstate.ts</code>. It is a <strong>tiny declarative engine</strong> — not raw XState at runtime. Each domain entity is described by a <code>MachineDef</code>: a table of states plus role-guarded transitions. A single <code>TransitionDef</code> carries the event name, one or more <code>from</code> states, a <code>to</code> destination, the <code>roles</code> allowed to fire it (omitted ⇒ any authenticated user), UI hints (<code>label</code>, <code>description</code>, <code>intent</code>), an optional <code>form</code> key naming data the client must collect first, and an optional runtime <code>guard</code>.</p>
+
+  <div class="grid-2">
+    <div class="card bezel"><div class="bezel-in">
+      <h4>Three exported functions</h4>
+      <ul style="margin-bottom:0;">
+        <li><code>availableTransitions()</code> — filters by state, then role, then guard; returns a serializable <code>Affordance[]</code> shipped to the client.</li>
+        <li><code>canFire()</code> — boolean: can this actor fire this event now? (delegates to the above).</li>
+        <li><code>resolveTransition()</code> — the <strong>validation gate</strong> services call before persisting; throws a typed <code>FsmError</code> (<code>INVALID_STATE</code>, <code>ILLEGAL_TRANSITION</code>, <code>FORBIDDEN</code>).</li>
+      </ul>
+    </div></div>
+    <div class="card bezel"><div class="bezel-in">
+      <h4>Single source of truth</h4>
+      <p>The declarative table is the one authority for <em>which</em> transitions are legal and <em>who</em> may fire them. Services never mutate a <code>state</code> column without first calling <code>resolveTransition</code>. The same table drives the UI, so the buttons a user sees and the transitions the server accepts are guaranteed to agree.</p>
+      <p style="margin-bottom:0;"><strong>Mirrored to XState:</strong> <code>toXStateMachine()</code> compiles each <code>MachineDef</code> into a real XState v5 statechart for visualization (Stately) and cross-checking in tests — the two stay lock-step.</p>
+    </div></div>
+  </div>
+
+  <div class="diagram-wrap">
+    <div class="dtitle"><span class="fig">Fig. 2</span> The FSM / affordance concept — one table, two consumers</div>
+    <p class="dcap">The same declarative machine table both projects the affordance list the client renders and gates the write the server accepts, so the two can never diverge.</p>
+<pre class="mermaid">
+flowchart LR
+  DEF["MachineDef<br/>declarative table<br/>states + role-guarded transitions"]
+
+  subgraph READ["Read path — render"]
+    AV["availableTransitions(state, role, ctx)"]
+    AFF["Affordance list<br/>event · label · intent · form"]
+    BTN["Client renders one button<br/>per affordance"]
+  end
+
+  subgraph WRITE["Write path — enforce"]
+    FIRE["User fires event<br/>via Server Action"]
+    RES["resolveTransition(state, event, role)"]
+    GATE{"legal state?<br/>role allowed?<br/>guard passes?"}
+    OK["Apply side-effects in db.transaction<br/>+ logTransition + notifyRole"]
+    ERR["throw FsmError<br/>INVALID_STATE · ILLEGAL_TRANSITION · FORBIDDEN"]
+  end
+
+  DEF --> AV --> AFF --> BTN
+  BTN --> FIRE --> RES --> GATE
+  DEF --> RES
+  GATE -- yes --> OK
+  GATE -- no --> ERR
+
+  classDef ok fill:#e2f4ea,stroke:#1f9d5b,color:#12572f;
+  classDef bad fill:#fbe6e8,stroke:#c23b46,color:#7d232c;
+  class OK ok;
+  class ERR bad;
+</pre>
+  </div>
+
+  <p><strong>Transition execution &amp; audit.</strong> Every state change flows through a service (e.g. <code>transitionVisit</code>): load the entity, run the <code>resolveTransition</code> gate, apply event side-effects inside a <code>db.$transaction</code> (create the lab/drug order, mark a bed occupied, set <code>closedAt</code>), update the <code>state</code> column, write a <code>StateTransition</code> row, notify the next team, and revalidate. The <code>StateTransition</code> model is a generic platform-wide event log keyed by <code>entityType</code>/<code>entityId</code>.</p>
+
+  <!-- Pillar 2: Affordances -->
+  <h3 class="page-break"><span class="h3num">4.2</span>Pillar II — Backend-driven affordances (HATEOAS-style)</h3>
+  <p>This is a core architectural idea: <strong>the server decides what the client may do, and the client renders exactly that</strong>. Verified in code, the flow is:</p>
+  <ol>
+    <li>A Server Component page loads the entity and computes affordances for the current actor. For a visit, <code>visits/[id]/page.tsx</code> calls <code>visitAffordances(visit.state, actor)</code>, a thin wrapper over <code>availableTransitions(visitMachine, state, { role })</code>.</li>
+    <li>The page passes that <code>Affordance[]</code> into a client component — <code>&lt;VisitActions affordances={…} /&gt;</code>.</li>
+    <li>The client renders <strong>one button per affordance</strong>, styling it from <code>affordance.intent</code> (<code>primary/success/danger</code> → button variants) and labelling it from <code>affordance.label</code>. If the affordance carries a <code>form</code> key, clicking opens the matching dialog to collect that data first.</li>
+    <li>Firing calls a Server Action which re-enters the service → <code>resolveTransition</code> re-validates the <em>same</em> rule server-side. The client is never trusted; the affordance list is a convenience projection of an authority that is re-checked on write.</li>
+  </ol>
+  <p>The same pattern powers appointments, wards, referrals, lab orders, HR leave, billing, and store requests. Roles, legal transitions, button labels, styling intent, and required forms are all declared <em>once</em> in the FSM table — so the server enforcement can't drift from what the UI offers.</p>
+
+  <!-- Pillar 3: Feature flags -->
+  <h3><span class="h3num">4.3</span>Pillar III — The feature-flag system</h3>
+  <p>The registry <code>src/lib/features.ts</code> is a <strong>Fowler-style toggle registry</strong> and the source of truth: <code>FEATURES: FeatureDef[]</code> lists every flag with <code>key</code>, <code>name</code>, <code>description</code>, <code>category</code>, <code>defaultEnabled</code>, and <code>group</code>. DB <code>FeatureFlag</code> rows mirror the registry so a manager can flip toggles at runtime, and <code>rolloutRoles</code> supports PERMISSION-style role gating.</p>
+
+  <div class="grid-3" style="margin:12px 0;">
+    <div class="feature-mini"><span class="pill blue" style="font-size:9px;">RELEASE</span><h4 style="margin-top:6px;">Ship dark</h4><p>Release toggles let in-progress work ship disabled until ready.</p></div>
+    <div class="feature-mini"><span class="pill gray" style="font-size:9px;">OPS</span><h4 style="margin-top:6px;">Kill-switch</h4><p>Operational toggles for audit log, notifications and the like.</p></div>
+    <div class="feature-mini"><span class="pill red" style="font-size:9px;">PERMISSION</span><h4 style="margin-top:6px;">Entitle</h4><p>Gate by role or plan; e.g. optional two-factor auth.</p></div>
+    <div class="feature-mini"><span class="pill gold" style="font-size:9px;">EXPERIMENT</span><h4 style="margin-top:6px;">Pilot</h4><p>A/B or pilot capabilities behind a controlled rollout.</p></div>
+    <div class="feature-mini"><span class="pill green" style="font-size:9px;">TENANT</span><h4 style="margin-top:6px;">White-label</h4><p>Per-institution capability — the module set a facility gets.</p></div>
+    <div class="feature-mini"><span class="pill navy" style="font-size:9px;">GATING</span><h4 style="margin-top:6px;">Nav + actions</h4><p>Disabled modules drop from the sidebar; actions check <code>isFeatureEnabled()</code>.</p></div>
+  </div>
+
+  <p>Resolution follows a clear precedence: <code>isFeatureEnabled(key, role?)</code> lets the DB row win, else the registry default, honoring <code>rolloutRoles</code> (MANAGER always passes). <code>enabledFeatureSet(role?)</code> yields the enabled keys used to filter nav and UI; <code>setFeatureFlag()</code> upserts and revalidates the layout; <code>syncFeatureRegistry()</code> idempotently upserts all registry flags into the DB. Nav items carry an optional <code>feature</code> key, so disabled modules simply vanish from the sidebar.</p>
+
+  <div class="runfoot">
+    <span class="r"><span class="dot"></span> DDU Clinic — Platform Architecture &amp; Product Documentation</span>
+    <span>v2.0 · §04 Architectural Pillars</span>
+  </div>
+</section>
+
+<!-- ============================================================= -->
+<!-- SECTION 5 · MODULES & FEATURE INVENTORY                       -->
+<!-- ============================================================= -->
+<section class="section page-break">
+  <div class="sec-head">
+    <div class="eyebrow">Section 05</div>
+    <h2 class="sec-title"><span class="num">05</span>Modules &amp; Feature Inventory</h2>
+    <p class="sec-lead">Roughly thirty-five feature flags across six groups, plus a module-by-module map of the whole platform. Categories carry intent — tenant capability, release toggle, operational switch, or permission gate.</p>
+  </div>
+
+  <div class="legend">
+    <span><span class="sw" style="background:#e6f5ec;border-color:#c7e7d3;"></span> Default ON</span>
+    <span><span class="sw" style="background:#f6e9ea;border-color:#eccfd2;"></span> Default OFF</span>
+    <span><span class="pill green" style="font-size:9px;">TENANT</span> white-label</span>
+    <span><span class="pill blue" style="font-size:9px;">RELEASE</span></span>
+    <span><span class="pill gray" style="font-size:9px;">OPS</span></span>
+    <span><span class="pill red" style="font-size:9px;">PERMISSION</span></span>
+  </div>
+
+  <h3><span class="h3num">5.1</span>Modules — tenant capabilities (all <span class="pill green" style="font-size:9px;">TENANT</span>)</h3>
+  <table class="tight">
+    <thead><tr><th style="width:170px;">Key</th><th>Name</th><th>Description</th><th style="width:60px;">Default</th></tr></thead>
+    <tbody>
+      <tr><td><code>module.reception</code></td><td>Reception &amp; registration</td><td>Front-desk registration and visit intake.</td><td><span class="tag on">ON</span></td></tr>
+      <tr><td><code>module.triage</code></td><td>Nurse triage</td><td>Vitals capture and triage queue.</td><td><span class="tag on">ON</span></td></tr>
+      <tr><td><code>module.doctor</code></td><td>Consultations</td><td>Doctor consultation workspace.</td><td><span class="tag on">ON</span></td></tr>
+      <tr><td><code>module.lab</code></td><td>Laboratory</td><td>Lab orders, worklist and results.</td><td><span class="tag on">ON</span></td></tr>
+      <tr><td><code>module.pharmacy</code></td><td>Pharmacy</td><td>Dispensing and medicine inventory.</td><td><span class="tag on">ON</span></td></tr>
+      <tr><td><code>module.wards</code></td><td>Wards &amp; admissions</td><td>Inpatient beds and admissions.</td><td><span class="tag on">ON</span></td></tr>
+      <tr><td><code>module.referrals</code></td><td>Referrals</td><td>External hospital referrals.</td><td><span class="tag on">ON</span></td></tr>
+      <tr><td><code>module.hr</code></td><td>Human resources</td><td>Staff, leave, attendance &amp; payroll.</td><td><span class="tag on">ON</span></td></tr>
+      <tr><td><code>module.store</code></td><td>Store &amp; assets</td><td>Non-medical inventory and assets.</td><td><span class="tag on">ON</span></td></tr>
+      <tr><td><code>module.reports</code></td><td>Reports &amp; analytics</td><td>Management dashboards.</td><td><span class="tag on">ON</span></td></tr>
+      <tr><td><code>module.portal</code></td><td>Student portal</td><td>Student self-service portal.</td><td><span class="tag on">ON</span></td></tr>
+      <tr><td><code>module.billing</code></td><td>Billing &amp; cashier</td><td>Charges, invoices and payments.</td><td><span class="tag on">ON</span></td></tr>
+      <tr><td><code>module.appointments</code></td><td>Appointments</td><td>Scheduling and calendar.</td><td><span class="tag on">ON</span></td></tr>
+    </tbody>
+  </table>
+
+  <h3><span class="h3num">5.2</span>Clinical, Documents, HR &amp; Store, Platform</h3>
+  <table class="tight">
+    <thead><tr><th style="width:180px;">Key</th><th>Name</th><th style="width:110px;">Category</th><th style="width:56px;">Default</th></tr></thead>
+    <tbody>
+      <tr><td colspan="4" style="background:var(--tint-2);font-weight:700;font-family:'Plus Jakarta Sans';font-size:10.5px;letter-spacing:0.06em;">CLINICAL</td></tr>
+      <tr><td><code>clinical.sims_lookup</code></td><td>SIMS student lookup</td><td><span class="pill green" style="font-size:9px;">TENANT</span></td><td><span class="tag on">ON</span></td></tr>
+      <tr><td><code>clinical.allergies</code></td><td>Allergy list</td><td><span class="pill blue" style="font-size:9px;">RELEASE</span></td><td><span class="tag on">ON</span></td></tr>
+      <tr><td><code>clinical.problem_list</code></td><td>Problem list</td><td><span class="pill blue" style="font-size:9px;">RELEASE</span></td><td><span class="tag on">ON</span></td></tr>
+      <tr><td><code>clinical.vitals_trends</code></td><td>Vitals trends</td><td><span class="pill blue" style="font-size:9px;">RELEASE</span></td><td><span class="tag on">ON</span></td></tr>
+      <tr><td><code>clinical.immunization</code></td><td>Immunizations</td><td><span class="pill blue" style="font-size:9px;">RELEASE</span></td><td><span class="tag on">ON</span></td></tr>
+      <tr><td><code>clinical.icd10</code></td><td>ICD-10 coding</td><td><span class="pill blue" style="font-size:9px;">RELEASE</span></td><td><span class="tag on">ON</span></td></tr>
+      <tr><td><code>clinical.consent</code></td><td>Consent capture</td><td><span class="pill blue" style="font-size:9px;">RELEASE</span></td><td><span class="tag off">OFF</span></td></tr>
+      <tr><td colspan="4" style="background:var(--tint-2);font-weight:700;font-family:'Plus Jakarta Sans';font-size:10.5px;letter-spacing:0.06em;">DOCUMENTS — all TENANT</td></tr>
+      <tr><td><code>docs.sick_leave</code></td><td>Sick-leave certificates</td><td><span class="pill green" style="font-size:9px;">TENANT</span></td><td><span class="tag on">ON</span></td></tr>
+      <tr><td><code>docs.prescription_print</code></td><td>Prescription printout</td><td><span class="pill green" style="font-size:9px;">TENANT</span></td><td><span class="tag on">ON</span></td></tr>
+      <tr><td><code>docs.referral_print</code></td><td>Referral letter</td><td><span class="pill green" style="font-size:9px;">TENANT</span></td><td><span class="tag on">ON</span></td></tr>
+      <tr><td><code>docs.lab_report_print</code></td><td>Lab report printout</td><td><span class="pill green" style="font-size:9px;">TENANT</span></td><td><span class="tag on">ON</span></td></tr>
+      <tr><td colspan="4" style="background:var(--tint-2);font-weight:700;font-family:'Plus Jakarta Sans';font-size:10.5px;letter-spacing:0.06em;">HR &amp; STORE</td></tr>
+      <tr><td><code>hr.attendance</code></td><td>Attendance &amp; shifts</td><td><span class="pill blue" style="font-size:9px;">RELEASE</span></td><td><span class="tag on">ON</span></td></tr>
+      <tr><td><code>hr.payroll</code></td><td>Payroll</td><td><span class="pill blue" style="font-size:9px;">RELEASE</span></td><td><span class="tag off">OFF</span></td></tr>
+      <tr><td><code>hr.leave_balances</code></td><td>Leave balances</td><td><span class="pill blue" style="font-size:9px;">RELEASE</span></td><td><span class="tag on">ON</span></td></tr>
+      <tr><td><code>store.purchase_orders</code></td><td>Purchase orders</td><td><span class="pill blue" style="font-size:9px;">RELEASE</span></td><td><span class="tag on">ON</span></td></tr>
+      <tr><td><code>store.stock_counts</code></td><td>Stock counts</td><td><span class="pill blue" style="font-size:9px;">RELEASE</span></td><td><span class="tag on">ON</span></td></tr>
+      <tr><td colspan="4" style="background:var(--tint-2);font-weight:700;font-family:'Plus Jakarta Sans';font-size:10.5px;letter-spacing:0.06em;">PLATFORM / UX</td></tr>
+      <tr><td><code>ux.command_palette</code></td><td>Command palette (⌘K)</td><td><span class="pill blue" style="font-size:9px;">RELEASE</span></td><td><span class="tag on">ON</span></td></tr>
+      <tr><td><code>ux.dark_mode</code></td><td>Dark mode</td><td><span class="pill blue" style="font-size:9px;">RELEASE</span></td><td><span class="tag on">ON</span></td></tr>
+      <tr><td><code>ux.notifications</code></td><td>Notifications centre</td><td><span class="pill gray" style="font-size:9px;">OPS</span></td><td><span class="tag on">ON</span></td></tr>
+      <tr><td><code>platform.audit_log</code></td><td>Audit log</td><td><span class="pill gray" style="font-size:9px;">OPS</span></td><td><span class="tag on">ON</span></td></tr>
+      <tr><td><code>platform.two_factor</code></td><td>Two-factor auth</td><td><span class="pill red" style="font-size:9px;">PERMISSION</span></td><td><span class="tag off">OFF</span></td></tr>
+      <tr><td><code>ai.assistant</code></td><td>Saba AI assistant</td><td><span class="pill blue" style="font-size:9px;">RELEASE</span></td><td><span class="tag off">OFF</span></td></tr>
+      <tr><td><code>platform.white_label</code></td><td>White-label branding</td><td><span class="pill green" style="font-size:9px;">TENANT</span></td><td><span class="tag on">ON</span></td></tr>
+    </tbody>
+    <caption>Notable defaults-off: <code>clinical.consent</code>, <code>hr.payroll</code>, <code>platform.two_factor</code>, <code>ai.assistant</code>. Everything else defaults on. Verified in <code>src/lib/features.ts</code>.</caption>
+  </table>
+
+  <h3 class="page-break"><span class="h3num">5.3</span>Module-by-module map</h3>
+  <p>App routes live under <code>src/app/(app)/**</code> (staff shell), <code>src/app/portal/**</code> (student portal), and <code>src/app/print/**</code> (printables). Access rules are in <code>SECTION_ACCESS</code> (<code>src/lib/rbac.ts</code>); each module is backed by a service.</p>
+
+  <div class="band">
+    <img src="assets/ddu-logo-white.png" alt="DDU" />
+    <div class="btext"><div class="beye">Clinical group</div><div class="btitle">From the front desk to discharge</div><div class="bsub">Reception, triage, consultations, lab, pharmacy, wards, referrals and the live queue board.</div></div>
+  </div>
+
+  <table class="tight">
+    <thead><tr><th style="width:150px;">Module</th><th>Routes</th><th>Roles</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Dashboard</strong></td><td><code>/dashboard</code> — role-aware landing</td><td><span class="pill gray">any staff</span></td></tr>
+      <tr><td><strong>Reception</strong></td><td><code>/reception</code> — registration, creates <span class="pill state gray">REGISTERED</span> visits</td><td>RECEPTIONIST · MANAGER</td></tr>
+      <tr><td><strong>Patients</strong></td><td><code>/patients</code>, <code>/[id]</code>, vitals, allergies/problems/immunizations</td><td>RECEPTIONIST · NURSE · DOCTOR · MANAGER</td></tr>
+      <tr><td><strong>Appointments</strong></td><td><code>/appointments</code>, <code>/new</code>, <code>/[id]</code> — scheduling FSM</td><td>RECEPTIONIST · NURSE · DOCTOR</td></tr>
+      <tr><td><strong>Triage</strong></td><td><code>/triage</code> — vitals capture, triage queue</td><td>NURSE · MANAGER</td></tr>
+      <tr><td><strong>Consultations</strong></td><td><code>/doctor</code>, <code>/doctor/caseload</code>, <code>/visits/[id]</code> — Saba copilot attaches here</td><td>DOCTOR · MANAGER</td></tr>
+      <tr><td><strong>Laboratory</strong></td><td><code>/lab</code>, <code>/lab/[id]</code>, <code>/lab/catalog</code></td><td>LAB_TECH · MANAGER</td></tr>
+      <tr><td><strong>Pharmacy</strong></td><td><code>/pharmacy</code>, <code>/[id]</code>, <code>/inventory</code>, <code>/suppliers</code></td><td>PHARMACIST · MANAGER</td></tr>
+      <tr><td><strong>Wards</strong></td><td><code>/wards</code>, <code>/wards/[id]</code> — admission FSM</td><td>NURSE · DOCTOR · MANAGER</td></tr>
+      <tr><td><strong>Referrals</strong></td><td><code>/referrals</code>, <code>/new</code>, <code>/[id]</code> — signed printable letter</td><td>DOCTOR · RECEPTIONIST · MANAGER</td></tr>
+      <tr><td><strong>Queue board</strong></td><td><code>/queue</code> — live waiting-room display</td><td><span class="pill gray">any staff</span></td></tr>
+    </tbody>
+  </table>
+
+  <div class="band">
+    <img src="assets/ddu-logo-white.png" alt="DDU" />
+    <div class="btext"><div class="beye">Operations &amp; Management</div><div class="btitle">Billing, HR, store and oversight</div><div class="bsub">The back-office spine — cashier, human resources, procurement, staff directory, reports and settings.</div></div>
+  </div>
+
+  <table class="tight">
+    <thead><tr><th style="width:150px;">Module</th><th>Routes</th><th>Roles</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Billing</strong></td><td><code>/billing</code>, <code>/billing/[id]</code> — invoice FSM + printable receipt</td><td>RECEPTIONIST · MANAGER</td></tr>
+      <tr><td><strong>Human Resources</strong></td><td><code>/hr</code>, <code>/hr/leave</code>, <code>/attendance</code>, <code>/leave-balances</code>, <code>/roster</code></td><td>HR · MANAGER</td></tr>
+      <tr><td><strong>Store &amp; Assets</strong></td><td><code>/store</code>, <code>/assets</code>, <code>/requests</code>, <code>/purchase-orders</code></td><td>STORE_KEEPER · MANAGER</td></tr>
+      <tr><td><strong>Staff Directory</strong></td><td><code>/staff</code>, <code>/staff/[id]</code></td><td>MANAGER · HR</td></tr>
+      <tr><td><strong>Reports</strong></td><td><code>/reports</code> — Recharts dashboards</td><td>MANAGER</td></tr>
+      <tr><td><strong>Settings</strong></td><td><code>/settings</code> + appearance, audit, features, organization, security</td><td>MANAGER</td></tr>
+      <tr><td><strong>Student portal</strong></td><td><code>/portal</code> + appointments, documents, health (Saba), history</td><td><span class="pill gold">STUDENT</span></td></tr>
+    </tbody>
+  </table>
+
+  <div class="runfoot">
+    <span class="r"><span class="dot"></span> DDU Clinic — Platform Architecture &amp; Product Documentation</span>
+    <span>v2.0 · §05 Feature Inventory</span>
+  </div>
+</section>
+
+<!-- ============================================================= -->
+<!-- SECTION 6 · CLINICAL WORKFLOW                                 -->
+<!-- ============================================================= -->
+<section class="section page-break">
+  <div class="sec-head">
+    <div class="eyebrow">Section 06</div>
+    <h2 class="sec-title"><span class="num">06</span>Clinical Workflow</h2>
+    <p class="sec-lead">The visit is the clinical spine. One machine carries a patient from registration through triage, consultation, lab, pharmacy, wards or referral, to completion — with lab results looping back to the doctor rather than closing the visit.</p>
+  </div>
+
+  <p>Machine: <code>src/server/fsm/machines/visit.ts</code>; orchestrator: <code>transitionVisit</code> in <code>src/server/services/visit.ts</code>. Each transition names the roles allowed to fire it; <code>resolveTransition()</code> throws unless both the state and the actor's role are valid. Every move is wrapped in a DB transaction, logged to <code>StateTransition</code>, and often fans out a notification.</p>
+
+  <div class="diagram-wrap">
+    <div class="dtitle"><span class="fig">Fig. 3</span> End-to-end clinical workflow with role lanes</div>
+    <p class="dcap">Reception → triage → doctor → lab → results → pharmacy → wards / referral → billing → completed. Labels show the firing role; lab results route back to the doctor.</p>
+<pre class="mermaid">
+flowchart TD
+  START(["Patient arrives"]) --> REG["REGISTERED<br/><i>Reception creates visit</i>"]
+  REG -->|"start_triage · NURSE/RECEPTIONIST"| TRI["TRIAGE<br/><i>vitals captured</i>"]
+  REG -->|"send_to_doctor"| WFD
+  TRI -->|"send_to_doctor · NURSE/RECEPTIONIST"| WFD["WAITING_FOR_DOCTOR<br/><i>doctor assigned</i>"]
+  WFD -->|"begin_consultation · DOCTOR"| CONS["IN_CONSULTATION"]
+
+  CONS -->|"order_labs · DOCTOR"| WFL["WAITING_FOR_LAB<br/><i>LabOrder created → notify LAB_TECH</i>"]
+  WFL -->|"lab_results_ready · LAB_TECH"| LRR["LAB_RESULTS_READY<br/><i>notify ordering doctor</i>"]
+  LRR -->|"resume_consultation · DOCTOR"| CONS
+
+  CONS -->|"prescribe · DOCTOR"| WFP["WAITING_FOR_PHARMACY<br/><i>DrugOrder created → notify PHARMACIST</i>"]
+  WFP -->|"resume_consultation · DOCTOR"| CONS
+  WFP -->|"dispensed · PHARMACIST"| DONE
+
+  CONS -->|"refer · DOCTOR"| REF["REFERRED<br/><i>Referral issued</i>"]
+  REF -->|"complete · DOCTOR/RECEPTIONIST"| DONE
+
+  CONS -->|"admit · DOCTOR/NURSE"| ADM["ADMITTED<br/><i>bed occupied → notify NURSE</i>"]
+  ADM -->|"discharge · DOCTOR/NURSE"| DONE
+
+  CONS -->|"complete · DOCTOR"| DONE["COMPLETED<br/><i>diagnosis/ICD, closedAt · notify RECEPTIONIST · billing</i>"]
+
+  REG -.->|"cancel · MANAGER/RECEPTIONIST"| CAN["CANCELLED"]
+  TRI -.->|cancel| CAN
+  WFD -.->|cancel| CAN
+
+  classDef fin fill:#e2f4ea,stroke:#1f9d5b,color:#12572f;
+  classDef can fill:#f3f4f6,stroke:#9aa7ba,color:#4a5568;
+  class DONE fin;
+  class CAN can;
+</pre>
+  </div>
+
+  <h3><span class="h3num">6.1</span>State-by-state, role-by-role</h3>
+  <table class="tight">
+    <thead><tr><th style="width:130px;">Step</th><th style="width:130px;">Event</th><th>From → To</th><th style="width:150px;">Role(s)</th><th>Side-effects</th></tr></thead>
+    <tbody>
+      <tr><td>Registration</td><td><em>(create)</em></td><td>→ <span class="pill state gray">REGISTERED</span></td><td>RECEPTIONIST</td><td>Patient + visit created; optional SIMS lookup</td></tr>
+      <tr><td>Triage / vitals</td><td><code>start_triage</code></td><td>REGISTERED → <span class="pill state gray">TRIAGE</span></td><td>NURSE · RECEPTIONIST</td><td>Captures <code>Vitals</code></td></tr>
+      <tr><td>Queue to doctor</td><td><code>send_to_doctor</code></td><td>→ <span class="pill state gray">WAITING_FOR_DOCTOR</span></td><td>NURSE · RECEPTIONIST</td><td>Assigns <code>doctorId</code></td></tr>
+      <tr><td>Start consult</td><td><code>begin_consultation</code></td><td>→ <span class="pill state blue">IN_CONSULTATION</span></td><td>DOCTOR</td><td>Claims visit if unassigned</td></tr>
+      <tr><td>Order labs</td><td><code>order_labs</code></td><td>→ <span class="pill state gray">WAITING_FOR_LAB</span></td><td>DOCTOR</td><td>Creates <code>LabOrder</code> → notify LAB_TECH</td></tr>
+      <tr><td>Results back</td><td><code>lab_results_ready</code></td><td>→ <span class="pill state gray">LAB_RESULTS_READY</span></td><td>LAB_TECH</td><td>Notify ordering doctor</td></tr>
+      <tr><td>Re-assess</td><td><code>resume_consultation</code></td><td>→ <span class="pill state blue">IN_CONSULTATION</span></td><td>DOCTOR</td><td>Doctor reviews results</td></tr>
+      <tr><td>Prescribe</td><td><code>prescribe</code></td><td>→ <span class="pill state gray">WAITING_FOR_PHARMACY</span></td><td>DOCTOR</td><td>Creates <code>DrugOrder</code> → notify PHARMACIST</td></tr>
+      <tr><td>Dispense (close)</td><td><code>dispensed</code></td><td>→ <span class="pill state green">COMPLETED</span></td><td>PHARMACIST</td><td>Auto-close on full dispense → notify RECEPTIONIST</td></tr>
+      <tr><td>Refer out</td><td><code>refer</code></td><td>→ <span class="pill state gold">REFERRED</span></td><td>DOCTOR</td><td>Creates <code>Referral</code> (ISSUED)</td></tr>
+      <tr><td>Admit</td><td><code>admit</code></td><td>→ <span class="pill state gold">ADMITTED</span></td><td>DOCTOR · NURSE</td><td>Creates <code>Admission</code>, occupies bed → notify NURSE</td></tr>
+      <tr><td>Discharge</td><td><code>discharge</code></td><td>→ <span class="pill state green">COMPLETED</span></td><td>DOCTOR · NURSE</td><td>Frees bed; closes visit</td></tr>
+      <tr><td>Complete</td><td><code>complete</code></td><td>→ <span class="pill state green">COMPLETED</span></td><td>DOCTOR</td><td>Writes diagnosis/ICD, sets <code>closedAt</code></td></tr>
+      <tr><td>Cancel</td><td><code>cancel</code></td><td>early → <span class="pill state gray">CANCELLED</span></td><td>MANAGER · RECEPTIONIST</td><td>Records reason</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout">
+    <span class="lbl">The loop that matters</span>
+    <p>On <code>submit_results</code>, the lab technician records per-item values and flags and, if the visit is <span class="pill state gray">WAITING_FOR_LAB</span>, flips it to <span class="pill state gray">LAB_RESULTS_READY</span> and notifies the ordering doctor. Results route <strong>back to the doctor</strong> for re-assessment rather than closing the encounter — the clinical judgement stays with the physician.</p>
+  </div>
+
+  <h3><span class="h3num">6.2</span>Sub-machines feeding the spine</h3>
+  <div class="grid-2">
+    <div class="card">
+      <h4>Lab order</h4>
+      <div class="role-row"><span class="pill state gray">ORDERED</span><span class="pill state gray">COLLECTING</span><span class="pill state gray">IN_PROGRESS</span><span class="pill state gray">RESULTS_READY</span><span class="pill state green">COMPLETED</span></div>
+      <p style="margin:0;font-size:11.5px;color:var(--muted);">LAB_TECH-driven (<code>collect</code>, <code>process</code>, <code>submit_results</code>, <code>complete</code>); <code>complete</code> also DOCTOR; <code>cancel</code> LAB_TECH/MANAGER. Per-item result flags: <span class="pill state gray">NORMAL</span> <span class="pill state gold">LOW/HIGH</span> <span class="pill state red">CRITICAL</span>.</p>
+    </div>
+    <div class="card">
+      <h4>Drug order</h4>
+      <div class="role-row"><span class="pill state gray">ORDERED</span><span class="pill state gold">PARTIALLY_DISPENSED</span><span class="pill state green">DISPENSED</span></div>
+      <p style="margin:0;font-size:11.5px;color:var(--muted);">PHARMACIST-driven (<code>record_partial</code>, <code>dispense_all</code>, both form <code>dispense</code>; <code>cancel</code> PHARMACIST/MANAGER). Full dispense from the last stop auto-closes the visit.</p>
+    </div>
+  </div>
+
+  <div class="runfoot">
+    <span class="r"><span class="dot"></span> DDU Clinic — Platform Architecture &amp; Product Documentation</span>
+    <span>v2.0 · §06 Clinical Workflow</span>
+  </div>
+</section>
+
+<!-- ============================================================= -->
+<!-- SECTION 7 · OPERATIONAL WORKFLOWS                             -->
+<!-- ============================================================= -->
+<section class="section page-break">
+  <div class="sec-head">
+    <div class="eyebrow">Section 07</div>
+    <h2 class="sec-title"><span class="num">07</span>Operational Workflows</h2>
+    <p class="sec-lead">The same FSM discipline governs the back office — HR leave that couples directly to account access, store procurement from request to goods-receipt, and pharmacy dispensing that always draws from the earliest-expiring batch first.</p>
+  </div>
+
+  <h3><span class="h3num">7.1</span>HR leave — process coupled to security</h3>
+  <p>Machine: <code>machines/leave.ts</code>; service: <code>services/hr.ts</code>. Roles HR and MANAGER approve, reject, activate and approve return. The distinctive move: when a leave reaches <span class="pill state gold">ACTIVE</span>, the employee's <code>employmentStatus</code> flips to <code>ON_LEAVE</code>, which <strong>blocks their login</strong> until they return — a clean example of process driving access control.</p>
+
+  <div class="diagram-wrap">
+    <div class="dtitle"><span class="fig">Fig. 4</span> HR leave flow with account-access coupling</div>
+    <p class="dcap">Submitted → approved → active → return-requested → returned. Activation locks the login; return (or cancel/reject of an active leave) restores it.</p>
+<pre class="mermaid">
+flowchart LR
+  SUB["SUBMITTED<br/><i>createLeaveRequest → notify HR</i>"]
+  APP["APPROVED<br/><i>approver + comment → notify employee</i>"]
+  ACT["ACTIVE<br/><b>employmentStatus = ON_LEAVE</b><br/>login blocked"]
+  RR["RETURN_REQUESTED<br/><i>employee requests return</i>"]
+  RET["RETURNED<br/><b>status = ACTIVE</b><br/>login restored"]
+  REJ["REJECTED"]
+  CAN["CANCELLED"]
+
+  SUB -->|"approve · HR/MANAGER"| APP
+  SUB -->|"reject · HR/MANAGER"| REJ
+  APP -->|"activate · HR/MANAGER"| ACT
+  ACT -->|"request_return · employee"| RR
+  RR -->|"approve_return · HR/MANAGER"| RET
+  ACT -.->|"cancel restores access"| CAN
+  APP -.->|cancel| CAN
+
+  classDef lock fill:#fbe6e8,stroke:#c23b46,color:#7d232c;
+  classDef ok fill:#e2f4ea,stroke:#1f9d5b,color:#12572f;
+  class ACT lock;
+  class RET ok;
+</pre>
+  </div>
+
+  <h3 class="page-break"><span class="h3num">7.2</span>Store &amp; procurement — request to goods-receipt</h3>
+  <p>Service: <code>services/store.ts</code>. Two chains: a general <strong>stock request</strong> FSM, and the <strong>purchase-order → goods-receipt</strong> flow. <code>createStockRequest</code> notifies STORE_KEEPER; each decision notifies the requester back. Purchase orders compute a total on creation; <code>receivePurchaseOrder</code> increments each line's received quantity and moves the PO to <span class="pill state green">RECEIVED</span> (all in) or <span class="pill state gold">PARTIALLY_RECEIVED</span>. Every step logs a <code>StateTransition</code> and an audit entry.</p>
+
+  <div class="diagram-wrap">
+    <div class="dtitle"><span class="fig">Fig. 5</span> Procurement / stock flow</div>
+    <p class="dcap">Stock request (submitted → approved → fulfilled) and the parallel purchase-order chain (ordered → partially/fully received), with asset assignment as a sibling track.</p>
+<pre class="mermaid">
+flowchart TD
+  subgraph SR["Stock request — STORE_KEEPER / MANAGER"]
+    S1["SUBMITTED<br/><i>notify STORE_KEEPER</i>"] -->|"approve"| S2["APPROVED"]
+    S1 -->|"reject"| S3["REJECTED"]
+    S2 -->|"fulfill · STORE_KEEPER"| S4["FULFILLED<br/><i>notify requester</i>"]
+  end
+
+  subgraph PO["Purchase order — goods receipt"]
+    P1["ORDERED<br/><i>createPurchaseOrder, total computed</i>"] -->|"receivePurchaseOrder — some"| P2["PARTIALLY_RECEIVED"]
+    P1 -->|"receivePurchaseOrder — all"| P3["RECEIVED"]
+    P2 -->|"remaining received"| P3
+    P1 -.->|"cancel — open only"| P4["CANCELLED"]
+  end
+
+  subgraph AS["Assets"]
+    A1["assignAsset → ASSIGNED"] -->|"returnAsset"| A2["RETURNED / LOST / DAMAGED"]
+  end
+
+  S2 -. "restock trigger" .-> P1
+
+  classDef done fill:#e2f4ea,stroke:#1f9d5b,color:#12572f;
+  class S4,P3 done;
+</pre>
+  </div>
+
+  <h3><span class="h3num">7.3</span>Pharmacy — FEFO dispensing</h3>
+  <p>Service: <code>services/pharmacy.ts</code>. Stock is held in <code>MedicationBatch</code> rows (batch number, expiry date, quantity, cost/sell price, supplier). The critical rule is <strong>FEFO — First-Expiry-First-Out</strong>: <code>dispenseFromBatches()</code> decrements from batches <strong>earliest-expiry-first</strong> (<code>orderBy: { expiryDate: "asc" }</code>), writing a negative <code>DISPENSE</code> stock movement per batch for a complete audit trail. Partial fills mark items <span class="pill state gold">PENDING</span>/<span class="pill state red">OUT_OF_STOCK</span>; full fills reach <span class="pill state green">DISPENSED</span>, and when the visit was <span class="pill state gray">WAITING_FOR_PHARMACY</span> it flips to <span class="pill state green">COMPLETED</span> — pharmacy is the last stop.</p>
+
+  <div class="diagram-wrap">
+    <div class="dtitle"><span class="fig">Fig. 6</span> Pharmacy FEFO dispensing flow</div>
+    <p class="dcap">A drug order draws from medication batches ordered by earliest expiry, logging one movement per batch, until the order is fully or partially filled — a full fill from the last stop auto-completes the visit.</p>
+<pre class="mermaid">
+flowchart TD
+  ORD["DrugOrder · ORDERED<br/><i>notify PHARMACIST</i>"] --> Q{"stock on hand<br/>for each item?"}
+  Q -->|"yes"| SORT["Select MedicationBatch rows<br/>orderBy expiryDate ASC (FEFO)"]
+  SORT --> DEC["Decrement earliest-expiry batch<br/>write negative DISPENSE StockMovement"]
+  DEC --> MORE{"item quantity<br/>satisfied?"}
+  MORE -->|"no · next batch"| DEC
+  MORE -->|"yes"| NEXT{"more items?"}
+  NEXT -->|"yes"| SORT
+  NEXT -->|"all filled"| FULL["DISPENSED"]
+  Q -->|"insufficient"| PART["PARTIALLY_DISPENSED<br/>items PENDING / OUT_OF_STOCK"]
+  FULL --> CLOSE{"visit was<br/>WAITING_FOR_PHARMACY?"}
+  CLOSE -->|"yes"| DONE["Visit → COMPLETED<br/><i>notify RECEPTIONIST</i>"]
+  CLOSE -->|"no"| END(["order closed"])
+
+  classDef done fill:#e2f4ea,stroke:#1f9d5b,color:#12572f;
+  classDef warn fill:#fbf4e4,stroke:#e0a112,color:#5c4708;
+  class FULL,DONE done;
+  class PART warn;
+</pre>
+  </div>
+
+  <div class="callout gold">
+    <span class="lbl">Why FEFO</span>
+    <p>Dispensing the earliest-expiring stock first minimizes wastage from expiry and is the accepted good-practice for pharmacy inventory. Low-stock (on-hand ≤ reorder level), near-expiry (≤ 90 days) and expired batches are computed on demand and surfaced through management dashboards and Saba's operational context.</p>
+  </div>
+
+  <h3><span class="h3num">7.4</span>Other machines at a glance</h3>
+  <div class="kv">
+    <div class="k">Admission</div><div class="v"><span class="pill state gold">ADMITTED</span> → <span class="pill state gray">ON_WARD</span> (<code>settle</code>, NURSE) → <span class="pill state green">DISCHARGED</span> (frees bed, closes visit); <code>transferBed</code> moves patients with occupancy bookkeeping.</div>
+    <div class="k">Referral</div><div class="v"><span class="pill state gray">DRAFT</span> → <span class="pill state blue">ISSUED</span> → <span class="pill state gray">ACKNOWLEDGED</span> → <span class="pill state green">COMPLETED</span>; issue notifies RECEPTIONIST.</div>
+    <div class="k">Invoice</div><div class="v"><span class="pill state gray">DRAFT</span> → <span class="pill state blue">ISSUED</span> → <span class="pill state gold">PARTIALLY_PAID</span> → <span class="pill state green">PAID</span> (or VOID, MANAGER only); <code>recordPayment</code> posts a payment and notifies MANAGER.</div>
+    <div class="k">Appointment</div><div class="v"><span class="pill state gray">SCHEDULED</span> → <span class="pill state blue">CONFIRMED</span> → <span class="pill state gray">CHECKED_IN</span> → <span class="pill state green">COMPLETED</span>, plus NO_SHOW / CANCELLED.</div>
+  </div>
+
+  <div class="runfoot">
+    <span class="r"><span class="dot"></span> DDU Clinic — Platform Architecture &amp; Product Documentation</span>
+    <span>v2.0 · §07 Operational Workflows</span>
+  </div>
+</section>
+
+<!-- ============================================================= -->
+<!-- SECTION 8 · SECURITY & COMPLIANCE                             -->
+<!-- ============================================================= -->
+<section class="section page-break">
+  <div class="sec-head">
+    <div class="eyebrow">Section 08</div>
+    <h2 class="sec-title"><span class="num">08</span>Security &amp; Compliance</h2>
+    <p class="sec-lead">Layered defence: role-based access control, dual Auth.js credential providers, multi-factor authentication with passkeys, an on-leave login lockout, a best-effort audit trail, edge middleware, and cryptographically verifiable documents.</p>
+  </div>
+
+  <h3><span class="h3num">8.1</span>Role-based access control</h3>
+  <p>The <code>Role</code> enum defines eight roles. Session guards in <code>src/server/session.ts</code> (all <code>"server-only"</code>) provide <code>getActor()</code>, <code>requireStaff()</code>, <code>requireStudent()</code>, and <code>requireRole(...roles)</code> — the last <strong>always lets MANAGER through</strong>, else redirects non-matching roles to <code>/dashboard</code>. <code>SECTION_ACCESS</code> maps each top-level section to the roles allowed (or <code>null</code> = any authenticated staffer), and <code>canAccess()</code> drives both the sidebar and section guards.</p>
+
+  <p><strong>Middleware route protection</strong> (<code>src/middleware.ts</code>) runs the edge-safe Auth.js config. Public paths are <code>/</code>, <code>/login</code>, <code>/student-login</code>, and <code>/verify[/…]</code>. Unauthenticated users are redirected to the correct login preserving <code>callbackUrl</code>; <strong>students are confined to <code>/portal</code></strong> and staff hitting <code>/portal</code> are bounced to <code>/dashboard</code>.</p>
+
+  <h3><span class="h3num">8.2</span>Auth.js credential providers &amp; MFA</h3>
+  <div class="grid-2">
+    <div class="card bezel"><div class="bezel-in">
+      <h4>Dual providers (<code>src/auth.ts</code>)</h4>
+      <p><strong>staff</strong> — email + password; looks up the lower-cased email, rejects inactive accounts, <code>bcrypt.compare</code>s the password. <strong>Blocks any non-<code>ACTIVE</code> employment status</strong> via <code>BlockedSignin</code>. If MFA is enabled, requires a valid second factor.</p>
+      <p style="margin-bottom:0;"><strong>student</strong> — <code>studentId</code> + password against <code>Patient.portalPasswordHash</code>, gated on <code>portalEnabled</code>. Students get <code>role: null</code>, <code>kind: "student"</code>. Session strategy is JWT.</p>
+    </div></div>
+    <div class="card bezel"><div class="bezel-in">
+      <h4>Multi-factor (<code>mfa.ts</code>, <code>webauthn.ts</code>)</h4>
+      <ul style="margin-bottom:0;">
+        <li><strong>TOTP</strong> via <code>otpauth</code> — base32 secret, 6-digit/30s, ±1 step drift, QR enrolment.</li>
+        <li><strong>Passkeys (WebAuthn)</strong> via <code>@simplewebauthn</code> — <code>rpID</code>/<code>origin</code> derived from request headers so it works on any host.</li>
+        <li><strong>Single-use recovery codes</strong> — 10 codes shown once, bcrypt-hashed, <strong>consumed on use</strong> (<code>usedAt</code> stamped).</li>
+      </ul>
+    </div></div>
+  </div>
+
+  <div class="callout navy">
+    <span class="lbl">On-leave login lockout</span>
+    <p>When a <code>LeaveRequest</code> reaches <span class="pill state gold">ACTIVE</span>, the employee's <code>employmentStatus</code> becomes <code>ON_LEAVE</code>. The staff <code>authorize</code> flow rejects any non-<code>ACTIVE</code> status, so on-leave, suspended, and terminated staff cannot sign in. Process state and access control are the same fact.</p>
+  </div>
+
+  <h3><span class="h3num">8.3</span>Audit trail</h3>
+  <p><code>audit(actorId, action, entityType?, entityId?, meta?)</code> writes to <code>AuditLog</code>. It is <strong>best-effort</strong>: a logging failure must never break the primary operation, and if the <code>actorId</code> foreign key can't be resolved (e.g. a session that predates a reseed) it retries as a system entry. Separately, <code>logTransition()</code> writes the FSM <code>StateTransition</code> trail, and <code>notifyRole</code>/<code>notifyUser</code> fan notification rows to a role or an individual.</p>
+
+  <h3 class="page-break"><span class="h3num">8.4</span>Tamper-evident documents — HMAC sign &amp; public verify</h3>
+  <p>Every issued document and referral carries a short <strong>public verify code</strong> (printed as text and QR) and an <strong>HMAC-SHA256 signature</strong> over the record's <em>immutable</em> facts (<code>src/server/services/document-signing.ts</code>). The signing key is <code>DOCUMENT_SIGNING_SECRET</code> (falling back to <code>AUTH_SECRET</code>, then a dev default). Documents are signed on creation; referrals are signed <strong>lazily on first print</strong>. Verification recomputes the HMAC from the stored record and compares with <code>timingSafeEqual</code> — <strong>a photoshopped certificate will not verify; a genuine one always will.</strong></p>
+
+  <div class="diagram-wrap">
+    <div class="dtitle"><span class="fig">Fig. 7</span> HMAC document sign &amp; verify</div>
+    <p class="dcap">Signing HMACs a canonical string of immutable facts and stores it with a verify code; the public /verify route recomputes and timing-safe-compares, yielding valid / invalid / revoked / not-found.</p>
+<pre class="mermaid">
+flowchart LR
+  subgraph SIGN["Sign — on issue (referrals lazily on first print)"]
+    FACTS["Immutable facts<br/>docNo · type · patient/visit ids<br/>dates · days · issuer · issuedAt"]
+    CANON["canonical() deterministic string"]
+    HMAC["HMAC-SHA256<br/>key = DOCUMENT_SIGNING_SECRET"]
+    STORE[("Store signature + verifyCode<br/>Crockford base32, grouped ABCDE-FGHIJ")]
+    FACTS --> CANON --> HMAC --> STORE
+  end
+
+  subgraph VERIFY["Public /verify/[code] — no login"]
+    SCAN["Scan QR / type code"]
+    LOOK["verifyByCode() — look up<br/>IssuedDocument or Referral"]
+    REVK{"revoked or<br/>CANCELLED?"}
+    RECOMP["Recompute HMAC from stored record"]
+    CMP{"timingSafeEqual<br/>matches stored signature?"}
+    SCAN --> LOOK --> REVK
+    REVK -->|"yes"| RV["REVOKED"]
+    REVK -->|"no"| RECOMP --> CMP
+    CMP -->|"yes"| OK["VALID — issued &amp; unaltered"]
+    CMP -->|"no"| BAD["INVALID — altered, do not accept"]
+    LOOK -->|"no record"| NF["NOT FOUND"]
+  end
+
+  STORE -. "prints QR → /verify/code" .-> SCAN
+
+  classDef ok fill:#e2f4ea,stroke:#1f9d5b,color:#12572f;
+  classDef bad fill:#fbe6e8,stroke:#c23b46,color:#7d232c;
+  classDef warn fill:#fbf4e4,stroke:#e0a112,color:#5c4708;
+  class OK ok;
+  class BAD bad;
+  class RV,NF warn;
+</pre>
+  </div>
+
+  <p>The public verify page renders one of four states, each with a distinct icon and tone: <span class="pill green">valid</span> "issued by the clinic and has not been altered", <span class="pill red">invalid</span> "details don't match — may have been altered, do not accept", <span class="pill gold">revoked</span>, and <span class="pill gray">not found</span>. Verification trusts the server's recomputation, not anything printed on the page.</p>
+
+  <div class="runfoot">
+    <span class="r"><span class="dot"></span> DDU Clinic — Platform Architecture &amp; Product Documentation</span>
+    <span>v2.0 · §08 Security &amp; Compliance</span>
+  </div>
+</section>
+
+<!-- ============================================================= -->
+<!-- SECTION 9 · SABA AI                                           -->
+<!-- ============================================================= -->
+<section class="section page-break">
+  <div class="sec-head">
+    <div class="eyebrow">Section 09</div>
+    <h2 class="sec-title"><span class="num">09</span>Saba — the AI Assistant</h2>
+    <p class="sec-lead">One assistant with two faces — a clinical copilot for doctors and a caring health guide for students — built on a provider-agnostic engine and wrapped in a deliberately strict, read-only guardrail spine.</p>
+  </div>
+
+  <p>Saba (<code>src/server/ai/saba.ts</code>, <code>src/app/api/saba/route.ts</code>, <code>src/components/saba/*</code>) is gated by the <code>ai.assistant</code> flag. It talks to <strong>any OpenAI-compatible <code>/chat/completions</code> endpoint</strong>, so it runs on Groq, OpenAI, Ollama, or a self-hosted gateway with no code change — purely env-configured. <code>SABA_PROVIDER</code> selects per-provider defaults (groq → <code>openai/gpt-oss-120b</code> in the demo config; openai → <code>gpt-4o-mini</code>; ollama → <code>llama3.1</code>), overridable by <code>SABA_BASE_URL</code>, <code>SABA_API_KEY</code>, <code>SABA_MODEL</code>. Ollama needs no key, so Saba can run fully on-prem with no data leaving the clinic. Responses stream: <code>streamSaba()</code> is an async generator that parses SSE <code>data:</code> lines and yields token chunks the browser appends live.</p>
+
+  <div class="grid-2">
+    <div class="card bezel"><div class="bezel-in">
+      <h4>A · Doctor / staff copilot</h4>
+      <p style="margin-bottom:0;">Scope <code>staff</code>, mounted app-wide as a floating widget when <code>ai.assistant</code> is on. History-aware (last 12 turns) and role-aware, with live read-only tooling per role. For a doctor on a real open visit it becomes a clinical copilot: history-aware differentials, tests to consider, red-flag flagging — framed as <strong>decision support</strong>.</p>
+    </div></div>
+    <div class="card bezel"><div class="bezel-in">
+      <h4>B · Student health guide</h4>
+      <p style="margin-bottom:0;">Scope <code>student</code>, in the portal — "a caring health guide … like a kind older sister." Uses the student's own past visits only, to give gentle self-care advice and nudge them to visit the clinic or seek emergency care when appropriate. Explicitly not a doctor.</p>
+    </div></div>
+  </div>
+
+  <div class="diagram-wrap">
+    <div class="dtitle"><span class="fig">Fig. 8</span> Saba request flow — auth, authorization, context, stream, CTA</div>
+    <p class="dcap">User → session → feature gate → role/scope authorization → server-built read-only context → provider stream → CTA links rendered as pill buttons.</p>
+<pre class="mermaid">
+flowchart TD
+  U["User asks Saba"] --> R["/api/saba route handler (Node runtime)"]
+  R --> A1{"session?"}
+  A1 -->|"no"| E401["401 Unauthorized"]
+  A1 -->|"yes"| A2{"ai.assistant enabled?"}
+  A2 -->|"no"| E403["403 Forbidden"]
+  A2 -->|"yes"| A3{"provider configured?"}
+  A3 -->|"no"| E503["503 Unavailable"]
+  A3 -->|"yes"| SCOPE{"scope?"}
+
+  SCOPE -->|"student"| ST{"actor.kind == student?"}
+  ST -->|"no"| E403
+  ST -->|"yes"| SCTX["buildStudentContext(actor.id)<br/>OWN record only"]
+
+  SCOPE -->|"staff"| STF{"actor.kind == staff?"}
+  STF -->|"no"| E403
+  STF -->|"yes"| ROLE["buildStaffContext(role)<br/>role-tailored live snapshot"]
+  ROLE --> CLIN{"role in DOCTOR/NURSE/MANAGER<br/>AND real visitId opened?"}
+  CLIN -->|"yes"| DCTX["buildDoctorContext(patientId)<br/>patientId re-derived from the visit server-side"]
+  CLIN -->|"no"| SKIP["no deep patient context"]
+
+  SCTX --> PROMPT["Assemble system prompt<br/>+ guardrails + context"]
+  DCTX --> PROMPT
+  SKIP --> PROMPT
+  PROMPT --> LLM["streamSaba() → OpenAI-compatible provider<br/>temperature 0.3, stream"]
+  LLM --> OUT["ReadableStream → chat UI appends tokens"]
+  OUT --> CTA["Markdown links → pill CTA buttons<br/>hand off do-actions to a real page"]
+
+  classDef bad fill:#fbe6e8,stroke:#c23b46,color:#7d232c;
+  class E401,E403,E503 bad;
+</pre>
+  </div>
+
+  <h3 class="page-break"><span class="h3num">9.1</span>Guardrails — the safety spine</h3>
+  <p>Saba's constraints are enforced in <strong>both</strong> the system prompt and the route. Four layers:</p>
+
+  <div class="grid-2">
+    <div class="card">
+      <h4><span class="pill blue" style="font-size:9px;">1</span> Read-only</h4>
+      <p style="margin:0;font-size:12px;">Saba is <strong>READ-ONLY</strong>: it can look up and explain but <em>cannot make any change, approve, order, dispense, book or edit anything</em>, and never claims it did. It has no tools that mutate — it only reads context the server pre-builds. To <em>do</em> something, it emits a markdown link to the exact page, rendered as a pill-shaped <strong>CTA button</strong>.</p>
+    </div>
+    <div class="card">
+      <h4><span class="pill blue" style="font-size:9px;">2</span> Scope guard</h4>
+      <p style="margin:0;font-size:12px;">STAY ON TASK — Saba only helps with this clinic. Asked anything unrelated (trivia, coding, maths, essays, jokes, world facts, chit-chat) it declines in one short line. The student persona gently declines and offers health help instead.</p>
+    </div>
+    <div class="card">
+      <h4><span class="pill red" style="font-size:9px;">3</span> Authorization</h4>
+      <p style="margin:0;font-size:12px;"><strong>Students:</strong> must be <code>kind === "student"</code>; context is built from <code>actor.id</code> only — <em>own record only</em>. <strong>Staff:</strong> deep clinical patient context loads <em>only</em> for <code>DOCTOR/NURSE/MANAGER</code> and <em>only</em> for a real <code>visitId</code> the user opened; the server re-derives <code>patientId</code> from the visit, never from a client-supplied id. This closes the "ask about an arbitrary MRN" hole.</p>
+    </div>
+    <div class="card">
+      <h4><span class="pill gold" style="font-size:9px;">4</span> Clinical-safety framing</h4>
+      <p style="margin:0;font-size:12px;"><code>SAFETY_DOCTOR</code>: decision <em>support</em>, never a decision maker; no definitive diagnosis; differentials and tests framed as considerations; flag red flags; note clinical correlation. <code>SAFETY_STUDENT</code>: a friendly guide, <em>not</em> a doctor — do not diagnose or prescribe. The chat header carries an "AI · verify advice" badge.</p>
+    </div>
+  </div>
+
+  <div class="callout gold">
+    <span class="lbl">The authorization gate is real, not just prompt text</span>
+    <p>Route-level enforcement (<code>route.ts</code>) is the true gate: it returns 401 without a session, 403 if the flag is off or the persona/role mismatches, and 503 if no provider is configured. Because Saba is read-only and re-derives patient identity server-side, the worst-case blast radius of a prompt-injection attempt is bounded to information the actor was already authorized to see.</p>
+  </div>
+
+  <h3><span class="h3num">9.2</span>Role-tailored live context</h3>
+  <p><code>buildStaffContext({id, role})</code> assembles a role-specific "what needs my attention" snapshot — all read-only, all server-side:</p>
+  <table class="tight">
+    <thead><tr><th style="width:130px;">Role</th><th>Live snapshot Saba can answer from</th></tr></thead>
+    <tbody>
+      <tr><td>MANAGER</td><td>In clinic now / completed today; who's on leave + pending count; stock lows, batches expiring ≤90d, expired; open POs + pending stock requests.</td></tr>
+      <tr><td>PHARMACIST</td><td>Prescriptions awaiting dispensing; low-stock list; expiry counts (≤90d / expired).</td></tr>
+      <tr><td>LAB_TECH</td><td>Worklist counts by state (ordered / collecting / in-progress / results ready).</td></tr>
+      <tr><td>HR</td><td>Pending leave requests (names); who's currently on leave; staff present today.</td></tr>
+      <tr><td>STORE_KEEPER</td><td>Pending stock requests (item × qty); open POs; low-medicine count.</td></tr>
+      <tr><td>NURSE</td><td>Patients waiting for a doctor; inpatients on ward; bed occupancy.</td></tr>
+      <tr><td>RECEPTIONIST</td><td>Registered today; waiting for a doctor now.</td></tr>
+      <tr><td>DOCTOR</td><td>Your open patients right now; plus deep <code>buildDoctorContext</code> "chart on a page" for the open visit.</td></tr>
+    </tbody>
+  </table>
+
+  <div class="runfoot">
+    <span class="r"><span class="dot"></span> DDU Clinic — Platform Architecture &amp; Product Documentation</span>
+    <span>v2.0 · §09 Saba AI</span>
+  </div>
+</section>
+
+<!-- ============================================================= -->
+<!-- SECTION 10 · DOCUMENTS                                        -->
+<!-- ============================================================= -->
+<section class="section page-break">
+  <div class="sec-head">
+    <div class="eyebrow">Section 10</div>
+    <h2 class="sec-title"><span class="num">10</span>Documents the System Generates</h2>
+    <p class="sec-lead">Six document types, each an immutable snapshot printed on a white-label letterhead and sealed with a scannable verify code. Below, a faithful recreation of the sick-leave certificate the platform produces.</p>
+  </div>
+
+  <p>The <code>DocumentType</code> enum covers <code>SICK_LEAVE, PRESCRIPTION, REFERRAL, LAB_REPORT, ADMISSION_SUMMARY, VISIT_SUMMARY</code>, each with a print route. Every issued document is an immutable <code>IssuedDocument</code> row with a <code>docNo</code> (e.g. <code>DOC-2026-00042</code>) and a <strong><code>payload</code> JSON snapshot</strong> of exactly what was printed, so re-prints reproduce the original even if the underlying record later changes. The shared <code>Letterhead</code> reads from <code>getBranding()</code>, so white-label branding flows into every printout.</p>
+
+  <!-- FAITHFUL SICK-LEAVE RECREATION -->
+  <div class="doc-preview page-break">
+    <div class="doc-sheet-tag">Recreation · print/sick-leave/[docId]</div>
+    <div class="dp-head">
+      <div class="lh">
+        <img src="assets/ddu-logo-color.png" alt="DDU logo" />
+        <div>
+          <div class="dp-org">Dire Dawa University</div>
+          <div class="dp-app">Student Clinic Center</div>
+          <div class="dp-contact">Medical Certificate — Sick Leave</div>
+        </div>
+      </div>
+      <div class="dp-kind">Official<br/>Medical Document</div>
+    </div>
+
+    <div class="dp-h1">Medical Certificate</div>
+    <div class="dp-h1sub">Certificate of Sick Leave</div>
+
+    <div class="dp-fields">
+      <div><div class="fl">Patient</div><div class="fv">Meron Tadesse</div></div>
+      <div><div class="fl">MRN</div><div class="fv">CLN-004182</div></div>
+      <div><div class="fl">Age / Sex</div><div class="fv">21 / Female</div></div>
+      <div><div class="fl">Visit</div><div class="fv">V-2026-01947</div></div>
+    </div>
+
+    <div class="dp-body">
+      This is to certify that <span class="em">Meron Tadesse</span> was examined at this facility and, on
+      medical grounds, is advised to rest from <span class="em">18 Aug 2026</span> to
+      <span class="em">22 Aug 2026</span> (<span class="em">5</span> days).<br/>
+      <span class="em">Diagnosis:</span> Acute viral pharyngitis (ICD-10 J02.9).<br/>
+      <span class="em">Recommendation:</span> Rest, oral fluids, and paracetamol as needed. Return to the clinic if
+      fever persists beyond 72 hours or breathing difficulty develops.
+    </div>
+
+    <div class="dp-foot">
+      <div class="stamp">Official<br/>Stamp</div>
+      <div class="sig">
+        <div class="sline">
+          <div class="sname">Dr. Samuel Bekele</div>
+          <div class="srole">General Practitioner</div>
+          <div class="slabel">Attending physician</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="seal">
+      <svg class="qr" viewBox="0 0 100 100" role="img" aria-label="Verification QR code" xmlns="http://www.w3.org/2000/svg">
+        <rect width="100" height="100" fill="#ffffff"/>
+        <!-- finder patterns -->
+        <g fill="#16202f">
+          <rect x="6" y="6" width="22" height="22"/><rect x="10" y="10" width="14" height="14" fill="#fff"/><rect x="13" y="13" width="8" height="8" fill="#16202f"/>
+          <rect x="72" y="6" width="22" height="22"/><rect x="76" y="10" width="14" height="14" fill="#fff"/><rect x="79" y="13" width="8" height="8" fill="#16202f"/>
+          <rect x="6" y="72" width="22" height="22"/><rect x="10" y="76" width="14" height="14" fill="#fff"/><rect x="13" y="79" width="8" height="8" fill="#16202f"/>
+        </g>
+        <!-- data modules (decorative placeholder) -->
+        <g fill="#16202f">
+          <rect x="34" y="8" width="4" height="4"/><rect x="42" y="8" width="4" height="4"/><rect x="50" y="8" width="4" height="4"/><rect x="62" y="8" width="4" height="4"/>
+          <rect x="38" y="14" width="4" height="4"/><rect x="46" y="14" width="4" height="4"/><rect x="58" y="14" width="4" height="4"/><rect x="66" y="14" width="4" height="4"/>
+          <rect x="34" y="20" width="4" height="4"/><rect x="50" y="20" width="4" height="4"/><rect x="54" y="20" width="4" height="4"/><rect x="62" y="20" width="4" height="4"/>
+          <rect x="8" y="34" width="4" height="4"/><rect x="16" y="34" width="4" height="4"/><rect x="24" y="34" width="4" height="4"/><rect x="34" y="34" width="4" height="4"/><rect x="46" y="34" width="4" height="4"/><rect x="54" y="34" width="4" height="4"/><rect x="66" y="34" width="4" height="4"/><rect x="78" y="34" width="4" height="4"/><rect x="88" y="34" width="4" height="4"/>
+          <rect x="12" y="42" width="4" height="4"/><rect x="22" y="42" width="4" height="4"/><rect x="38" y="42" width="4" height="4"/><rect x="50" y="42" width="4" height="4"/><rect x="60" y="42" width="4" height="4"/><rect x="72" y="42" width="4" height="4"/><rect x="84" y="42" width="4" height="4"/>
+          <rect x="8" y="50" width="4" height="4"/><rect x="18" y="50" width="4" height="4"/><rect x="30" y="50" width="4" height="4"/><rect x="42" y="50" width="4" height="4"/><rect x="54" y="50" width="4" height="4"/><rect x="64" y="50" width="4" height="4"/><rect x="76" y="50" width="4" height="4"/><rect x="88" y="50" width="4" height="4"/>
+          <rect x="14" y="58" width="4" height="4"/><rect x="26" y="58" width="4" height="4"/><rect x="38" y="58" width="4" height="4"/><rect x="48" y="58" width="4" height="4"/><rect x="60" y="58" width="4" height="4"/><rect x="70" y="58" width="4" height="4"/><rect x="82" y="58" width="4" height="4"/>
+          <rect x="34" y="66" width="4" height="4"/><rect x="44" y="66" width="4" height="4"/><rect x="56" y="66" width="4" height="4"/><rect x="66" y="66" width="4" height="4"/><rect x="78" y="66" width="4" height="4"/><rect x="88" y="66" width="4" height="4"/>
+          <rect x="36" y="74" width="4" height="4"/><rect x="48" y="74" width="4" height="4"/><rect x="58" y="74" width="4" height="4"/><rect x="70" y="74" width="4" height="4"/><rect x="82" y="74" width="4" height="4"/>
+          <rect x="34" y="82" width="4" height="4"/><rect x="44" y="82" width="4" height="4"/><rect x="54" y="82" width="4" height="4"/><rect x="64" y="82" width="4" height="4"/><rect x="74" y="82" width="4" height="4"/><rect x="88" y="82" width="4" height="4"/>
+          <rect x="38" y="88" width="4" height="4"/><rect x="50" y="88" width="4" height="4"/><rect x="60" y="88" width="4" height="4"/><rect x="72" y="88" width="4" height="4"/><rect x="84" y="88" width="4" height="4"/>
+        </g>
+      </svg>
+      <div>
+        <div class="stitle">Scan to verify</div>
+        <div class="sauth">Authentic document</div>
+        <div class="scode">3J3HD-VKSCV</div>
+        <div class="surl">https://clinic.ddu.edu.et/verify/3J3HD-VKSCV</div>
+      </div>
+    </div>
+
+    <div class="dp-docfoot">
+      <span>Ref: <span class="mono">DOC-2026-00042</span></span>
+      <span>Issued: 22 Aug 2026</span>
+    </div>
+  </div>
+  <p style="font-size:10.5px;color:var(--muted);font-style:italic;margin-top:4px;">Faithful recreation of <code>src/app/print/sick-leave/[docId]/page.tsx</code> with the shared <code>Letterhead</code>, <code>Field</code>, <code>SignatureLine</code>, and <code>VerifySeal</code> components. The QR grid is a stylized placeholder; the live seal embeds a real QR pointing at <code>/verify/&lt;code&gt;</code>.</p>
+
+  <h3 class="page-break"><span class="h3num">10.1</span>The verification counterpart</h3>
+  <p>The QR and code on every document point at the <strong>public</strong> <code>/verify</code> page — no login needed. Anyone (a faculty member, an employer) can confirm a certificate's authenticity in seconds. The page recomputes the cryptographic signature over the official record; a genuine, unaltered document always verifies, a forged one never does.</p>
+
+  <figure>
+    <img src="assets/shot-verify.png" alt="The public document verification page showing an authentic result" />
+    <figcaption>The public <code>/verify/[code]</code> result page — recomputing the HMAC over the clinic's official record to confirm a document is issued and unaltered.</figcaption>
+  </figure>
+
+  <h3><span class="h3num">10.2</span>The rest of the document family</h3>
+  <p>Alongside sick-leave, the platform issues signed printables for visit summaries, referral letters, and discharge summaries. The discharge summary is a client component with <strong>"Include sections:" checkboxes</strong> so the clinician chooses which blocks appear before printing, and computes length-of-stay. All are signed and sealed.</p>
+
+  <div class="grid-3">
+    <div class="mini-doc">
+      <div class="md-top"><img src="assets/ddu-logo-color.png" alt="DDU"/><div><div class="md-kind">Visit Summary</div><div class="md-org">DDU Student Clinic</div></div></div>
+      <div class="md-line"><span class="l">Patient</span><span class="v">Meron Tadesse</span></div>
+      <div class="md-line"><span class="l">Complaint</span><span class="v">Sore throat, fever</span></div>
+      <div class="md-line"><span class="l">Assessment</span><span class="v">Pharyngitis · J02.9</span></div>
+      <div class="md-line"><span class="l">Vitals</span><span class="v">37.9°C · 88 · 118/74</span></div>
+      <div class="md-line"><span class="l">Prescribed</span><span class="v">Paracetamol 500mg</span></div>
+      <div class="md-seal">
+        <svg class="q" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg"><rect width="40" height="40" fill="#fff"/><g fill="#16202f"><rect x="3" y="3" width="10" height="10"/><rect x="5" y="5" width="6" height="6" fill="#fff"/><rect x="6.5" y="6.5" width="3" height="3"/><rect x="27" y="3" width="10" height="10"/><rect x="29" y="5" width="6" height="6" fill="#fff"/><rect x="30.5" y="6.5" width="3" height="3"/><rect x="3" y="27" width="10" height="10"/><rect x="5" y="29" width="6" height="6" fill="#fff"/><rect x="6.5" y="30.5" width="3" height="3"/><rect x="17" y="5" width="2" height="2"/><rect x="21" y="5" width="2" height="2"/><rect x="17" y="17" width="2" height="2"/><rect x="21" y="19" width="2" height="2"/><rect x="25" y="17" width="2" height="2"/><rect x="29" y="21" width="2" height="2"/><rect x="33" y="25" width="2" height="2"/><rect x="19" y="25" width="2" height="2"/><rect x="23" y="29" width="2" height="2"/><rect x="27" y="33" width="2" height="2"/><rect x="17" y="33" width="2" height="2"/></g></svg>
+        <div><div class="t">Verify</div><div class="c">7KP2Q-M4WNX</div></div>
+      </div>
+    </div>
+
+    <div class="mini-doc">
+      <div class="md-top"><img src="assets/ddu-logo-color.png" alt="DDU"/><div><div class="md-kind">Referral Letter</div><div class="md-org">DDU Student Clinic</div></div></div>
+      <div class="md-line"><span class="l">Patient</span><span class="v">Yohannes Girma</span></div>
+      <div class="md-line"><span class="l">To facility</span><span class="v">Dilchora Hospital</span></div>
+      <div class="md-line"><span class="l">Urgency</span><span class="v">Routine</span></div>
+      <div class="md-line"><span class="l">Reason</span><span class="v">Specialist review</span></div>
+      <div class="md-line"><span class="l">State</span><span class="v">ISSUED</span></div>
+      <div class="md-seal">
+        <svg class="q" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg"><rect width="40" height="40" fill="#fff"/><g fill="#16202f"><rect x="3" y="3" width="10" height="10"/><rect x="5" y="5" width="6" height="6" fill="#fff"/><rect x="6.5" y="6.5" width="3" height="3"/><rect x="27" y="3" width="10" height="10"/><rect x="29" y="5" width="6" height="6" fill="#fff"/><rect x="30.5" y="6.5" width="3" height="3"/><rect x="3" y="27" width="10" height="10"/><rect x="5" y="29" width="6" height="6" fill="#fff"/><rect x="6.5" y="30.5" width="3" height="3"/><rect x="19" y="5" width="2" height="2"/><rect x="23" y="7" width="2" height="2"/><rect x="17" y="19" width="2" height="2"/><rect x="23" y="17" width="2" height="2"/><rect x="27" y="19" width="2" height="2"/><rect x="31" y="23" width="2" height="2"/><rect x="35" y="27" width="2" height="2"/><rect x="21" y="27" width="2" height="2"/><rect x="25" y="31" width="2" height="2"/><rect x="29" y="35" width="2" height="2"/><rect x="19" y="33" width="2" height="2"/></g></svg>
+        <div><div class="t">Verify</div><div class="c">R9DC4-H2VBK</div></div>
+      </div>
+    </div>
+
+    <div class="mini-doc">
+      <div class="md-top"><img src="assets/ddu-logo-color.png" alt="DDU"/><div><div class="md-kind">Discharge Summary</div><div class="md-org">DDU Student Clinic</div></div></div>
+      <div class="md-line"><span class="l">Patient</span><span class="v">Sara Alemu</span></div>
+      <div class="md-line"><span class="l">Ward / Bed</span><span class="v">Female · B-04</span></div>
+      <div class="md-line"><span class="l">Stay</span><span class="v">3 days</span></div>
+      <div class="md-line"><span class="l">Sections</span><span class="v">Course · Meds · F/U</span></div>
+      <div class="md-line"><span class="l">State</span><span class="v">DISCHARGED</span></div>
+      <div class="md-seal">
+        <svg class="q" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg"><rect width="40" height="40" fill="#fff"/><g fill="#16202f"><rect x="3" y="3" width="10" height="10"/><rect x="5" y="5" width="6" height="6" fill="#fff"/><rect x="6.5" y="6.5" width="3" height="3"/><rect x="27" y="3" width="10" height="10"/><rect x="29" y="5" width="6" height="6" fill="#fff"/><rect x="30.5" y="6.5" width="3" height="3"/><rect x="3" y="27" width="10" height="10"/><rect x="5" y="29" width="6" height="6" fill="#fff"/><rect x="6.5" y="30.5" width="3" height="3"/><rect x="18" y="6" width="2" height="2"/><rect x="22" y="5" width="2" height="2"/><rect x="18" y="18" width="2" height="2"/><rect x="22" y="20" width="2" height="2"/><rect x="26" y="18" width="2" height="2"/><rect x="30" y="22" width="2" height="2"/><rect x="34" y="26" width="2" height="2"/><rect x="20" y="26" width="2" height="2"/><rect x="24" y="30" width="2" height="2"/><rect x="28" y="34" width="2" height="2"/><rect x="18" y="34" width="2" height="2"/></g></svg>
+        <div><div class="t">Verify</div><div class="c">D6XTP-3KQFN</div></div>
+      </div>
+    </div>
+  </div>
+  <p style="font-size:10.5px;color:var(--muted);font-style:italic;margin-top:6px;">Concise previews of the visit-summary, referral-letter and discharge-summary printables (<code>src/app/print/{visit-summary,referral,discharge}/*</code>). Each embeds a verify seal identical in mechanism to the sick-leave certificate above.</p>
+
+  <div class="runfoot">
+    <span class="r"><span class="dot"></span> DDU Clinic — Platform Architecture &amp; Product Documentation</span>
+    <span>v2.0 · §10 Documents</span>
+  </div>
+</section>
+
+<!-- ============================================================= -->
+<!-- SECTION 11 · DATA MODEL                                       -->
+<!-- ============================================================= -->
+<section class="section page-break">
+  <div class="sec-head">
+    <div class="eyebrow">Section 11</div>
+    <h2 class="sec-title"><span class="num">11</span>Data Model</h2>
+    <p class="sec-lead">The full schema is 1,185 lines of Prisma. At its heart is the Visit — the encounter the FSM drives — surrounded by identity, clinical detail, pharmacy stock, billing, and the cross-cutting platform tables.</p>
+  </div>
+
+  <div class="diagram-wrap">
+    <div class="dtitle"><span class="fig">Fig. 9</span> Key entities &amp; relationships</div>
+    <p class="dcap">The Visit is the hub of the clinical spine; Patient and User anchor identity; StateTransition and AuditLog are the cross-cutting event logs every entity feeds.</p>
+<pre class="mermaid">
+flowchart TD
+  USER["User<br/><i>role · employmentStatus · MFA</i>"]
+  PAT["Patient<br/><i>mrn · type · studentId · portal</i>"]
+  DEPT["Department"]
+
+  VIS["VISIT<br/><b>the clinical spine</b><br/>state · diagnosis · icdCode"]
+  VIT["Vitals"]
+  NOTE["ClinicalNote"]
+
+  LO["LabOrder"] --> LOI["LabOrderItem<br/><i>resultValue · flag</i>"]
+  DO["DrugOrder"] --> DOI["DrugOrderItem<br/><i>dispensedQty</i>"]
+  MED["Medication"] --> BATCH["MedicationBatch<br/><i>expiry · qty · FEFO</i>"]
+  BATCH --> MOVE["StockMovement"]
+
+  REF["Referral<br/><i>verifyCode · signature</i>"]
+  ADM["Admission"] --> BED["Bed"] --> WARD["Ward"]
+  INV["Invoice"] --> INVI["InvoiceItem"]
+  INV --> PAY["Payment"]
+  DOCM["IssuedDocument<br/><i>payload · verifyCode · signature</i>"]
+  APPT["Appointment"]
+  LEAVE["LeaveRequest<br/><i>drives ON_LEAVE lock</i>"]
+
+  ST["StateTransition<br/><b>generic FSM log</b>"]
+  AUD["AuditLog"]
+  NOTIF["Notification"]
+
+  DEPT --> USER
+  DEPT --> PAT
+  PAT --> VIS
+  USER -->|"doctor / createdBy"| VIS
+  VIS --> VIT
+  VIS --> NOTE
+  VIS --> LO
+  VIS --> DO
+  DOI --> MED
+  VIS --> REF
+  VIS --> ADM
+  VIS --> INV
+  VIS --> DOCM
+  PAT --> APPT
+  USER --> LEAVE
+
+  VIS -. logs .-> ST
+  LO -. logs .-> ST
+  DO -. logs .-> ST
+  LEAVE -. logs .-> ST
+  USER -. writes .-> AUD
+  VIS -. fans .-> NOTIF
+
+  classDef spine fill:#eaf1fb,stroke:#1a56b0,color:#0c1f3d,stroke-width:2px;
+  classDef log fill:#e5eaf3,stroke:#0c1f3d,color:#0c1f3d;
+  class VIS spine;
+  class ST,AUD,NOTIF log;
+</pre>
+  </div>
+
+  <h3><span class="h3num">11.1</span>Entity groups</h3>
+  <div class="grid-2">
+    <div class="card">
+      <h4>Identity &amp; RBAC</h4>
+      <p style="margin:0;font-size:11.5px;"><strong>User</strong> — staff account, hub of ~30 relations; <strong>RecoveryCode</strong> (hashed, single-use); <strong>Authenticator</strong> (WebAuthn passkey); <strong>Department</strong>.</p>
+    </div>
+    <div class="card">
+      <h4>Patients</h4>
+      <p style="margin:0;font-size:11.5px;"><strong>Patient</strong> — MRN, type (STUDENT/STAFF/DEPENDENT/EXTERNAL), source (MANUAL/SIMS), portal login, demographics; owns visits, documents, appointments, invoices, allergies.</p>
+    </div>
+    <div class="card">
+      <h4>Clinical spine</h4>
+      <p style="margin:0;font-size:11.5px;"><strong>Visit</strong> (FSM-driven encounter) with <strong>Vitals</strong>, <strong>ClinicalNote</strong>, lab/drug orders, referrals, one admission, documents, invoices.</p>
+    </div>
+    <div class="card">
+      <h4>Pharmacy</h4>
+      <p style="margin:0;font-size:11.5px;"><strong>Medication</strong> → <strong>MedicationBatch</strong> (lot/expiry/qty) → <strong>StockMovement</strong> (RECEIVE/DISPENSE/ADJUST/EXPIRE/RETURN); <strong>DrugOrder</strong> → <strong>DrugOrderItem</strong>.</p>
+    </div>
+    <div class="card">
+      <h4>Wards, billing, HR</h4>
+      <p style="margin:0;font-size:11.5px;"><strong>Ward</strong> → <strong>Bed</strong> → <strong>Admission</strong>; <strong>Invoice</strong> → <strong>InvoiceItem</strong> + <strong>Payment</strong>; <strong>LeaveRequest</strong>, <strong>Attendance</strong>, <strong>Shift</strong>, <strong>LeaveBalance</strong>.</p>
+    </div>
+    <div class="card">
+      <h4>Cross-cutting</h4>
+      <p style="margin:0;font-size:11.5px;"><strong>IssuedDocument</strong> (payload + signature), <strong>Notification</strong> (recipient and/or role), <strong>StateTransition</strong> (generic FSM log), <strong>AuditLog</strong>, <strong>FeatureFlag</strong>, <strong>Setting</strong>.</p>
+    </div>
+  </div>
+
+  <div class="runfoot">
+    <span class="r"><span class="dot"></span> DDU Clinic — Platform Architecture &amp; Product Documentation</span>
+    <span>v2.0 · §11 Data Model</span>
+  </div>
+</section>
+
+<!-- ============================================================= -->
+<!-- SECTION 12 · DEPLOYMENT & OPERATIONS                          -->
+<!-- ============================================================= -->
+<section class="section page-break">
+  <div class="sec-head">
+    <div class="eyebrow">Section 12</div>
+    <h2 class="sec-title"><span class="num">12</span>Deployment &amp; Operations</h2>
+    <p class="sec-lead"><strong>Cloud-native and highly scalable</strong>, and — crucially — <strong>deployment-portable</strong>. The public demo runs on Vercel + Neon, but the exact same codebase deploys <strong>on-premises on a campus server with no data loss and no vendor lock-in</strong>. Configured entirely by environment, shipped by a git push, and installable as a PWA.</p>
+  </div>
+
+  <div class="callout navy">
+    <span class="lbl">Demo vs. production</span>
+    <p>The live demo is hosted on <strong>Vercel</strong> for convenience — but that is <strong>not</strong> a requirement. DDU Clinic is a standard Next.js + PostgreSQL application, so production can run <strong>fully on-premises inside the university</strong> (a campus server or the DDU data centre) with the database and every record staying on university infrastructure. Because it is env-configured and container-friendly, moving from the cloud demo to on-prem is a configuration change, <strong>not</strong> a rewrite — and carries <strong>no data loss</strong>. Cloud-native by design, portable by principle.</p>
+  </div>
+
+  <div class="diagram-wrap">
+    <div class="dtitle"><span class="fig">Fig. 10</span> Deployment topology — cloud or on-prem, same code</div>
+    <p class="dcap">The same application image runs as cloud serverless functions (demo: Vercel) or as a Node process on a campus server; PostgreSQL is Neon (cloud) or self-hosted on university infrastructure. AI can even run on-prem via Ollama, so no clinical data need leave the campus.</p>
+<pre class="mermaid">
+flowchart TD
+  BROWSER["Browser / installable PWA<br/><i>web manifest, themed, maskable icons</i>"]
+
+  subgraph RUNTIME["Runtime — same code, either target"]
+    direction TB
+    CLOUD["Cloud (demo): Vercel serverless<br/>edge middleware + Node routes"]
+    ONPREM["On-prem: Node server on a<br/>campus machine (container-friendly)"]
+  end
+
+  subgraph DATA["PostgreSQL — your choice"]
+    POOL["Pooled endpoint (PgBouncer)"]
+    DB[("Neon cloud OR self-hosted on-prem")]
+  end
+
+  subgraph PROV["External providers"]
+    AIP["AI provider<br/>Groq / OpenAI / Ollama"]
+    SIMSP["University SIMS"]
+  end
+
+  GIT["git push → CI<br/>prisma generate &amp; next build"]
+
+  BROWSER --> CLOUD
+  BROWSER --> ONPREM
+  CLOUD --> POOL
+  ONPREM --> POOL
+  POOL --> DB
+  CLOUD --> AIP
+  ONPREM --> AIP
+  CLOUD --> SIMSP
+  ONPREM --> SIMSP
+  GIT -. deploys .-> RUNTIME
+
+  classDef ext fill:#fbf4e4,stroke:#e0a112,color:#5c4708;
+  classDef data fill:#e5eaf3,stroke:#0c1f3d,color:#0c1f3d;
+  class AIP,SIMSP ext;
+  class POOL,DB data;
+</pre>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <h4>Cloud-native, runs anywhere</h4>
+      <p style="margin:0;font-size:11.5px;">A standard Next.js App Router app. The demo runs as Vercel serverless functions; the identical build runs as a plain <strong>Node process on a campus server</strong> (container-friendly). Auth is edge-split: <code>auth.config.ts</code> (edge-safe) powers middleware; the full <code>auth.ts</code> runs on Node. <strong>No cloud-only APIs are required.</strong></p>
+    </div>
+    <div class="card">
+      <h4>PostgreSQL — cloud or on-prem</h4>
+      <p style="margin:0;font-size:11.5px;"><code>datasource db</code> is plain <code>postgresql</code> via <code>url = env("DATABASE_URL")</code>. Point it at Neon (cloud demo, pooled PgBouncer) <strong>or a PostgreSQL server inside the university</strong> — every record then stays on campus infrastructure. Switching is one env var; no schema or code change.</p>
+    </div>
+    <div class="card">
+      <h4>Env-based config</h4>
+      <p style="margin:0;font-size:11.5px;">All environment-specific behavior is env-driven: <code>DATABASE_URL</code>, <code>AUTH_SECRET</code>, <code>AUTH_TRUST_HOST</code>, <code>DOCUMENT_SIGNING_SECRET</code>, the <code>SIMS_*</code> integration, and the <code>SABA_*</code> AI knobs. Auth.js derives the URL from the request, so redirects follow whatever host/port you run on.</p>
+    </div>
+    <div class="card">
+      <h4>One build, any target</h4>
+      <p style="margin:0;font-size:11.5px;"><code>npm run build</code> = <code>prisma generate &amp;&amp; next build</code>, regenerating the Prisma client against the schema every time. In the cloud a git push triggers CI + rollout; on-prem the same command builds on the campus server (or in a container) — identical artifact either way.</p>
+    </div>
+  </div>
+
+  <div class="callout gold">
+    <span class="lbl">PWA — honest status</span>
+    <p>The app is <strong>installable</strong>: <code>public/manifest.webmanifest</code> (standalone display, themed, maskable icons) is wired via <code>metadata.manifest</code> and <code>appleWebApp</code>. However, on this branch there is <strong>no service worker and no Serwist wiring</strong> — so today the PWA is manifest-based (installable, themed), <em>not</em> a fully offline-caching service worker. That is the intended direction (Serwist is already a dependency) but not yet active.</p>
+  </div>
+
+  <h3><span class="h3num">12.1</span>Scaling posture</h3>
+  <p>Because functions are stateless and short-lived, horizontal scale is handled by the platform; the bounded resource is database connections, which the Neon pooled endpoint absorbs. The audit and transition logs are append-only and keyed by entity, making them a natural feed for an external warehouse without touching the hot path.</p>
+
+  <div class="runfoot">
+    <span class="r"><span class="dot"></span> DDU Clinic — Platform Architecture &amp; Product Documentation</span>
+    <span>v2.0 · §12 Deployment</span>
+  </div>
+</section>
+
+<!-- ============================================================= -->
+<!-- SECTION 13 · ROADMAP                                          -->
+<!-- ============================================================= -->
+<section class="section page-break">
+  <div class="sec-head">
+    <div class="eyebrow">Section 13</div>
+    <h2 class="sec-title"><span class="num">13</span>Roadmap &amp; Future Ecosystem</h2>
+    <p class="sec-lead">Every future connector is a natural extension of foundations already in place — the pluggable-adapter pattern, the FSM engine, and signed documents. The following are clearly aspirational.</p>
+  </div>
+
+  <div class="callout">
+    <span class="lbl">Already shipping</span>
+    <p><strong>SIMS student lookup</strong> — a pluggable <code>SimsProvider</code> adapter with mock and HTTP implementations, env-selected, gated by <code>clinical.sims_lookup</code>. <strong>AI providers</strong> — the same pluggable pattern over OpenAI-compatible endpoints, on-prem-capable via Ollama. <strong>White-label branding</strong> — <code>getBranding()</code> injects org name, app name and theme colours into the live layout and every printout.</p>
+  </div>
+
+  <h3><span class="h3num">13.1</span>Future connectors <span class="pill gold" style="font-size:9px;">FUTURE</span></h3>
+  <div class="grid-2">
+    <div class="feature-mini"><h4>Deeper SIMS / registrar</h4><p>Beyond lookup: write-back of clinic-issued sick-leave to the registrar, enrolment/eligibility checks, automatic student-status sync. The <code>SimsProvider</code> interface is the seam.</p></div>
+    <div class="feature-mini"><h4>National HMIS / DHIS2</h4><p>Export aggregate indicators (visits, ICD-10 diagnoses, immunizations) to the national health-information exchange; the structured coded data already exists to feed it.</p></div>
+    <div class="feature-mini"><h4>Insurance &amp; payments</h4><p>Plug billing into insurance eligibility + claims and mobile-money / telebirr-style gateways; the invoice FSM and Payment records are the integration points.</p></div>
+    <div class="feature-mini"><h4>Telemedicine</h4><p>A remote-consultation channel layered onto the visit spine (a virtual <span class="pill state blue">IN_CONSULTATION</span>), reusing the same ordering / prescribing / referral machinery.</p></div>
+    <div class="feature-mini"><h4>Real-time broadcasting</h4><p>Replace the 25-second notification polling with websockets / SSE / pub-sub so notifications, queues and ward boards update instantly across stations.</p></div>
+    <div class="feature-mini"><h4>Analytics / BI exports</h4><p>The StateTransition + AuditLog + domain tables are a ready warehouse feed for throughput, turnaround-time and utilization dashboards beyond the built-in reports.</p></div>
+    <div class="feature-mini"><h4>Verification as a trust service</h4><p>Extend the <code>/verify</code> HMAC scheme to third-party verifiers (employers, faculty) and to signed QR on any future document type.</p></div>
+    <div class="feature-mini"><h4>Mobile / tablet &amp; student status app</h4><p>Native mobile and tablet clients, and a lightweight student app to check clinic status and queue position — building on the installable PWA foundation.</p></div>
+  </div>
+
+  <h3><span class="h3num">13.2</span>Toward a campus digital ecosystem</h3>
+  <p>Each module already exposes a clean seam for campus-wide integration: <strong>SIMS</strong> ties the clinic to the student information system; <strong>signed documents + <code>/verify</code></strong> give faculty and employers a trust endpoint; <strong>HR leave ↔ <code>employmentStatus</code> lockout</strong> models the access-control pattern a campus IAM could federate; <strong>billing</strong> is the hook for campus finance and insurance; and <strong>feature flags + white-label branding</strong> let the same platform serve other university health centres as a multi-tenant service. Because of the FSM engine, any new campus workflow is added as one declarative machine — with role-gated transitions, audit, and notifications for free.</p>
+
+  <div class="runfoot">
+    <span class="r"><span class="dot"></span> DDU Clinic — Platform Architecture &amp; Product Documentation</span>
+    <span>v2.0 · §13 Roadmap</span>
+  </div>
+</section>
+
+<!-- ============================================================= -->
+<!-- SECTION 14 · APPENDIX                                         -->
+<!-- ============================================================= -->
+<section class="section page-break">
+  <div class="sec-head">
+    <div class="eyebrow">Section 14</div>
+    <h2 class="sec-title"><span class="num">14</span>Appendix</h2>
+    <p class="sec-lead">The technology stack, demo accounts for evaluation, and a short glossary of the terms used throughout this document.</p>
+  </div>
+
+  <h3><span class="h3num">14.1</span>Technology stack</h3>
+  <table class="tight">
+    <thead><tr><th style="width:180px;">Concern</th><th>Choice</th><th style="width:150px;">Version</th></tr></thead>
+    <tbody>
+      <tr><td>Framework</td><td>Next.js (App Router)</td><td><code>next 16.3.1</code></td></tr>
+      <tr><td>UI runtime</td><td>React 19 (Server Components + Actions)</td><td><code>react 19.2.8</code></td></tr>
+      <tr><td>Language</td><td>TypeScript</td><td><code>typescript ^5</code></td></tr>
+      <tr><td>ORM</td><td>Prisma</td><td><code>^6.19.3</code></td></tr>
+      <tr><td>Database</td><td>PostgreSQL (Neon serverless in prod)</td><td>—</td></tr>
+      <tr><td>State machines</td><td>XState v5 + bespoke declarative engine</td><td><code>xstate ^5.32.5</code></td></tr>
+      <tr><td>Auth</td><td>Auth.js / NextAuth v5 (beta)</td><td><code>next-auth ^5.0.0-beta.32</code></td></tr>
+      <tr><td>Passwords</td><td>bcryptjs</td><td><code>^3.0.3</code></td></tr>
+      <tr><td>MFA — TOTP</td><td>otpauth + qrcode</td><td><code>otpauth ^9.5.1</code></td></tr>
+      <tr><td>MFA — Passkeys</td><td>@simplewebauthn (server + browser)</td><td><code>^9.0.3</code></td></tr>
+      <tr><td>Styling</td><td>Tailwind CSS v4</td><td><code>^4</code></td></tr>
+      <tr><td>PWA</td><td>Serwist (dependency; not yet wired)</td><td><code>^9.5.12</code></td></tr>
+      <tr><td>Charts</td><td>Recharts</td><td><code>^3.10.1</code></td></tr>
+      <tr><td>Forms / validation</td><td>react-hook-form + Zod</td><td><code>RHF ^7.85 · zod ^4.4</code></td></tr>
+      <tr><td>Client data</td><td>@tanstack/react-query</td><td><code>^5.101.4</code></td></tr>
+      <tr><td>UI primitives</td><td>Radix UI · lucide-react · sonner · CVA</td><td>—</td></tr>
+      <tr><td>AI copilot</td><td>Groq / OpenAI-compatible (plain fetch)</td><td>—</td></tr>
+      <tr><td>Tests</td><td>Vitest + Testing Library + jsdom</td><td><code>vitest ^4.1.11</code></td></tr>
+    </tbody>
+  </table>
+
+  <h3><span class="h3num">14.2</span>Demo accounts</h3>
+  <div class="callout navy">
+    <span class="lbl">Evaluation logins</span>
+    <p style="margin-bottom:8px;"><strong>Staff</strong> sign in at <code>/login</code> with email + password. Pattern: <code>&lt;role&gt;@clinic.test</code> / <code>password</code>.</p>
+    <div class="role-row">
+      <span class="tag"><code>manager@clinic.test</code></span>
+      <span class="tag"><code>doctor@clinic.test</code></span>
+      <span class="tag"><code>nurse@clinic.test</code></span>
+      <span class="tag"><code>labtech@clinic.test</code></span>
+      <span class="tag"><code>pharmacist@clinic.test</code></span>
+      <span class="tag"><code>reception@clinic.test</code></span>
+      <span class="tag"><code>hr@clinic.test</code></span>
+      <span class="tag"><code>store@clinic.test</code></span>
+    </div>
+    <p style="margin:10px 0 0;"><strong>Student</strong> signs in at <code>/student-login</code>: student ID <code>DDU/1001/14</code> / password <code>student</code>. All demo passwords are for evaluation only.</p>
+  </div>
+
+  <h3><span class="h3num">14.3</span>Glossary</h3>
+  <div class="kv" style="grid-template-columns:180px 1fr;">
+    <div class="k">Affordance</div><div class="v">A serializable projection of a legal, role-permitted transition — what the client renders as an action button.</div>
+    <div class="k">FSM engine</div><div class="v">The declarative finite-state-machine engine that is the single authority for legal transitions and role authorization.</div>
+    <div class="k">HATEOAS-style</div><div class="v">The backend-driven-UI contract: the server tells the client which actions are available; the client renders exactly those.</div>
+    <div class="k">FEFO</div><div class="v">First-Expiry-First-Out — dispensing pharmacy stock from the earliest-expiring batch first to minimize wastage.</div>
+    <div class="k">HMAC</div><div class="v">Keyed hash (SHA-256) computed over a document's immutable facts to make forgery detectable at <code>/verify</code>.</div>
+    <div class="k">Feature flag</div><div class="v">A registry-defined toggle (TENANT / RELEASE / OPS / PERMISSION / EXPERIMENT) gating a module, action, or UI branch.</div>
+    <div class="k">Modular monolith</div><div class="v">A single deployable application organised into clean service modules with boundaries drawn for later decomposition.</div>
+    <div class="k">RBAC</div><div class="v">Role-based access control across eight staff roles; MANAGER always passes role guards.</div>
+    <div class="k">SIMS</div><div class="v">The university Student Information Management System, reached through a pluggable lookup adapter.</div>
+    <div class="k">StateTransition</div><div class="v">The generic, platform-wide FSM audit log every entity move is written to.</div>
+  </div>
+
+  <hr class="soft" />
+
+  <div class="band" style="margin-top:24px;">
+    <img src="assets/ddu-logo-white.png" alt="DDU" />
+    <div class="btext">
+      <div class="beye">End of document</div>
+      <div class="btitle">DDU Clinic — Platform Architecture &amp; Product Documentation</div>
+      <div class="bsub">Version 2.0.0 · branch feature/platform-v2 · Bereket Zelalem · Dire Dawa University · 25 August 2026</div>
+    </div>
+  </div>
+
+  <div class="runfoot">
+    <span class="r"><span class="dot"></span> DDU Clinic — Platform Architecture &amp; Product Documentation</span>
+    <span>v2.0 · §14 Appendix</span>
+  </div>
+</section>
+
+</div><!-- /.doc -->
+
+</body>
+</html>
