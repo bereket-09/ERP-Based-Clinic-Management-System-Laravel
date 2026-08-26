@@ -16,6 +16,9 @@ import {
   Receipt,
   Settings,
   Tv,
+  HeartPulse,
+  Building2,
+  ShieldCheck,
   type LucideIcon,
 } from "lucide-react";
 import type { Section } from "@/lib/rbac";
@@ -31,12 +34,15 @@ export interface NavItem {
 
 export interface NavGroup {
   label: string;
+  /** Category icon shown on the collapsible group header. */
+  icon: LucideIcon;
   items: NavItem[];
 }
 
 export const NAV: NavGroup[] = [
   {
     label: "Clinical",
+    icon: HeartPulse,
     items: [
       { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard, section: "dashboard" },
       { label: "Reception", href: "/reception", icon: UserPlus, section: "reception", feature: "module.reception" },
@@ -53,6 +59,7 @@ export const NAV: NavGroup[] = [
   },
   {
     label: "Operations",
+    icon: Building2,
     items: [
       { label: "Billing", href: "/billing", icon: Receipt, section: "billing", feature: "module.billing" },
       { label: "Human Resources", href: "/hr", icon: CalendarDays, section: "hr", feature: "module.hr" },
@@ -62,6 +69,7 @@ export const NAV: NavGroup[] = [
   },
   {
     label: "Management",
+    icon: ShieldCheck,
     items: [
       { label: "Reports", href: "/reports", icon: BarChart3, section: "reports", feature: "module.reports" },
       { label: "Settings", href: "/settings", icon: Settings, section: "settings" },

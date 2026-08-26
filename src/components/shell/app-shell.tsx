@@ -2,7 +2,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Bell, LogOut, Menu, User as UserIcon, X } from "lucide-react";
+import { Bell, ChevronDown, LogOut, Menu, User as UserIcon, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { notificationSnapshot } from "@/app/(app)/notifications/actions";
@@ -140,44 +140,16 @@ function Sidebar({
         )}
       </div>
 
-      <nav className="flex-1 overflow-y-auto px-3 pb-6">
-        {NAV.map((group) => {
-          const items = group.items.filter(
-            (i) => canAccess(i.section, role) && (!i.feature || featureSet.has(i.feature)),
-          );
-          if (items.length === 0) return null;
-          return (
-            <div key={group.label} className="mb-5">
-              <p className="mb-1.5 px-3 text-[11px] font-semibold uppercase tracking-wider text-sidebar-muted">
-                {group.label}
-              </p>
-              <ul className="space-y-0.5">
-                {items.map((item) => {
-                  const active = pathname === item.href || pathname.startsWith(item.href + "/");
-                  return (
-                    <li key={item.href}>
-                      <Link
-                        href={item.href}
-                        className={cn(
-                          "group relative flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors",
-                          active
-                            ? "bg-sidebar-accent font-medium text-white"
-                            : "text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-white",
-                        )}
-                      >
-                        {active && (
-                          <span className="absolute left-0 top-1/2 h-5 w-1 -translate-y-1/2 rounded-r-full bg-sidebar-active" />
-                        )}
-                        <item.icon className="size-[18px] shrink-0" />
-                        {item.label}
-                      </Link>
-                    </li>
-                  );
-                })}
-              </ul>
-            </div>
-          );
-        })}
+      <nav className="flex-1 space-y-1.5 overflow-y-auto px-3 pb-6">
+        {NAV.map((group) => (
+          <NavGroupSection
+            key={group.label}
+            group={group}
+            role={role}
+            featureSet={featureSet}
+            pathname={pathname}
+          />
+        ))}
       </nav>
 
       <div className="border-t border-sidebar-border px-5 py-3 text-[11px] text-sidebar-muted">
@@ -186,6 +158,107 @@ function Sidebar({
         </span>
       </div>
     </aside>
+  );
+}
+
+/** A collapsible sidebar category: an icon + label header with a chevron, over
+ *  its (access- and feature-filtered) items. Remembers open/closed per group and
+ *  always reveals the group holding the current route. */
+function NavGroupSection({
+  group,
+  role,
+  featureSet,
+  pathname,
+}: {
+  group: (typeof NAV)[number];
+  role: Role | null;
+  featureSet: Set<string>;
+  pathname: string;
+}) {
+  const items = group.items.filter(
+    (i) => canAccess(i.section, role) && (!i.feature || featureSet.has(i.feature)),
+  );
+  const hasActive = items.some(
+    (i) => pathname === i.href || pathname.startsWith(i.href + "/"),
+  );
+  const [open, setOpen] = useState(true);
+
+  // Restore the saved state; with none saved, collapse groups that don't hold
+  // the current page so a role with few items still looks tidy.
+  useEffect(() => {
+    let saved: string | null = null;
+    try {
+      saved = window.localStorage.getItem(`nav:${group.label}`);
+    } catch {
+      /* private mode / unavailable */
+    }
+    setOpen(saved === "1" ? true : saved === "0" ? false : hasActive);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Always reveal the group containing the active route (e.g. after navigating).
+  useEffect(() => {
+    if (hasActive) setOpen(true);
+  }, [hasActive]);
+
+  if (items.length === 0) return null;
+
+  const toggle = () =>
+    setOpen((o) => {
+      const next = !o;
+      try {
+        window.localStorage.setItem(`nav:${group.label}`, next ? "1" : "0");
+      } catch {
+        /* ignore */
+      }
+      return next;
+    });
+
+  return (
+    <div>
+      <button
+        type="button"
+        onClick={toggle}
+        aria-expanded={open}
+        className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-[11px] font-semibold uppercase tracking-wider text-sidebar-muted transition-colors hover:bg-sidebar-accent/60 hover:text-white"
+      >
+        <group.icon className="size-4 shrink-0 opacity-90" />
+        <span className="flex-1 text-left">{group.label}</span>
+        <ChevronDown
+          className={cn(
+            "size-3.5 shrink-0 transition-transform duration-200",
+            !open && "-rotate-90",
+          )}
+        />
+      </button>
+
+      {open && (
+        <ul className="mb-1 mt-1 space-y-0.5">
+          {items.map((item) => {
+            const active = pathname === item.href || pathname.startsWith(item.href + "/");
+            return (
+              <li key={item.href}>
+                <Link
+                  href={item.href}
+                  className={cn(
+                    "group relative flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors",
+                    active
+                      ? "bg-sidebar-accent font-medium text-white"
+                      : "text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-white",
+                  )}
+                >
+                  {active && (
+                    <span className="absolute left-0 top-1/2 h-5 w-1 -translate-y-1/2 rounded-r-full bg-sidebar-active" />
+                  )}
+                  <item.icon className="size-[18px] shrink-0" />
+                  {item.label}
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </div>
   );
 }
 
